@@ -212,7 +212,7 @@ Jadwal tabel manual: target diperiksa saat UU APBN baru disahkan (akhir Septembe
 
 ### 4.7 CI/CD
 
-- **`pipeline.yml`** (satu-satunya workflow yang menulis data). Fase 1: hanya dijalankan manual dengan mode `run`, `full_refresh`, atau `migrate`; jadwal ditambahkan setelah Secret terisi dan run manual pertama lulus. Bila dipicu jadwal, mode bawaannya `run`.
+- **`pipeline.yml`** (satu-satunya workflow yang menulis data). Pemicu: jadwal harian `17 23 * * *` (06.17 WIB), push ke `main` yang mengubah `config/**`, dan manual dengan mode `run`, `full_refresh`, atau `migrate`; jadwal dan push memakai mode `run`. Jadwal hari rilis BPS (`17 8,11 1-8 * *`) menyusul setelah pengambil data BPS ada.
   - Job `run`, batas 60 menit: tes, ambil data, cek awal (koneksi, ukuran database, katalog akses), simpan, turunan, model (fase 3), publikasi, revalidasi (fase 2), catat run. Yang sudah ada: semua kecuali model dan revalidasi.
   - Job `backtest` (fase 3): berjalan setelah rilis target atau secara manual, dengan batas waktu sendiri; menulis `etl.backtest`.
   - Job `notify`, terpisah dengan izin `issues: write` saja: membuka atau mengomentari satu issue `pipeline-failure` berisi nama sumber, kode HTTP, dan tautan run.

@@ -1,8 +1,13 @@
 name: Pipeline data
 
-# Fase 1: hanya dijalankan manual. Jadwal harian (cron 17 23 * * * = 06.17 WIB) ditambahkan
-# setelah Secret SUPABASE_DB_URL terisi dan run manual pertama lulus.
+# Cron ditulis dalam UTC. 17 23 * * * = 06.17 WIB keesokan harinya (WIB = UTC + 7). Menit 17
+# dipilih karena awal jam adalah waktu tersibuk GitHub. Jadwal dan push memakai mode run.
 on:
+  schedule:
+    - cron: "17 23 * * *"
+  push:
+    branches: [main]
+    paths: ["config/**"]
   workflow_dispatch:
     inputs:
       mode:

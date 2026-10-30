@@ -15,6 +15,8 @@ Langkah operasional dan pemulihan. Arsitekturnya ada di [ARCHITECTURE.md](ARCHIT
 - Salin string **Session pooler** dari tombol Connect di dashboard Supabase langsung ke GitHub Secrets (`SUPABASE_DB_URL`) dan `.env` laptop. Jangan lewat chat, issue, atau commit.
 - GitHub: **Settings > Secrets and variables > Actions > Secrets**. `pipeline.yml` membaca `SUPABASE_DB_URL`, `SUPABASE_URL`, dan `SUPABASE_PUBLISHABLE_KEY` sebagai Secrets. `SUPABASE_URL` tidak rahasia, tetapi memuat ref proyek yang sengaja tidak ditampilkan di log publik.
 - Nilai disimpan tanpa spasi atau tanda kutip di sekitarnya; uji akses menolak key yang formatnya tidak valid.
+- Satu Secret per variabel: nama persis seperti di `.env` (misalnya `SUPABASE_DB_URL`), isinya hanya nilainya (tanpa `NAMA=`).
+- Bila run di GitHub menyebut "... belum diisi" padahal `.env` di laptop terisi, Secret tersimpan di tempat yang tidak dibaca workflow: tab **Variables** (bukan Secrets), menu **Codespaces** atau **Dependabot** (bukan Actions), pengaturan **akun** (bukan pengaturan repo), atau satu Secret berisi seluruh isi `.env`. Yang benar: halaman repo > Settings > Secrets and variables > Actions > tab Secrets > bagian **Repository secrets**.
 - Mulai fase 2: rahasia acak untuk `REVALIDATE_SECRET` dan `HEALTH_TOKEN` dibuat sendiri oleh pengelola, langsung ke clipboard, tidak pernah dijalankan lewat sesi agent:
 
 ```
@@ -35,7 +37,7 @@ python -c "import secrets; print(secrets.token_urlsafe(32), end='')" | clip
 2. Dari folder repo dengan Python `.venv`: `python -m confore migrate`. Hasil yang benar: tiga migrasi diterapkan dan "Uji Data API lulus". Bila muncul "akses tidak aman" (migrasi dibatalkan) atau "akses public tidak aman", berhenti dan periksa nama objek yang disebut; migrasi sebelum yang dibatalkan tetap tersimpan.
 3. `python -m confore run --dry-run`, lalu `python -m confore run`. Run kedua di hari yang sama harus menulis 0 baris vintage baru.
 4. Isi tiga Secret di GitHub (ketiganya wajib: tanpa dua yang terakhir, mode `migrate` di Actions berhenti), lalu **Actions > Pipeline data > Run workflow** dengan mode `migrate` (harus "tidak ada yang baru" dan "Uji Data API lulus"), lalu mode `run`.
-5. Setelah run manual dari runner lulus, tambahkan jadwal harian ke `pipeline.yml` (lihat ARCHITECTURE.md, Jadwal penarikan).
+5. Setelah run manual dari runner lulus, tambahkan jadwal harian ke `pipeline.yml` (lihat ARCHITECTURE.md, Jadwal penarikan). Sudah dilakukan 2026-10-30; run terjadwal pertama 2026-10-31 06.17 WIB.
 6. Pengaturan sekali jalan: di dashboard Supabase, matikan pendaftaran pengguna baru (Authentication > Sign In / Providers), karena situs tanpa login; di repo GitHub, nyalakan **Dependabot alerts** (Settings > Security and quality > Advanced Security) supaya rilis keamanan psycopg di `requirements.txt` terlihat.
 Bila koneksi gagal: periksa bahwa `SUPABASE_DB_URL` adalah string **Session pooler** (user `postgres.<ref>`, host berakhiran `.pooler.supabase.com`, port 5432). String koneksi langsung (host `db.<ref>.supabase.co`, user `postgres`) hanya bisa dijangkau lewat IPv6, jadi gagal dari runner GitHub dan dari jaringan tanpa IPv6.
 
