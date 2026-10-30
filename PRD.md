@@ -116,8 +116,7 @@ Keputusan produk dan alasannya dicatat di catatan proyek pengelola; dokumen ini 
 ## 9. Pertanyaan terbuka
 
 1. Sumber angka resmi selama pengembangan, sebelum key BPS keluar: (a) salinan IMF yang tertinggal beberapa minggu dan diberi label, atau (b) input manual 3-4 angka per bulan ke `config/` beserta tautan rilis BPS.
-2. Siapa yang commit dan push. Pengelola sendiri yang men-deploy frontend dan backend.
-3. Domain: subdomain Vercel (gratis) atau domain sendiri (berbayar).
-4. Syarat IMF untuk menampilkan ulang datanya di situs publik.
-5. Tabel manual selain target resmi (`config/sources.csv`, `config/release_calendar.csv`, `config/holidays.csv`, dan angka sementara bila opsi 1b dipilih) adalah pengecualian baru dari aturan "semua data dari API" dan perlu disetujui.
-6. Perlu tidaknya panduan desain (`DESIGN.md`).
+2. Domain: subdomain Vercel (gratis) atau domain sendiri (berbayar).
+3. Syarat IMF untuk menampilkan ulang datanya di situs publik.
+4. Tabel manual selain target resmi (`config/sources.csv`, `config/release_calendar.csv`, `config/holidays.csv`, dan angka sementara bila opsi 1b dipilih) adalah pengecualian baru dari aturan "semua data dari API" dan perlu disetujui.
+5. Perlu tidaknya panduan desain (`DESIGN.md`).

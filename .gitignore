@@ -8,11 +8,6 @@
 *.key
 service-account*.json
 
-# Draf lama berisi data asli dan catatan pribadi. Pengaman sampai berkasnya dihapus;
-# hapus dua baris ini setelah kedua berkas tidak ada lagi.
-docs/RENCANA-MVP.md
-docs/ARSITEKTUR.md
-
 # Supabase CLI (menyimpan ref proyek dan URL pooler)
 supabase/.temp/
 supabase/.branches/
