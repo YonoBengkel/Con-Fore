@@ -84,13 +84,14 @@ export function perubahan(
   konsep: string,
   frekuensi: string,
 ): string | null {
-  // TPT per ronde Sakernas hanya boleh dibanding ronde bulan yang sama (ARCHITECTURE 4.3), sedangkan
-  // previous_value adalah ronde sebelumnya. Baris perubahan dilewati sampai ada pembanding sepadan.
-  if (sebelum == null || konsep === "round_rate") return null;
-  const banding = PEMBANDING[frekuensi] ?? "periode sebelumnya";
+  if (sebelum == null) return null;
+  // TPT per ronde Sakernas: pipeline mengisi previous_value dengan ronde bulan yang sama tahun
+  // sebelumnya (ARCHITECTURE 4.3), karena ronde yang berbeda bulan tidak sepadan.
+  const banding =
+    konsep === "round_rate" ? "ronde yang sama tahun lalu" : (PEMBANDING[frekuensi] ?? "periode sebelumnya");
   if (satuan.startsWith("%")) {
     const selisih = sekarang - sebelum;
-    const d = konsep === "rate" ? 2 : 1;
+    const d = konsep === "rate" || konsep === "round_rate" ? 2 : 1;
     if (Math.abs(selisih) < 0.5 * 10 ** -d) return `sama dengan ${banding}`;
     return `${selisih > 0 ? "naik" : "turun"} ${angka(Math.abs(selisih), d)} poin persen dari ${banding} (${nilaiPendek(sebelum, satuan, konsep)})`;
   }

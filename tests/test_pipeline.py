@@ -13,7 +13,7 @@ from unittest import mock
 from confore import cli, config, db, fetch
 from confore.derive import derive_all, ratio, yoy
 from confore.fetch import FetchError, Point
-from confore.publish import next_releases
+from confore.publish import next_releases, previous_value
 
 
 def points(*pairs, frequency="Q"):
@@ -214,6 +214,13 @@ class TimeAndSafetyTest(unittest.TestCase):
             with mock.patch.object(db, "SUPABASE_CA", ca):
                 self.assertEqual(db.tls_options(url),
                                  {"sslmode": "verify-full", "sslrootcert": str(ca)})
+
+    def test_previous_value_compares_same_sakernas_round(self):
+        rounds = points(("2025-02", "4.76"), ("2025-08", "4.85"), ("2025-11", "4.74"),
+                        ("2026-02", "4.68"), frequency="M")
+        self.assertEqual(previous_value(rounds, "round_rate"), Decimal("4.76"))
+        self.assertEqual(previous_value(rounds, "rate"), Decimal("4.74"))
+        self.assertIsNone(previous_value(rounds[1:], "round_rate"))  # Februari 2025 tidak ada
 
     def test_next_release_skips_past_dates(self):
         calendar = [("s", "2026-09", "bps", date(2026, 10, 1)),

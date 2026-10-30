@@ -22,6 +22,18 @@ def next_releases(calendar, today):
     return nearest
 
 
+def previous_value(points, concept):
+    """Pembanding angka terbaru: periode sebelumnya, atau untuk TPT per ronde Sakernas
+    (round_rate) ronde bulan yang sama tahun sebelumnya (ARCHITECTURE 4.3)."""
+    if len(points) < 2:
+        return None
+    if concept != "round_rate":
+        return points[-2].value
+    last = points[-1]
+    year_ago = last.start.replace(year=last.start.year - 1)
+    return next((p.value for p in points if p.start == year_ago), None)
+
+
 def publish(conn, cfg, status, today):
     """status adalah status run ini; last_success_at hanya maju bila status bukan failed."""
     items = cfg["series"]
@@ -43,7 +55,7 @@ def publish(conn, cfg, status, today):
                      last.period if last else None, last.release if last else None,
                      upcoming.get(item["id"])))
         if last:
-            previous = points[-2].value if len(points) > 1 else None
+            previous = previous_value(points, item["concept"])
             latest.append((item["id"], last.period, last.value, previous, last.release, last.seen,
                            item["source"], item["id"] in stale))
             charts.append((item["id"], [item["id"]],

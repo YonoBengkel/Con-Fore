@@ -245,7 +245,7 @@ erDiagram
 |---|---|---|
 | `sources` | `source_id` | Untuk halaman Sumber data, termasuk kalimat atribusi wajib |
 | `series_meta` | `series_id` | Nama Indonesia, satuan, sumber, sitasi, periode terakhir, tanggal rilis terakhir dan berikutnya |
-| `latest_values` | `series_id` | Angka terbaru per seri beserta angka periode sebelumnya, untuk kartu dan kalimat ringkasan. `seen_date` = tanggal nilai itu pertama terlihat; `is_stale` = pengambilan terakhir seri itu (atau inputnya, untuk seri turunan) gagal, atau seri itu belum pernah berhasil diambil |
+| `latest_values` | `series_id` | Angka terbaru per seri beserta pembandingnya, untuk kartu dan kalimat ringkasan: angka periode sebelumnya, atau untuk TPT per ronde Sakernas (`round_rate`) ronde bulan yang sama tahun sebelumnya. `seen_date` = tanggal nilai itu pertama terlihat; `is_stale` = pengambilan terakhir seri itu (atau inputnya, untuk seri turunan) gagal, atau seri itu belum pernah berhasil diambil |
 | `chart_series` | `chart_id` | Satu baris per grafik. Satu grafik bisa memuat beberapa seri (`series_ids`), dan `points` berupa objek JSON berisi array `[periode, nilai]` per seri. Dipilih karena Data API memotong jawaban di 1.000 baris secara diam-diam. Juga sumber unduhan CSV |
 | `targets` | (`series_id`, `year`, `target_kind`) | Salinan target resmi beserta status `verification`; sebelum rilis publik, baris `berita` dicocokkan dulu ke dokumen resmi |
 | `release_calendar` | (`series_id`, `ref_period`) | Hanya rilis yang belum lewat (tanggal WIB). Bila beberapa kalender mencatat periode yang sama, yang dipakai tanggal paling awal. `calendar_source` ikut tampil, karena selama data berasal dari salinan IMF, tanggal BPS adalah tanggal rilis BPS, bukan tanggal angka itu muncul di situs |
