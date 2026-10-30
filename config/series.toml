@@ -1,0 +1,207 @@
+# Registri seri: satu blok [[series]] per seri. Pipeline hanya menarik seri yang ada di sini.
+#
+# Kunci wajib: id, source (kode di config/sources.csv), frequency (A, Q, M, D), unit, concept,
+# name (nama Indonesia untuk situs), citation.
+# Seri yang diambil dari API: dataset dan query (path + query string setelah alamat dasar sumber).
+# Seri turunan: derive ("yoy" atau "ratio") dan inputs (id seri lain), tanpa query.
+# Opsional: country (bawaan IDN), is_target (bawaan false), actual_only (khusus WEO: buang tahun
+# proyeksi, simpan hanya tahun sampai LATEST_ACTUAL_ANNUAL_DATA).
+# concept: level, index, yoy, avg_yoy, eop_yoy, rate, round_rate (lihat SCHEMA.md).
+
+# --- Target, tahunan (IMF WEO) ---
+
+[[series]]
+id = "idn_gdp_growth_a"
+source = "imf"
+dataset = "WEO"
+query = "IMF.RES,WEO/IDN.NGDP_RPCH.A?startPeriod=2000"
+actual_only = true
+frequency = "A"
+unit = "%"
+concept = "yoy"
+is_target = true
+name = "Pertumbuhan ekonomi (PDB riil), tahunan"
+citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
+
+[[series]]
+id = "idn_cpi_eop_a"
+source = "imf"
+dataset = "WEO"
+query = "IMF.RES,WEO/IDN.PCPIEPCH.A?startPeriod=2000"
+actual_only = true
+frequency = "A"
+unit = "%"
+concept = "eop_yoy"
+is_target = true
+name = "Inflasi akhir tahun (Desember dibanding Desember)"
+citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
+
+[[series]]
+id = "idn_unemp_a"
+source = "imf"
+dataset = "WEO"
+query = "IMF.RES,WEO/IDN.LUR.A?startPeriod=2000"
+actual_only = true
+frequency = "A"
+unit = "% angkatan kerja"
+concept = "rate"
+is_target = true
+name = "Tingkat pengangguran terbuka, tahunan"
+citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
+
+# --- Target, kuartalan dan bulanan (salinan IMF dari data BPS) ---
+
+[[series]]
+id = "idn_gdp_real_q"
+source = "imf"
+dataset = "QNEA"
+query = "IMF.STA,QNEA/IDN.B1GQ.Q.NSA.XDC.Q?startPeriod=2000-Q1&detail=dataonly"
+frequency = "Q"
+unit = "rupiah, harga konstan"
+concept = "level"
+name = "PDB riil kuartalan"
+citation = "International Monetary Fund, Quarterly National Economic Accounts (QNEA), https://data.imf.org/en/datasets/IMF.STA:QNEA"
+
+[[series]]
+id = "idn_gdp_growth_q"
+source = "imf"
+derive = "yoy"
+inputs = ["idn_gdp_real_q"]
+frequency = "Q"
+unit = "%"
+concept = "yoy"
+is_target = true
+name = "Pertumbuhan ekonomi kuartalan (dibanding kuartal yang sama tahun lalu)"
+citation = "Dihitung Con-Fore dari International Monetary Fund, Quarterly National Economic Accounts (QNEA), https://data.imf.org/en/datasets/IMF.STA:QNEA"
+
+[[series]]
+id = "idn_cpi_yoy_m"
+source = "imf"
+dataset = "CPI"
+query = "IMF.STA,CPI/IDN.CPI._T.YOY_PCH_PA_PT.M?startPeriod=2000-01&detail=dataonly"
+frequency = "M"
+unit = "%"
+concept = "yoy"
+is_target = true
+name = "Inflasi (dibanding bulan yang sama tahun lalu)"
+citation = "International Monetary Fund, Consumer Price Index (CPI), https://data.imf.org/en/datasets/IMF.STA:CPI"
+
+# --- Penggerak: harga komoditas (IMF PCPS, rata-rata bulanan) ---
+
+[[series]]
+id = "wld_coal_m"
+source = "imf"
+dataset = "PCPS"
+query = "IMF.RES,PCPS/G001.PCOALAU.USD.M?startPeriod=2000-01&detail=dataonly"
+country = "WLD"
+frequency = "M"
+unit = "USD per metrik ton"
+concept = "level"
+name = "Harga batu bara (Australia)"
+citation = "International Monetary Fund, Primary Commodity Prices (PCPS), https://data.imf.org/en/datasets/IMF.RES:PCPS"
+
+[[series]]
+id = "wld_cpo_m"
+source = "imf"
+dataset = "PCPS"
+query = "IMF.RES,PCPS/G001.PPOIL.USD.M?startPeriod=2000-01&detail=dataonly"
+country = "WLD"
+frequency = "M"
+unit = "USD per metrik ton"
+concept = "level"
+name = "Harga minyak sawit mentah (CPO)"
+citation = "International Monetary Fund, Primary Commodity Prices (PCPS), https://data.imf.org/en/datasets/IMF.RES:PCPS"
+
+[[series]]
+id = "wld_nickel_m"
+source = "imf"
+dataset = "PCPS"
+query = "IMF.RES,PCPS/G001.PNICK.USD.M?startPeriod=2000-01&detail=dataonly"
+country = "WLD"
+frequency = "M"
+unit = "USD per metrik ton"
+concept = "level"
+name = "Harga nikel"
+citation = "International Monetary Fund, Primary Commodity Prices (PCPS), https://data.imf.org/en/datasets/IMF.RES:PCPS"
+
+[[series]]
+id = "wld_brent_m"
+source = "imf"
+dataset = "PCPS"
+query = "IMF.RES,PCPS/G001.POILBRE.USD.M?startPeriod=2000-01&detail=dataonly"
+country = "WLD"
+frequency = "M"
+unit = "USD per barel"
+concept = "level"
+name = "Harga minyak mentah Brent"
+citation = "International Monetary Fund, Primary Commodity Prices (PCPS), https://data.imf.org/en/datasets/IMF.RES:PCPS"
+
+# --- Penggerak: suku bunga, indikator pendahulu, kurs ---
+
+[[series]]
+id = "idn_policy_rate_m"
+source = "bis"
+dataset = "WS_CBPOL"
+query = "WS_CBPOL/1.0/M.ID?startPeriod=2000-01&format=csv&detail=dataonly"
+frequency = "M"
+unit = "% per tahun"
+concept = "rate"
+name = "Suku bunga acuan Bank Indonesia (BI-Rate)"
+citation = "BIS, Central bank policy rates"
+
+[[series]]
+id = "idn_cli_m"
+source = "oecd"
+dataset = "DF_CLI"
+query = "OECD.SDD.STES,DSD_STES@DF_CLI,/IDN.M.LI...AA...H?startPeriod=2000-01&format=csvfile"
+frequency = "M"
+unit = "indeks, rata-rata jangka panjang = 100"
+concept = "index"
+name = "Indikator pendahulu OECD, Indonesia"
+citation = "OECD, Composite leading indicators, OECD Data Explorer"
+
+[[series]]
+id = "chn_cli_m"
+source = "oecd"
+dataset = "DF_CLI"
+query = "OECD.SDD.STES,DSD_STES@DF_CLI,/CHN.M.LI...AA...H?startPeriod=2000-01&format=csvfile"
+country = "CHN"
+frequency = "M"
+unit = "indeks, rata-rata jangka panjang = 100"
+concept = "index"
+name = "Indikator pendahulu OECD, Tiongkok (mitra dagang terbesar)"
+citation = "OECD, Composite leading indicators, OECD Data Explorer"
+
+[[series]]
+id = "eur_idr_d"
+source = "ecb"
+dataset = "EXR"
+query = "EXR/D.IDR.EUR.SP00.A?startPeriod=2000-01-01&format=csvdata&detail=dataonly"
+frequency = "D"
+unit = "rupiah per euro"
+concept = "level"
+name = "Kurs rupiah per euro (acuan ECB)"
+citation = "ECB, Euro foreign exchange reference rates"
+
+[[series]]
+id = "eur_usd_d"
+source = "ecb"
+dataset = "EXR"
+query = "EXR/D.USD.EUR.SP00.A?startPeriod=2000-01-01&format=csvdata&detail=dataonly"
+country = "WLD"
+frequency = "D"
+unit = "dolar AS per euro"
+concept = "level"
+name = "Kurs dolar AS per euro (acuan ECB)"
+citation = "ECB, Euro foreign exchange reference rates"
+
+[[series]]
+id = "usd_idr_d"
+source = "ecb"
+derive = "ratio"
+inputs = ["eur_idr_d", "eur_usd_d"]
+frequency = "D"
+unit = "rupiah per dolar AS"
+concept = "level"
+name = "Kurs rupiah per dolar AS"
+citation = "Kurs silang dihitung Con-Fore dari kurs acuan ECB (rupiah per euro dibagi dolar AS per euro)"

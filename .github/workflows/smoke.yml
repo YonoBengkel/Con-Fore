@@ -16,7 +16,7 @@ jobs:
           persist-credentials: false
 
       - name: Tes
-        run: python3 -m unittest discover -s tests -v
+        run: python3 -m unittest tests.test_smoke -v
 
       - name: Uji akses setiap sumber
         env:

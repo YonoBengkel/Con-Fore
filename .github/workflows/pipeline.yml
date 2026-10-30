@@ -1,0 +1,47 @@
+name: Pipeline data
+
+# Fase 1: hanya dijalankan manual. Jadwal harian (cron 17 23 * * * = 06.17 WIB) ditambahkan
+# setelah Secret SUPABASE_DB_URL terisi dan run manual pertama lulus.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "run: ambil dan publikasi; full_refresh: tulis ulang semua observasi; migrate: migrasi SQL lalu uji akses"
+        type: choice
+        options: [run, full_refresh, migrate]
+        default: run
+
+permissions:
+  contents: read
+
+concurrency:
+  group: con-fore-pipeline
+  queue: max
+
+jobs:
+  run:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+      - name: Pasang dependensi dari lockfile berhash
+        run: python -m pip install --require-hashes -r requirements.txt
+      - name: Tes
+        run: python -m unittest discover -s tests -v
+      - name: Pipeline
+        env:
+          MODE: ${{ inputs.mode || 'run' }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          case "$MODE" in
+            migrate) python -m confore migrate ;;
+            full_refresh) python -m confore run --full-refresh ;;
+            *) python -m confore run ;;
+          esac

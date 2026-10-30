@@ -1,4 +1,4 @@
-Status: plan (disetujui pengelola 2026-10-30, sebelum ada kode; ditulis ulang dari kode begitu kode ada)
+Status: bagian pipeline data sesuai kode fase 1 (2026-10-30); situs, model, jadwal otomatis, backup, dan pemantauan masih rencana yang disetujui pengelola 2026-10-30.
 
 # Arsitektur Con-Fore
 
@@ -27,47 +27,53 @@ Semua logika ada di satu paket Python, `confore`, yang bisa dijalankan sama pers
 
 ## 2. Peta folder
 
-Yang sudah ada sejak fase 0 ditandai `[ada]`; sisanya rencana.
+Yang sudah ada ditandai `[ada]`; sisanya rencana.
 
 ```
 Con-Fore/
   README.md  PRD.md  ARCHITECTURE.md  SCHEMA.md  RUNBOOK.md   [ada]
   .gitignore  .env.example                                    [ada]
+  requirements.in        dependensi langsung (psycopg)        [ada]
+  requirements.txt       lockfile berhash dari `uv pip compile` [ada]
   confore/               paket Python
     smoke.py             uji akses setiap sumber, satu permintaan kecil per sumber   [ada]
-    sources/             satu modul per sumber (imf, bis, oecd, ecb, frankfurter, worldbank, bps, fred)
-    fetch.py             cek perubahan, unduh, validasi, simpan observasi
-    derive.py            turunan: yoy, inflasi Desember, agregasi kuartalan
+    config.py            muat dan periksa config/ (seri, sumber, target, kalender)   [ada]
+    fetch.py             pengambil generik CSV SDMX (IMF, BIS, OECD, ECB): retry, normalisasi periode, hash   [ada]
+    derive.py            turunan di memori: yoy, rasio (kurs silang)   [ada]
+    db.py                migrasi, cek katalog akses, uji Data API, tulis vintage, log   [ada]
+    publish.py           isi ulang tabel public.* dalam satu transaksi   [ada]
+    cli.py               perintah: migrate, run (--dry-run, --source, --trigger, --full-refresh)   [ada]
     models/              baseline, DFM PDB, inflasi, TPT (fase 3)
-    publish.py           isi ulang tabel public.* dalam satu transaksi
-    redact.py            samarkan rahasia (per nilai dan per pola) sebelum masuk issue atau database
-    cli.py               perintah: migrate, fetch, derive, model, publish
-  supabase/migrations/   SQL berversi: skema, GRANT, RLS
+  supabase/migrations/   0001-0003: skema, tabel, GRANT, RLS   [ada]
   config/
-    series.yaml          registri seri dan kunci API
-    sources.csv          nama, URL, lisensi, dan kalimat atribusi per sumber (diisi manual, usulan)
-    targets.csv          target resmi bersumber (diisi manual)
-    release_calendar.csv kalender rilis (diisi manual, usulan)
-    holidays.csv         hari libur dan Ramadan/Lebaran (diisi manual, usulan)
+    series.toml          registri seri dan query API   [ada]
+    sources.csv          nama, URL, syarat, lisensi, dan kalimat atribusi per sumber   [ada]
+    targets.csv          target resmi bersumber, dengan status verifikasi   [ada]
+    release_calendar.csv kalender rilis   [ada]
+    holidays.csv         hari libur dan Ramadan/Lebaran (fase 3, saat model memakainya)
   web/                   Next.js (App Router)
-  tests/                 test_smoke.py [ada]; nanti fixture parser, batas waktu WIB/UTC, uji akses database
+  tests/                 test_smoke.py, test_pipeline.py, test_db.py (Postgres lokal)   [ada]
   .github/
     dependabot.yml       pembaruan bulanan untuk action yang dipin   [ada]
-    workflows/           smoke.yml [ada]; nanti pipeline.yml, backup.yml, ci.yml
+    workflows/           smoke.yml, pipeline.yml [ada]; nanti backup.yml, ci.yml
   docs/                  catatan metodologi (tanpa data asli)
 ```
 
-## 3. Cara menjalankan (rencana)
+Rencana awal memakai satu modul per sumber di `confore/sources/`. Karena keempat sumber tanpa key menjawab dalam CSV SDMX yang sama, cukup satu pengambil generik; sumber berformat lain (BPS, FRED) menambah fungsi parser sendiri saat dipakai. Registri memakai TOML (bukan YAML) karena `tomllib` ada di pustaka standar.
 
-Lokal, dengan `.env` berisi variabel di bawah (`.env` masuk `.gitignore` sejak commit pertama):
+## 3. Cara menjalankan
+
+Lokal, dengan `.env` berisi variabel di bawah (`.env` masuk `.gitignore` sejak commit pertama) dan dependensi dari `requirements.txt` (lihat README):
 
 ```
-python -m confore migrate      # terapkan migrasi SQL yang belum jalan, lalu uji akses
-python -m confore fetch        # semua sumber; --source imf untuk satu sumber
-python -m confore derive
-python -m confore publish      # isi ulang public.*, lalu revalidasi situs
-cd web && npm run dev          # situs lokal membaca Supabase
+python -m confore migrate          # terapkan migrasi SQL yang belum jalan, lalu cek katalog dan uji Data API
+python -m confore run --dry-run    # ambil semua seri dan hitung turunan tanpa database
+python -m confore run              # ambil, cek akses, simpan vintage baru, publikasi public.*
+python -m confore run --source imf # hanya ambil satu sumber; publikasi tetap untuk semua seri
+cd web && npm run dev              # (fase 2) situs lokal membaca Supabase
 ```
+
+Urutan satu `run`: muat dan periksa `config/`, ambil setiap seri dengan jeda 1 detik (sebelum koneksi database dibuka, supaya koneksi tidak menganggur saat sumber lambat), buka koneksi, ambil kunci advisory (run atau migrasi lain yang sedang berjalan membuat run ini berhenti), cek katalog akses (berhenti bila ada akses yang tidak aman) dan ukuran database, catat baris `etl.runs`, salin `config/` ke `etl`, tulis vintage baru dan `fetch_log` per seri, tentukan status, publikasi, lalu tutup baris run. Revalidasi situs ditambahkan di fase 2.
 
 | Variabel | Dipakai oleh | Isi |
 |---|---|---|
@@ -78,7 +84,7 @@ cd web && npm run dev          # situs lokal membaca Supabase
 | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | Vercel (hanya server); pipeline untuk uji akses setelah migrasi | Alamat proyek dan kunci publik |
 | `SITE_URL` | Pipeline | Domain produksi situs |
 
-Di GitHub, nilai ini disimpan sebagai Secrets (atau Variables untuk yang tidak rahasia). Di Vercel, sebagai Environment Variables. String session pooler disalin dari tombol Connect di dashboard Supabase (pilihan "Session pooler") langsung ke tempat-tempat itu, tidak pernah lewat chat atau commit.
+Di GitHub, nilai ini disimpan sebagai Secrets (`pipeline.yml` hanya membaca Secrets). Di Vercel, sebagai Environment Variables. String session pooler disalin dari tombol Connect di dashboard Supabase (pilihan "Session pooler") langsung ke tempat-tempat itu, tidak pernah lewat chat atau commit.
 
 ## 4. Lapisan aplikasi
 
@@ -120,7 +126,9 @@ Di GitHub, nilai ini disimpan sebagai Secrets (atau Variables untuk yang tidak r
 | `config/*` | Target resmi, sumber, kalender rilis, hari libur | Diisi manual di repo | Saat ada perubahan | Push ke `config/**` | - | MVP |
 | FRED, BI SEKI, halaman BI-Rate, GDELT, Comtrade | Pelengkap | Key, HTML, atau batas ketat | - | - | - | Nanti |
 
-Tidak dipakai: IMF DataMapper (menjawab 403) dan CSV grafik FRED (koneksi ditolak). Pipeline hanya menarik seri yang disebut di `config/series.yaml`.
+Tidak dipakai: IMF DataMapper (menjawab 403) dan CSV grafik FRED (koneksi ditolak). Pipeline hanya menarik seri yang disebut di `config/series.toml`.
+
+**Yang sudah jalan di fase 1:** IMF (WEO, QNEA, CPI, PCPS), BIS, OECD, dan ECB, 14 seri ditambah 2 turunan. Setiap run mengambil seri penuh sejak 2000 (jawaban kecil berkat `detail=dataonly`, kecuali WEO yang butuh kolom `LATEST_ACTUAL_ANNUAL_DATA`), lalu membandingkan hash data ternormalisasi dengan pengambilan terakhir. Kolom "Cara mendeteksi data baru" di atas (`updatedAfter`, 404 sebagai "tidak ada perubahan") adalah optimasi yang belum dipakai. Frankfurter dan World Bank baru dipakai di uji akses.
 
 **Jadwal penarikan**
 
@@ -131,7 +139,7 @@ Cron di GitHub Actions ditulis dalam **UTC** (bawaan; kunci `timezone` juga ters
 | Harian | `17 23 * * *` | 06.17, **tanggal WIB = tanggal UTC + 1** | Cek perubahan semua sumber; ambil yang berubah; model bila input berubah; publikasi |
 | Hari rilis BPS | `17 8,11 1-8 * *` | 15.17 dan 18.17, tanggal 1-8 (tanggal UTC = tanggal WIB) | Hanya cek BPS, beberapa jam setelah rilis sekitar 11.00 WIB; aktif setelah key BPS terbukti jalan |
 | Push `config/**` | - | Saat tabel manual diubah | Muat ulang tabel manual dan publikasi |
-| Manual | `workflow_dispatch` | Kapan saja | Mode `auto`, `full_refresh`, `migrate` |
+| Manual | `workflow_dispatch` | Kapan saja | Mode `run`, `full_refresh`, `migrate` |
 | Backup | `47 23 * * 0` | Senin 06.47 | Ekspor mingguan (lihat 4.13) |
 | Kesehatan (cron-job.org) | - | 09.17 setiap hari | `GET /api/health`; email ke pengelola bila 503 |
 | Penyalaan ulang (cron-job.org) | - | Setiap hari | `PUT .../actions/workflows/pipeline.yml/enable` |
@@ -147,6 +155,9 @@ Jadwal tabel manual: target diperiksa saat UU APBN baru disahkan (akhir Septembe
 - Konsep dicatat per seri (rata-rata tahunan, akhir tahun, per ronde Sakernas) supaya yang dibandingkan selalu sepadan.
 - Saat BPS mengganti tahun dasar, seri baru dibuat dan seri lama dibekukan; model memakai laju pertumbuhan.
 - Tulis massal: `COPY` ke tabel sementara, lalu satu `INSERT ... SELECT` dalam satu transaksi (pola lengkap di SCHEMA.md). Semua SQL memakai nama berskema (`etl.x`, `public.x`).
+- Periode yang ditarik sumber (hilang dari jawaban, atau berubah menjadi `NaN`) dicatat sebagai vintage bernilai NULL dan tidak tampil lagi; riwayatnya tetap tersimpan, dan nilainya kembali tampil bila sumber memuatnya lagi. Rem pengaman: bila dalam satu pengambilan lebih dari 5 periode atau 10% periode hilang, pengambilan itu dicatat sebagai error "terlalu banyak periode hilang" dan tidak ditulis.
+- Mode `full_refresh` (`run --full-refresh`) menulis ulang observasi walau hash-nya sama, untuk memulihkan tabel yang diubah manual atau dipulihkan dari backup, dan menerima penarikan massal yang ditolak rem pengaman (setelah diperiksa manual). Penulisannya tetap idempoten.
+- Sumber ber-key (BPS, FRED) nanti memakai permintaan tanpa pengalihan alamat, dan key ditambahkan saat permintaan dibuat, tidak pernah ditulis di `query` registri (yang ikut tersimpan di `etl.series.source_key`).
 
 ### 4.4 Auth
 
@@ -163,6 +174,7 @@ Jadwal tabel manual: target diperiksa saat UU APBN baru disahkan (akhir Septembe
 | Job `notify` | `GITHUB_TOKEN` dengan `issues: write` | Membuka issue kegagalan |
 
 - **Wajib session pooler:** runner GitHub hanya mendukung IPv4, sedangkan host langsung database Supabase memakai IPv6.
+- **Wajib TLS:** bila berkas `config/supabase-ca.crt` (sertifikat CA Supabase dari dashboard, publik) ada, koneksi pipeline memakai `sslmode=verify-full` sehingga identitas server ikut diverifikasi; tanpa berkas itu, `sslmode=require` (terenkripsi, tetapi tidak tahan penyadap yang memalsukan server). `sslmode` di string koneksi selalu menang, misalnya `disable` untuk Postgres lokal.
 - Secret key Supabase tidak dipakai di MVP karena bisa menembus RLS. Setelah publishable key dipakai, legacy JWT key `anon` dan `service_role` dinonaktifkan di dashboard Supabase, karena keduanya tetap berlaku sampai dimatikan.
 - Tanggal kedaluwarsa token cron-job.org dicatat di RUNBOOK; token yang kedaluwarsa membuat penyalaan ulang gagal tanpa terlihat.
 
@@ -181,7 +193,7 @@ Jadwal tabel manual: target diperiksa saat UU APBN baru disahkan (akhir Septembe
 
 ### 4.6 Compute
 
-- Runner `ubuntu-24.04` standar (gratis di repo publik). Mulai fase 1: Python 3.14 lewat `setup-python`, dengan pandas 3, statsmodels 0.15, dan psycopg 3 dari lockfile berhash. Di fase 0, uji akses memakai `python3` bawaan runner (3.12) dan hanya pustaka standar, jadi kodenya harus tetap kompatibel dengan 3.12.
+- Runner `ubuntu-24.04` standar (gratis di repo publik). `pipeline.yml` memakai Python 3.14 lewat `setup-python`; fase 1 hanya butuh psycopg 3 dari lockfile berhash (`requirements.txt`), sedangkan pandas 3 dan statsmodels 0.15 masuk di fase 3. Uji akses (`smoke.yml`) tetap memakai `python3` bawaan runner (3.12) dan hanya pustaka standar. Seluruh kode dites kompatibel dengan Python 3.12.
 - Job harian dibatasi 60 menit. Backtest berjalan di job `backtest` tersendiri (lihat 4.7), karena lamanya belum terukur.
 - Model (fase 3):
 
@@ -200,14 +212,14 @@ Jadwal tabel manual: target diperiksa saat UU APBN baru disahkan (akhir Septembe
 
 ### 4.7 CI/CD
 
-- **`pipeline.yml`** (satu-satunya workflow yang menulis data):
-  - Job `run`, batas 60 menit: cek awal (koneksi, ukuran database, katalog akses), ambil data, turunan, model (fase 3), publikasi, revalidasi, catat run.
+- **`pipeline.yml`** (satu-satunya workflow yang menulis data). Fase 1: hanya dijalankan manual dengan mode `run`, `full_refresh`, atau `migrate`; jadwal ditambahkan setelah Secret terisi dan run manual pertama lulus. Bila dipicu jadwal, mode bawaannya `run`.
+  - Job `run`, batas 60 menit: tes, ambil data, cek awal (koneksi, ukuran database, katalog akses), simpan, turunan, model (fase 3), publikasi, revalidasi (fase 2), catat run. Yang sudah ada: semua kecuali model dan revalidasi.
   - Job `backtest` (fase 3): berjalan setelah rilis target atau secara manual, dengan batas waktu sendiri; menulis `etl.backtest`.
   - Job `notify`, terpisah dengan izin `issues: write` saja: membuka atau mengomentari satu issue `pipeline-failure` berisi nama sumber, kode HTTP, dan tautan run.
   - `concurrency: con-fore-pipeline` dengan `queue: max` dan tanpa `cancel-in-progress`. Tanpa `queue: max`, run tertunda (misalnya `migrate` manual) bisa digantikan run berikutnya.
 - **`backup.yml`**: lihat 4.13. Memakai grup concurrency yang sama supaya ekspor tidak terjadi di tengah publikasi.
-- **`smoke.yml`** (ada sejak fase 0): dijalankan manual; menjalankan tes lalu uji akses setiap sumber dari runner, dan menulis hasilnya ke ringkasan job. Hanya langkah uji akses yang menerima Secret key BPS dan FRED. Permintaan yang membawa key menolak pengalihan alamat, dan catatan hasil hanya memuat kode HTTP atau jenis error.
-- **`ci.yml`** (mulai fase 3): tes parser dengan fixture, tes batas WIB/UTC, smoke test model, dan uji migrasi terhadap Postgres lokal. Tanpa secret. Uji akses ke proyek Supabase sungguhan berjalan di `pipeline.yml` mode `migrate`.
+- **`smoke.yml`** (ada sejak fase 0): dijalankan manual; menjalankan `tests.test_smoke` lalu uji akses setiap sumber dari runner, dan menulis hasilnya ke ringkasan job. Tes lain butuh psycopg, jadi dijalankan di `pipeline.yml`. Hanya langkah uji akses yang menerima Secret key BPS dan FRED. Permintaan yang membawa key menolak pengalihan alamat, dan catatan hasil hanya memuat kode HTTP atau jenis error.
+- **`ci.yml`** (mulai fase 3): tes parser dengan fixture, tes batas WIB/UTC, smoke test model, dan uji migrasi terhadap Postgres lokal (`tests/test_db.py` dengan `CONFORE_TEST_DB_URL`). Tanpa secret. Sampai saat itu, tes database dijalankan di laptop. Uji akses ke proyek Supabase sungguhan berjalan di `pipeline.yml` mode `migrate`.
 - Keamanan workflow: izin bawaan `contents: read`; setiap action dipin ke commit SHA dan diperbarui Dependabot; input manual dibaca lewat `env`; tidak pernah memakai `pull_request_target`.
 - **Deploy situs:** Vercel membangun dari branch `main`, dan Ignored Build Step hanya membangun bila ada perubahan di `web/`. Pembaruan data cukup lewat revalidasi.
 
@@ -216,7 +228,7 @@ Jadwal tabel manual: target diperiksa saat UU APBN baru disahkan (akhir Septembe
 - Skema `etl` tidak terbuka ke Data API.
 - Setiap tabel `public`: `revoke all`, `grant select` ke `anon`, RLS menyala, dan satu kebijakan baca.
 - Mulai 2026-10-30, tabel baru di Supabase tidak otomatis terbuka ke Data API, dan membuat ulang tabel (DROP, `to_sql(replace)`) menghapus GRANT serta RLS. Karena itu tabel `public` hanya dibuat lewat migrasi, dan publikasi memakai DELETE + INSERT.
-- Setiap run memeriksa katalog sebelum menulis (RLS, hak `anon` dan `authenticated`, kebijakan baca, view, fungsi). Setelah migrasi, tes dengan publishable key memastikan pembacaan berhasil, penulisan gagal, RPC gagal, dan `etl` tidak terlihat.
+- Setiap run memeriksa katalog sebelum menulis (RLS, hak `anon` dan `authenticated`, kebijakan baca, view, fungsi, sequence, tabel `etl`, default privileges, dan hak skema), dan setiap migrasi memeriksanya di dalam transaksinya sendiri. Setelah migrasi, tes dengan publishable key memastikan pembacaan berhasil, penulisan ditolak, dan skema `etl` tidak dibuka; di GitHub Actions tes ini wajib. RPC tidak dites lewat API karena `public` tidak punya fungsi.
 - Pola SQL lengkapnya di [SCHEMA.md](SCHEMA.md#4-kebijakan-akses).
 
 ### 4.9 Rate limiting
@@ -227,11 +239,11 @@ Jadwal tabel manual: target diperiksa saat UU APBN baru disahkan (akhir Septembe
 |---|---|
 | OECD | Maksimal 60 unduhan per jam (batas resmi); tanpa VPN |
 | FRED | Maksimal 120 permintaan per menit |
-| IMF | Hanya seri di `config/series.yaml`, tanpa unduhan massal |
+| IMF | Hanya seri di `config/series.toml`, sekali sehari, tanpa unduhan massal |
 | BPS | Batas tidak dipublikasi; ikuti header `Ratelimit-*` |
 | GDELT, Comtrade (nanti) | 1 permintaan per 5 detik dan 1 per detik |
 
-Semua permintaan memakai retry dengan jeda yang makin panjang dan menghormati `Retry-After`. Jawaban "tidak ada perubahan" (OECD 404, BIS 404 kode 100, IMF kosong) dicatat sebagai normal, bukan kegagalan.
+Semua permintaan diberi jeda 1 detik dari permintaan sebelumnya, hanya mengikuti pengalihan ke `https`, dan mendapat maksimal 3 percobaan untuk 429, 5xx, koneksi putus, atau jawaban terpotong (Content-Length belum terpenuhi, atau tidak diakhiri baris baru), dengan jeda 5 lalu 10 detik atau sesuai `Retry-After` (maksimal 60 detik). Setelah `updatedAfter` dipakai, jawaban "tidak ada perubahan" (OECD 404, BIS 404 kode 100, IMF kosong) dicatat sebagai normal, bukan kegagalan.
 
 **Ke situs (masuk)**
 
@@ -254,12 +266,12 @@ Semua permintaan memakai retry dengan jeda yang makin panjang dan menghormati `R
 
 ### 4.12 Error tracking dan log
 
-- `etl.runs` (satu baris per run: pemicu, status ok/sebagian/gagal, commit) dan `etl.fetch_log` (per dataset: status HTTP, hash, periode terakhir, berubah atau tidak; tanpa URL).
+- `etl.runs` (satu baris per run: pemicu, status ok/sebagian/gagal, commit) dan `etl.fetch_log` (per seri per run: status HTTP, kode error, hash, jumlah baris, periode terakhir, berubah atau tidak; tanpa URL).
 - `public.site_status` hanya berisi kode tetap, bukan teks bebas.
 - Issue `pipeline-failure` dari job `notify` menjadi notifikasi utama ke pengelola; email cron-job.org menjadi notifikasi kedua.
-- Setiap teks error melewati `redact()` sebelum masuk log, issue, ringkasan job, atau database. `redact()` menyamarkan per nilai (setiap rahasia yang ada di environment, termasuk bentuk ter-encode-nya) dan per pola (key di path URL, query string, `nama=nilai`, password di string koneksi). GitHub memang menyamarkan Secret di log dan ringkasan job, tetapi tidak di isi issue atau database, dan tidak bila nilainya berubah bentuk.
+- Pipeline tidak pernah mencetak atau menyimpan teks error bebas, karena pesan error bisa memuat URL ber-key, host, atau user database. `fetch_log` dan ringkasan job hanya memuat kode HTTP, kode tetap (misalnya "tanpa data"), atau nama jenis error plus SQLSTATE. Error tak terduga dicetak sebagai baris kode traceback tanpa pesannya, dan logger psycopg dimatikan. GitHub memang menyamarkan Secret di log, tetapi tidak di isi issue atau database, dan tidak bila nilainya berubah bentuk. Karena tidak ada teks bebas, `redact()` belum dibuat; ia dibuat bila nanti ada teks bebas yang harus masuk issue (job `notify`).
 - Log runtime Vercel di paket Hobby hanya disimpan 1 jam, jadi riwayat operasional tidak bergantung padanya.
-- Satu sumber gagal ditandai "terlambat" dan run tetap lanjut. Run dianggap gagal bila database tidak terjangkau, publikasi error, sumber yang sama gagal tiga kali berturut-turut, atau target gagal validasi pada hari rilisnya.
+- Satu seri gagal ditandai "terlambat" (`is_stale`) dan run tetap lanjut dengan status `partial`. Run dianggap gagal (`failed`, kode keluar 1) bila database tidak terjangkau, publikasi error, tidak ada satu pun seri yang berhasil diambil, seri mana pun gagal tiga kali berturut-turut, atau (nanti) target gagal validasi pada hari rilisnya. Status dinilai atas semua seri, bukan hanya yang diambil run itu, jadi run `--source` yang sukses tetap `partial` bila sumber lain masih gagal. `public.site_status.last_success_at` hanya maju pada run yang tidak gagal, supaya pemeriksaan kesehatan 36 jam tetap berbunyi saat sumber terus gagal; run yang berhenti karena error menandai `last_run_status = failed`.
 
 ### 4.13 Recovery
 
@@ -277,7 +289,7 @@ Semua permintaan memakai retry dengan jeda yang makin panjang dan menghormati `R
 | Mati diam-diam: jadwal terlewat atau workflow dimatikan, lalu Supabase dijeda | Run sukses terakhir lebih dari 36 jam | Pemeriksaan kesehatan dan penyalaan ulang harian dari cron-job.org; banner di situs |
 | Akses sumber berubah atau diblokir | 403, 429, CSV kosong, periode tidak bergerak (404 dari OECD/BIS bisa berarti tidak ada perubahan) | Satu modul per sumber, uji kontrak, cadangan BPS/IMF, jalur laptop |
 | Revisi dan ganti tahun dasar BPS | Riwayat berbeda dengan unduhan baru | Tabel vintage, kolom tahun dasar, seri baru saat rebasing |
-| Key bocor di repo publik | Peringatan secret scanning | `redact()`, izin minimal, push protection |
+| Key bocor di repo publik | Peringatan secret scanning | Error hanya berupa kode, key tidak pernah di registri, izin minimal, push protection |
 | Model meleset (Lebaran berpindah bulan, kebijakan sekali jalan, patahan COVID) | Kalah dari baseline berturut-turut | Variabel hari libur dan dummy; baseline selalu tampil; meleset tetap dipublikasikan |
 | Kebijakan paket gratis berubah | Changelog harga, email penyedia | Python dan SQL standar, backup mingguan, runner cadangan |
 | Dependensi berubah (pandas 3, statsmodels, Node di runner) | FutureWarning, backtest bergeser tanpa data baru | Lockfile berhash, versi paket dicatat di setiap forecast |

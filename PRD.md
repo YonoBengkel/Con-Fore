@@ -63,7 +63,7 @@ Ringkasan di kedua tab berupa **segitiga keseimbangan** (pertumbuhan, harga stab
 ### 4.3 Target resmi
 
 - Target diambil dari UU APBN (pertumbuhan dan TPT), PMK sasaran inflasi, dan Perpres RPJMN. Angka yang masih bersumber pemberitaan dicocokkan ke teks resminya sebelum rilis publik.
-- Nilainya sengaja tidak dimuat di dokumen repo. Daftar kurasinya (nilai, dokumen sumber, status verifikasi) ada di catatan proyek pengelola dan dipindahkan ke `config/targets.csv` di fase 1.
+- Nilainya tidak ditulis di dokumen ini. Daftar kurasinya (nilai, dokumen sumber, status verifikasi `dokumen` atau `berita`) ada di `config/targets.csv`.
 - Diperiksa ulang setiap UU APBN baru disahkan (sekitar akhir September) dan setiap PMK sasaran inflasi baru terbit.
 
 ## 5. Bukan tujuan MVP
@@ -115,8 +115,8 @@ Keputusan produk dan alasannya dicatat di catatan proyek pengelola; dokumen ini 
 
 ## 9. Pertanyaan terbuka
 
-1. Sumber angka resmi selama pengembangan, sebelum key BPS keluar: (a) salinan IMF yang tertinggal beberapa minggu dan diberi label, atau (b) input manual 3-4 angka per bulan ke `config/` beserta tautan rilis BPS.
+1. (Diputuskan 2026-10-30) Sebelum key BPS keluar, angka resmi diambil dari salinan IMF yang diberi label dan tertinggal beberapa minggu dari rilis BPS.
 2. Domain: subdomain Vercel (gratis) atau domain sendiri (berbayar).
-3. Syarat IMF untuk menampilkan ulang datanya di situs publik.
-4. Tabel manual selain target resmi (`config/sources.csv`, `config/release_calendar.csv`, `config/holidays.csv`, dan angka sementara bila opsi 1b dipilih) adalah pengecualian baru dari aturan "semua data dari API" dan perlu disetujui.
+3. (Terjawab 2026-10-30) Syarat data IMF (halaman Copyright and Usage, bagian "The Use of IMF Data") membolehkan data diunduh, diolah, dan disebarkan ulang dengan atribusi "International Monetary Fund, nama database, tautan dataset"; olahan yang mengubah data harus dinyatakan, dan penyedia unduhan wajib menyampaikan syarat ini ke penggunanya (berlaku untuk tombol unduh CSV di fase 2). Unduhan massal otomatis tetap butuh izin, jadi pipeline hanya menarik seri yang terdaftar, sekali sehari.
+4. (Disetujui 2026-10-30) Tabel manual selain target resmi (`config/sources.csv`, `config/release_calendar.csv`, `config/holidays.csv`) menjadi pengecualian dari aturan "semua data dari API".
 5. Perlu tidaknya panduan desain (`DESIGN.md`).

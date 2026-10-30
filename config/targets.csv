@@ -1,0 +1,27 @@
+series_id,year,target_kind,value,lower,upper,document,url,last_verified,verification
+idn_gdp_growth_a,2021,apbn,5.0,,,UU APBN 2021 (lewat pemberitaan CNN Indonesia),https://www.cnnindonesia.com/ekonomi/20200929170408-532-552349/dpr-dan-pemerintah-sahkan-uu-apbn-2021,2026-10-25,berita
+idn_gdp_growth_a,2022,apbn,5.2,,,UU APBN 2022 (lewat pemberitaan Kontan),https://nasional.kontan.co.id/news/tok-target-pertumbuhan-ekonomi-tahun-2022-ditetapkan-52,2026-10-25,berita
+idn_gdp_growth_a,2023,apbn,5.3,,,UU APBN 2023 (lewat pemberitaan CNBC Indonesia),https://www.cnbcindonesia.com/news/20220831161900-4-368180/tok-sri-mulyani-dan-dpr-sepakati-asumsi-makro-2023/amp,2026-10-25,berita
+idn_gdp_growth_a,2024,apbn,5.2,,,UU APBN 2024 (lewat pemberitaan Republika),https://ekonomi.republika.co.id/berita/s1bstx490/dpr-sahkan-uu-apbn-2024-ini-perinciannya,2026-10-25,berita
+idn_gdp_growth_a,2025,apbn,5.2,,,UU APBN 2025 (lewat pemberitaan Fortune Indonesia),https://www.fortuneidn.com/news/apbn-2025-sah-jadi-undang-undang-ini-asumsi-makro-yang-disepakati-00-29s55-tht1s6,2026-10-25,berita
+idn_gdp_growth_a,2026,apbn,5.4,,,UU APBN 2026 (lewat pemberitaan Bisnis.com),https://ekonomi.bisnis.com/read/20250923/10/1913831/dpr-sahkan-uu-apbn-2026-defisit-268-hingga-pertumbuhan-54,2026-10-25,berita
+idn_gdp_growth_a,2027,apbn,6.0,,,UU APBN 2027 (lewat pemberitaan Katadata),https://katadata.co.id/amp/finansial/makro/6abb44215f653/ruu-apbn-2027-resmi-jadi-undang-undang-penerimaan-pajak-dipatok-rp2912-triliun,2026-10-25,berita
+idn_unemp_a,2021,apbn,,7.7,9.1,UU APBN 2021 (lewat pemberitaan CNN Indonesia),https://www.cnnindonesia.com/ekonomi/20200929170408-532-552349/dpr-dan-pemerintah-sahkan-uu-apbn-2021,2026-10-25,berita
+idn_unemp_a,2022,apbn,,5.5,6.3,UU APBN 2022 (lewat pemberitaan Kontan),https://nasional.kontan.co.id/news/tok-target-pertumbuhan-ekonomi-tahun-2022-ditetapkan-52,2026-10-25,berita
+idn_unemp_a,2023,apbn,,5.3,6.0,UU APBN 2023 (lewat pemberitaan CNBC Indonesia),https://www.cnbcindonesia.com/news/20220831161900-4-368180/tok-sri-mulyani-dan-dpr-sepakati-asumsi-makro-2023/amp,2026-10-25,berita
+idn_unemp_a,2024,apbn,,5.0,5.7,UU APBN 2024 (lewat pemberitaan Republika),https://ekonomi.republika.co.id/berita/s1bstx490/dpr-sahkan-uu-apbn-2024-ini-perinciannya,2026-10-25,berita
+idn_unemp_a,2025,apbn,,4.5,5.0,UU APBN 2025 (lewat pemberitaan Fortune Indonesia),https://www.fortuneidn.com/news/apbn-2025-sah-jadi-undang-undang-ini-asumsi-makro-yang-disepakati-00-29s55-tht1s6,2026-10-25,berita
+idn_unemp_a,2026,apbn,,4.44,4.96,UU APBN 2026 (lewat pemberitaan Bisnis.com),https://ekonomi.bisnis.com/read/20250923/10/1913831/dpr-sahkan-uu-apbn-2026-defisit-268-hingga-pertumbuhan-54,2026-10-25,berita
+idn_unemp_a,2027,apbn,,4.30,4.87,UU APBN 2027 (lewat pemberitaan Katadata),https://katadata.co.id/amp/finansial/makro/6abb44215f653/ruu-apbn-2027-resmi-jadi-undang-undang-penerimaan-pajak-dipatok-rp2912-triliun,2026-10-25,berita
+idn_cpi_eop_a,2021,pmk,3,2,4,Sasaran inflasi 2020-2021 (lewat pemberitaan Republika),https://ekonomi.republika.co.id/berita/pcgqg0383/bi-targetkan-inflasi-pada-2020-hanya-3-persen,2026-10-25,berita
+idn_cpi_eop_a,2022,pmk,3,2,4,PMK 101/PMK.010/2021 (abstrak JDIH Kemenkeu),https://jdih.kemenkeu.go.id/download/b0ffd3cb-b7a6-41f0-a94c-6e41e994bb91/101~PMK.010~2021Per.pdf,2026-10-25,dokumen
+idn_cpi_eop_a,2023,pmk,3,2,4,PMK 101/PMK.010/2021 (abstrak JDIH Kemenkeu),https://jdih.kemenkeu.go.id/download/b0ffd3cb-b7a6-41f0-a94c-6e41e994bb91/101~PMK.010~2021Per.pdf,2026-10-25,dokumen
+idn_cpi_eop_a,2024,pmk,2.5,1.5,3.5,PMK 101/PMK.010/2021 (abstrak JDIH Kemenkeu),https://jdih.kemenkeu.go.id/download/b0ffd3cb-b7a6-41f0-a94c-6e41e994bb91/101~PMK.010~2021Per.pdf,2026-10-25,dokumen
+idn_cpi_eop_a,2025,pmk,2.5,1.5,3.5,PMK 31/2024 (lewat pemberitaan Pajakku),https://pajakku.com/artikel/berapa-target-sasaran-inflasi-tahun-2025-2026-dan-2027,2026-10-25,berita
+idn_cpi_eop_a,2026,pmk,2.5,1.5,3.5,PMK 31/2024 (lewat pemberitaan Pajakku),https://pajakku.com/artikel/berapa-target-sasaran-inflasi-tahun-2025-2026-dan-2027,2026-10-25,berita
+idn_cpi_eop_a,2027,pmk,2.5,1.5,3.5,PMK 31/2024 (lewat pemberitaan Pajakku),https://pajakku.com/artikel/berapa-target-sasaran-inflasi-tahun-2025-2026-dan-2027,2026-10-25,berita
+idn_gdp_growth_a,2025,rpjmn,5.3,,,Perpres 12/2025 tentang RPJMN 2025-2029 (lewat pemberitaan Kontan),https://nasional.kontan.co.id/news/prabowo-bidik-ekonomi-tumbuh-8-di-2029-konsumsi-rumah-tangga-naik-727,2026-10-25,berita
+idn_gdp_growth_a,2026,rpjmn,6.3,,,Perpres 12/2025 tentang RPJMN 2025-2029 (lewat pemberitaan Kontan),https://nasional.kontan.co.id/news/prabowo-bidik-ekonomi-tumbuh-8-di-2029-konsumsi-rumah-tangga-naik-727,2026-10-25,berita
+idn_gdp_growth_a,2027,rpjmn,7.5,,,Perpres 12/2025 tentang RPJMN 2025-2029 (lewat pemberitaan Kontan),https://nasional.kontan.co.id/news/prabowo-bidik-ekonomi-tumbuh-8-di-2029-konsumsi-rumah-tangga-naik-727,2026-10-25,berita
+idn_gdp_growth_a,2028,rpjmn,7.7,,,Perpres 12/2025 tentang RPJMN 2025-2029 (lewat pemberitaan Kontan),https://nasional.kontan.co.id/news/prabowo-bidik-ekonomi-tumbuh-8-di-2029-konsumsi-rumah-tangga-naik-727,2026-10-25,berita
+idn_gdp_growth_a,2029,rpjmn,8.0,,,Perpres 12/2025 tentang RPJMN 2025-2029 (lewat pemberitaan Kontan),https://nasional.kontan.co.id/news/prabowo-bidik-ekonomi-tumbuh-8-di-2029-konsumsi-rumah-tangga-naik-727,2026-10-25,berita

@@ -1,0 +1,11 @@
+series_id,ref_period,calendar_source,release_date
+idn_cpi_yoy_m,2026-10,bps,2026-11-02
+idn_cpi_yoy_m,2026-11,bps,2026-12-01
+idn_gdp_real_q,2026-Q3,bps,2026-11-05
+idn_gdp_growth_q,2026-Q3,bps,2026-11-05
+idn_cli_m,2026-10,oecd,2026-11-09
+chn_cli_m,2026-10,oecd,2026-11-09
+idn_cli_m,2026-11,oecd,2026-12-07
+chn_cli_m,2026-11,oecd,2026-12-07
+idn_policy_rate_m,2026-11,bi-rdg,2026-11-18
+idn_policy_rate_m,2026-12,bi-rdg,2026-12-16

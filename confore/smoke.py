@@ -70,7 +70,7 @@ CHECKS = [
 ]
 
 
-class _NoRedirect(urllib.request.HTTPRedirectHandler):
+class NoRedirect(urllib.request.HTTPRedirectHandler):
     """Tolak pengalihan, supaya key tidak ikut terkirim ke alamat lain."""
 
     def redirect_request(self, *args, **kwargs):
@@ -96,7 +96,7 @@ def check(name, url, headers, ok, key_env):
         return name, "dilewati", f"{key_env} belum diisi", 0.0
     if key_env and not KEY_FORMAT.fullmatch(key):
         return name, "gagal", f"format {key_env} tidak valid", 0.0
-    opener = urllib.request.build_opener(_NoRedirect) if key_env else urllib.request.build_opener()
+    opener = urllib.request.build_opener(NoRedirect) if key_env else urllib.request.build_opener()
     request = urllib.request.Request(url.format(key=key), headers={"User-Agent": USER_AGENT, **headers})
     start = time.monotonic()
     try:
