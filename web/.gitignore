@@ -1,0 +1,9 @@
+# Dependensi dan hasil build
+/node_modules
+/.next/
+/out/
+*.tsbuildinfo
+next-env.d.ts
+
+# Vercel CLI (menyimpan id proyek)
+.vercel

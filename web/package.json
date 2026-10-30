@@ -1,0 +1,27 @@
+{
+  "name": "con-fore-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Situs Con-Fore (Next.js): tab Data yang membaca tabel public Supabase lewat server.",
+  "scripts": {
+    "salin-env": "node scripts/salin-env.mjs",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "node --test lib/skor.test.ts"
+  },
+  "engines": {
+    "node": "24.x"
+  },
+  "dependencies": {
+    "next": "16.4.3",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "typescript": "5.9.3"
+  }
+}

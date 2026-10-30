@@ -75,6 +75,7 @@ def response(body, missing=0):
     handle = mock.MagicMock()
     handle.__enter__.return_value.read.return_value = body
     handle.__enter__.return_value.length = missing
+    handle.__enter__.return_value.headers = Message()
     return handle
 
 
@@ -88,6 +89,23 @@ class GetTest(unittest.TestCase):
                 mock.patch("time.sleep") as sleep:
             self.assertEqual(fetch.get("https://example.test", {}), "TIME_PERIOD,OBS_VALUE\n")
         sleep.assert_called_once()
+
+    def test_low_ratelimit_remaining_pauses(self):
+        for headers, wait in [({"RateLimit-Remaining": "19"}, None),
+                              ({"RateLimit-Remaining": "3"}, 60),
+                              ({"RateLimit-Remaining": "0", "RateLimit-Reset": "7"}, 7),
+                              ({"RateLimit-Remaining": "0", "RateLimit-Reset": "999"}, 60)]:
+            ok = response(b"TIME_PERIOD,OBS_VALUE\n")
+            for name, value in headers.items():
+                ok.__enter__.return_value.headers[name] = value
+            with self.subTest(headers=headers), \
+                    mock.patch.object(fetch.OPENER, "open", return_value=ok), \
+                    mock.patch("time.sleep") as sleep:
+                fetch.get("https://example.test", {})
+            if wait is None:
+                sleep.assert_not_called()
+            else:
+                sleep.assert_called_once_with(wait)
 
     def test_truncated_body_is_retried_then_rejected(self):
         for cut in [response(b"TIME_PERIOD,OBS_VALUE\n2026-10-29,20193", missing=3),
