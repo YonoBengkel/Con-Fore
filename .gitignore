@@ -1,0 +1,41 @@
+# Rahasia: hanya .env.example yang boleh masuk repo
+.env
+.env.*
+*.env
+.envrc
+!.env.example
+*.pem
+*.key
+service-account*.json
+
+# Draf lama berisi data asli dan catatan pribadi. Pengaman sampai berkasnya dihapus;
+# hapus dua baris ini setelah kedua berkas tidak ada lagi.
+docs/RENCANA-MVP.md
+docs/ARSITEKTUR.md
+
+# Supabase CLI (menyimpan ref proyek dan URL pooler)
+supabase/.temp/
+supabase/.branches/
+
+# Cadangan database lokal
+*.dump
+*.sql.gz
+*.sqlite
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Editor dan agent lokal
+.vscode/
+.idea/
+*.swp
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Sistem
+*.log
+.DS_Store
+Thumbs.db
