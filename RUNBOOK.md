@@ -37,6 +37,8 @@ python -c "import secrets; print(secrets.token_urlsafe(32), end='')" | clip
 4. Isi tiga Secret di GitHub (ketiganya wajib: tanpa dua yang terakhir, mode `migrate` di Actions berhenti), lalu **Actions > Pipeline data > Run workflow** dengan mode `migrate` (harus "tidak ada yang baru" dan "Uji Data API lulus"), lalu mode `run`.
 5. Setelah run manual dari runner lulus, tambahkan jadwal harian ke `pipeline.yml` (lihat ARCHITECTURE.md, Jadwal penarikan).
 6. Pengaturan sekali jalan: di dashboard Supabase, matikan pendaftaran pengguna baru (Authentication > Sign In / Providers), karena situs tanpa login; di repo GitHub, nyalakan **Dependabot alerts** (Settings > Security and quality > Advanced Security) supaya rilis keamanan psycopg di `requirements.txt` terlihat.
+Bila koneksi gagal: periksa bahwa `SUPABASE_DB_URL` adalah string **Session pooler** (user `postgres.<ref>`, host berakhiran `.pooler.supabase.com`, port 5432). String koneksi langsung (host `db.<ref>.supabase.co`, user `postgres`) hanya bisa dijangkau lewat IPv6, jadi gagal dari runner GitHub dan dari jaringan tanpa IPv6.
+
 7. Bila sebuah run perlu menulis ulang semua observasi (tabel diubah manual atau dipulihkan dari backup), jalankan workflow dengan mode `full_refresh`, atau `python -m confore run --full-refresh`.
 8. Bila ringkasan run menunjukkan "terlalu banyak periode hilang", sumber memotong riwayat seri itu. Cek dulu di portal sumbernya. Bila memang disengaja sumber, jalankan mode `full_refresh` untuk menerimanya; bila tidak, biarkan (run berikutnya mencoba lagi, dan setelah tiga kali gagal run ditandai `failed`).
 9. Pesan "run atau migrasi lain sedang berjalan" berarti ada run lain (laptop atau GitHub) yang memegang kunci database. Tunggu sampai selesai, lalu ulangi.

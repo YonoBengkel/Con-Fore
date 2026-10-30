@@ -112,11 +112,15 @@ def check_access(conn):
           and (has_sequence_privilege('anon', c.oid, 'USAGE,SELECT,UPDATE')
             or has_sequence_privilege('authenticated', c.oid, 'USAGE,SELECT,UPDATE'))
     """).fetchall()
+    # Fungsi trigger dan event trigger tidak bisa dipanggil langsung (juga lewat RPC), jadi tidak
+    # dihitung. Contoh: public.rls_auto_enable bawaan Supabase untuk event trigger ensure_rls.
     functions = conn.execute("""
         select p.proname
         from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-        where n.nspname = 'public' and (has_function_privilege('anon', p.oid, 'EXECUTE')
-                                        or has_function_privilege('authenticated', p.oid, 'EXECUTE'))
+        where n.nspname = 'public'
+          and p.prorettype not in ('trigger'::regtype, 'event_trigger'::regtype)
+          and (has_function_privilege('anon', p.oid, 'EXECUTE')
+               or has_function_privilege('authenticated', p.oid, 'EXECUTE'))
     """).fetchall()
     defaults = conn.execute("""
         select 'default privileges ' || n.nspname

@@ -189,7 +189,7 @@ Jadwal tabel manual: target diperiksa saat UU APBN baru disahkan (akhir Septembe
 
 - Syarat GitHub melarang Actions dipakai sebagai bagian aplikasi serverless, jadi Actions hanya menjalankan batch dan tidak pernah dipanggil per pengunjung.
 - Runner cadangan bila GitHub Actions tidak bisa dipakai: laptop pengelola, lalu GitLab CI (400 menit per bulan).
-- Region fungsi Vercel didekatkan ke region proyek Supabase (idealnya Singapura).
+- Proyek Supabase berada di region `ap-northeast-2` (Seoul), terlihat dari host Session pooler. Region fungsi Vercel didekatkan ke sana (`icn1`, Seoul).
 
 ### 4.6 Compute
 

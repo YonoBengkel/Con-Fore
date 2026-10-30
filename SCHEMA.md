@@ -329,8 +329,9 @@ Aturan tambahan:
 
 - Fungsi bantu dibuat di skema `etl`, tidak di `public`, supaya tidak bisa dipanggil lewat `/rest/v1/rpc`.
 - Tidak ada view di `public`, kecuali ditulis persis `with (security_invoker = true)`.
+- Proyek Supabase baru membawa event trigger `ensure_rls` (fungsi `public.rls_auto_enable`) yang menyalakan RLS otomatis untuk tabel baru di `public`. Migrasi tetap menyalakan RLS secara eksplisit, jadi hasilnya sama di Postgres lokal.
 
-**Pemeriksaan katalog** (`confore/db.py`, `check_access`), dijalankan sebelum setiap run menulis dan di dalam transaksi setiap migrasi (migrasi yang membuka akses dibatalkan). Semua query harus mengembalikan 0 baris; kalau tidak, run berhenti. Inti query-nya di bawah; versi di kode juga memeriksa hak kolom `authenticated`, sequence di `public` dan `etl`, hak `anon` dan `authenticated` atas tabel `etl`, default privileges milik `postgres` di `public` dan `etl` yang memberi hak ke `anon` atau `authenticated`, fungsi yang bisa dipanggil `authenticated`, `USAGE` pada skema `etl`, dan `CREATE` pada skema `etl` dan `public`. Migrasi `0002` juga mencabut eksplisit semua hak atas tabel dan sequence `etl`.
+**Pemeriksaan katalog** (`confore/db.py`, `check_access`), dijalankan sebelum setiap run menulis dan di dalam transaksi setiap migrasi (migrasi yang membuka akses dibatalkan). Semua query harus mengembalikan 0 baris; kalau tidak, run berhenti. Inti query-nya di bawah; versi di kode juga memeriksa hak kolom `authenticated`, sequence di `public` dan `etl`, hak `anon` dan `authenticated` atas tabel `etl`, default privileges milik `postgres` di `public` dan `etl` yang memberi hak ke `anon` atau `authenticated`, fungsi yang bisa dipanggil `authenticated` (fungsi bertipe `trigger` atau `event_trigger` dikecualikan karena tidak bisa dipanggil langsung maupun lewat RPC; contohnya `public.rls_auto_enable` bawaan Supabase), `USAGE` pada skema `etl`, dan `CREATE` pada skema `etl` dan `public`. Migrasi `0002` juga mencabut eksplisit semua hak atas tabel dan sequence `etl`.
 
 ```sql
 -- tabel, view, dan materialized view di public yang aksesnya salah

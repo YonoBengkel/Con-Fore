@@ -85,6 +85,17 @@ class DatabaseTest(unittest.TestCase):
         self.assertFalse(opened.fetchone()[0])
         self.assertIn("baru", self.db.check_access(self.conn))  # tetap ditolak: tanpa RLS dan GRANT
 
+    def test_callable_functions_are_refused_but_trigger_functions_are_not(self):
+        # Meniru public.rls_auto_enable bawaan Supabase: event trigger yang bisa "dieksekusi" anon.
+        self.conn.execute("""create function public.uji_evt() returns event_trigger
+                             language plpgsql security definer as $$ begin end $$""")
+        self.conn.execute("create function public.uji_rpc() returns int language sql as 'select 1'")
+        try:
+            self.conn.execute("grant execute on function public.uji_evt(), public.uji_rpc() to anon")
+            self.assertEqual(self.db.check_access(self.conn), ["uji_rpc"])
+        finally:
+            self.conn.execute("drop function public.uji_evt(), public.uji_rpc()")
+
     def test_vintages_only_on_change(self):
         day1, day2 = date(2026, 11, 1), date(2026, 11, 2)
         self.assertEqual(self.write("1.0", day1), 1)
