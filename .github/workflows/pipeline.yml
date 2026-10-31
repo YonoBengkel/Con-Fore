@@ -1,10 +1,13 @@
 name: Pipeline data
 
-# Cron ditulis dalam UTC. 17 23 * * * = 06.17 WIB keesokan harinya (WIB = UTC + 7). Menit 17
-# dipilih karena awal jam adalah waktu tersibuk GitHub. Jadwal dan push memakai mode run.
+# Cron ditulis dalam UTC (WIB = UTC + 7). Menit 17 dipilih karena awal jam adalah waktu
+# tersibuk GitHub. Jadwal dan push memakai mode run.
+# - 17 23 * * *: harian 06.17 WIB keesokan harinya, semua sumber.
+# - 17 8,11 1-8 * *: hari rilis BPS (tanggal 1-8), 15.17 dan 18.17 WIB, hanya sumber BPS.
 on:
   schedule:
     - cron: "17 23 * * *"
+    - cron: "17 8,11 1-8 * *"
   push:
     branches: [main]
     paths: ["config/**"]
@@ -41,10 +44,16 @@ jobs:
       - name: Pipeline
         env:
           MODE: ${{ inputs.mode || 'run' }}
+          JADWAL: ${{ github.event.schedule }}
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          BPS_API_KEY: ${{ secrets.BPS_API_KEY }}
         run: |
+          if [ "$JADWAL" = "17 8,11 1-8 * *" ]; then
+            python -m confore run --source bps --trigger release
+            exit $?
+          fi
           case "$MODE" in
             migrate) python -m confore migrate ;;
             full_refresh) python -m confore run --full-refresh ;;

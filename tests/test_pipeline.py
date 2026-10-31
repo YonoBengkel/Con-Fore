@@ -13,7 +13,7 @@ from unittest import mock
 from confore import cli, config, db, fetch
 from confore.derive import derive_all, ratio, yoy
 from confore.fetch import FetchError, Point
-from confore.publish import next_releases
+from confore.publish import next_releases, previous_value
 
 
 def points(*pairs, frequency="Q"):
@@ -75,6 +75,7 @@ def response(body, missing=0):
     handle = mock.MagicMock()
     handle.__enter__.return_value.read.return_value = body
     handle.__enter__.return_value.length = missing
+    handle.__enter__.return_value.headers = Message()
     return handle
 
 
@@ -88,6 +89,23 @@ class GetTest(unittest.TestCase):
                 mock.patch("time.sleep") as sleep:
             self.assertEqual(fetch.get("https://example.test", {}), "TIME_PERIOD,OBS_VALUE\n")
         sleep.assert_called_once()
+
+    def test_low_ratelimit_remaining_pauses(self):
+        for headers, wait in [({"RateLimit-Remaining": "19"}, None),
+                              ({"RateLimit-Remaining": "3"}, 60),
+                              ({"RateLimit-Remaining": "0", "RateLimit-Reset": "7"}, 7),
+                              ({"RateLimit-Remaining": "0", "RateLimit-Reset": "999"}, 60)]:
+            ok = response(b"TIME_PERIOD,OBS_VALUE\n")
+            for name, value in headers.items():
+                ok.__enter__.return_value.headers[name] = value
+            with self.subTest(headers=headers), \
+                    mock.patch.object(fetch.OPENER, "open", return_value=ok), \
+                    mock.patch("time.sleep") as sleep:
+                fetch.get("https://example.test", {})
+            if wait is None:
+                sleep.assert_not_called()
+            else:
+                sleep.assert_called_once_with(wait)
 
     def test_truncated_body_is_retried_then_rejected(self):
         for cut in [response(b"TIME_PERIOD,OBS_VALUE\n2026-10-29,20193", missing=3),
@@ -196,6 +214,13 @@ class TimeAndSafetyTest(unittest.TestCase):
             with mock.patch.object(db, "SUPABASE_CA", ca):
                 self.assertEqual(db.tls_options(url),
                                  {"sslmode": "verify-full", "sslrootcert": str(ca)})
+
+    def test_previous_value_compares_same_sakernas_round(self):
+        rounds = points(("2025-02", "4.76"), ("2025-08", "4.85"), ("2025-11", "4.74"),
+                        ("2026-02", "4.68"), frequency="M")
+        self.assertEqual(previous_value(rounds, "round_rate"), Decimal("4.76"))
+        self.assertEqual(previous_value(rounds, "rate"), Decimal("4.74"))
+        self.assertIsNone(previous_value(rounds[1:], "round_rate"))  # Februari 2025 tidak ada
 
     def test_next_release_skips_past_dates(self):
         calendar = [("s", "2026-09", "bps", date(2026, 10, 1)),

@@ -10,7 +10,7 @@ from datetime import date
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
-from confore.fetch import period_of
+from confore.fetch import bps_items, period_of
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "config"
@@ -83,6 +83,14 @@ def check_series(items, source_ids):
                                       "dengan frekuensi sama")
         elif not item.get("dataset") or not item.get("query"):
             raise ConfigError(f"series.toml {sid}: butuh dataset dan query, atau derive")
+        elif item["source"] == "bps":
+            # Format ketat (angka saja) juga mencegah key BPS tertulis di registri dan database.
+            try:
+                bps_items(item["query"])
+            except ValueError:
+                raise ConfigError(f"series.toml {sid}: query BPS tidak valid") from None
+            if item["frequency"] not in {"M", "Q"}:
+                raise ConfigError(f"series.toml {sid}: seri BPS harus bulanan atau kuartalan")
         seen[sid] = item
     return seen
 

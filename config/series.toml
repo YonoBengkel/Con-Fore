@@ -3,6 +3,9 @@
 # Kunci wajib: id, source (kode di config/sources.csv), frequency (A, Q, M, D), unit, concept,
 # name (nama Indonesia untuk situs), citation.
 # Seri yang diambil dari API: dataset dan query (path + query string setelah alamat dasar sumber).
+# Query BPS: "domain/<kode>/var/<id variabel>/sejak/<tahun>" plus filter opsional "?vervar=..&turvar=.."
+# (angka saja); beberapa variabel dipisah " + " dan untuk periode yang sama variabel terakhir menang.
+# Key dan id tahun (th) ditambahkan kode saat permintaan dibuat; key tidak pernah ditulis di sini.
 # Seri turunan: derive ("yoy" atau "ratio") dan inputs (id seri lain), tanpa query.
 # Opsional: country (bawaan IDN), is_target (bawaan false), actual_only (khusus WEO: buang tahun
 # proyeksi, simpan hanya tahun sampai LATEST_ACTUAL_ANNUAL_DATA).
@@ -85,6 +88,44 @@ concept = "yoy"
 is_target = true
 name = "Inflasi (dibanding bulan yang sama tahun lalu)"
 citation = "International Monetary Fund, Consumer Price Index (CPI), https://data.imf.org/en/datasets/IMF.STA:CPI"
+
+# --- Target, rilis pertama BPS (WebAPI, domain 0000 = nasional) ---
+
+[[series]]
+id = "bps_cpi_yoy_m"
+source = "bps"
+dataset = "WebAPI var 2263"
+query = "domain/0000/var/2263/sejak/2024?vervar=9999"
+frequency = "M"
+unit = "%"
+concept = "yoy"
+is_target = true
+name = "Inflasi (dibanding bulan yang sama tahun lalu)"
+citation = "Badan Pusat Statistik, Inflasi Tahunan (Y-on-Y) 38 Provinsi (2022=100), baris INDONESIA, https://www.bps.go.id/id/statistics-table/2/MjI2MyMy/inflasi-tahunan--y-on-y--38-provinsi--2022-100-.html"
+
+[[series]]
+id = "bps_gdp_growth_q"
+source = "bps"
+dataset = "WebAPI var 104"
+query = "domain/0000/var/104/sejak/2011?vervar=99003&turvar=5"
+frequency = "Q"
+unit = "%"
+concept = "yoy"
+is_target = true
+name = "Pertumbuhan ekonomi kuartalan (dibanding kuartal yang sama tahun lalu)"
+citation = "Badan Pusat Statistik, [Seri 2010] Laju Pertumbuhan PDB Seri 2010, baris Produk Domestik Bruto, y-on-y, https://www.bps.go.id/id/statistics-table/2/MTA0IzI=/-seri-2010--laju-pertumbuhan-pdb-seri-2010.html"
+
+[[series]]
+id = "bps_unemp_round"
+source = "bps"
+dataset = "WebAPI var 543 dan 2562"
+query = "domain/0000/var/543/sejak/2011?vervar=9999 + domain/0000/var/2562/sejak/2025?vervar=9999"
+frequency = "M"
+unit = "% angkatan kerja"
+concept = "round_rate"
+is_target = true
+name = "Tingkat pengangguran terbuka per ronde Sakernas"
+citation = "Badan Pusat Statistik, Tingkat Pengangguran Terbuka Menurut Provinsi, https://www.bps.go.id/id/statistics-table/2/NTQzIzI=/tingkat-pengangguran-terbuka-menurut-provinsi.html (ronde Februari dan Agustus), dan Tingkat Pengangguran Terbuka menurut Provinsi (Triwulanan), https://www.bps.go.id/id/statistics-table/2/MjU2MiMy/tingkat-pengangguran-terbuka-menurut-provinsi--triwulanan-.html (ronde triwulanan sejak 2025), baris INDONESIA"
 
 # --- Penggerak: harga komoditas (IMF PCPS, rata-rata bulanan) ---
 
