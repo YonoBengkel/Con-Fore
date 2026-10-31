@@ -1,4 +1,4 @@
-Status: usulan, menunggu persetujuan pengelola.
+Status: disetujui pengelola 2026-10-31.
 
 # Panduan desain Con-Fore
 

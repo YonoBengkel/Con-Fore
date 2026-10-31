@@ -1,4 +1,4 @@
-Status: pipeline data dan situs tab Data sesuai kode di branch `v0.1-tab-data` (2026-10-30); pipeline fase 1 sudah jalan di `main` dengan jadwal harian, sedangkan pengambil BPS dan situs belum masuk `main`. Deploy situs, panggilan revalidasi dari pipeline, model, backup, dan pemantauan masih rencana yang disetujui pengelola 2026-10-30.
+Status: pipeline data dan situs tab Data sesuai kode di `main` (2026-10-31), dan pipeline jalan dengan jadwal harian. Deploy situs, panggilan revalidasi dari pipeline, model, backup, dan pemantauan masih rencana yang disetujui pengelola 2026-10-30.
 
 # Arsitektur Con-Fore
 
@@ -32,7 +32,7 @@ Yang sudah ada ditandai `[ada]`; sisanya rencana.
 ```
 Con-Fore/
   README.md  PRD.md  ARCHITECTURE.md  SCHEMA.md  RUNBOOK.md   [ada]
-  DESIGN.md              panduan desain, masih usulan yang menunggu persetujuan pengelola   [ada]
+  DESIGN.md              panduan desain, disetujui pengelola 2026-10-31   [ada]
   .gitignore  .env.example                                    [ada]
   requirements.in        dependensi langsung (psycopg)        [ada]
   requirements.txt       lockfile berhash dari `uv pip compile` [ada]
@@ -151,7 +151,7 @@ Di GitHub, nilai ini disimpan sebagai Secrets (`pipeline.yml` hanya membaca Secr
 
 Tidak dipakai: IMF DataMapper (menjawab 403) dan CSV grafik FRED (koneksi ditolak). Pipeline hanya menarik seri yang disebut di `config/series.toml`.
 
-**Yang sudah jalan:** sejak fase 1 (di `main`), IMF (WEO, QNEA, CPI, PCPS), BIS, OECD, dan ECB, 14 seri ditambah 2 turunan. BPS menyusul di branch `v0.1-tab-data` dengan 3 seri rilis pertama, jadi totalnya 17 seri ditambah 2 turunan. Setiap run mengambil seri penuh (sejak 2000 untuk sumber SDMX; jawaban kecil berkat `detail=dataonly`, kecuali WEO yang butuh kolom `LATEST_ACTUAL_ANNUAL_DATA`), lalu membandingkan hash data ternormalisasi dengan pengambilan terakhir. Kolom "Cara mendeteksi data baru" di atas (`updatedAfter`, 404 sebagai "tidak ada perubahan", rilis pers BPS) adalah optimasi yang belum dipakai. Frankfurter dan World Bank baru dipakai di uji akses.
+**Yang sudah jalan:** sejak fase 1 (di `main`), IMF (WEO, QNEA, CPI, PCPS), BIS, OECD, dan ECB, 14 seri ditambah 2 turunan. Sejak v0.1, BPS menambah 3 seri rilis pertama, jadi totalnya 17 seri ditambah 2 turunan. Setiap run mengambil seri penuh (sejak 2000 untuk sumber SDMX; jawaban kecil berkat `detail=dataonly`, kecuali WEO yang butuh kolom `LATEST_ACTUAL_ANNUAL_DATA`), lalu membandingkan hash data ternormalisasi dengan pengambilan terakhir. Kolom "Cara mendeteksi data baru" di atas (`updatedAfter`, 404 sebagai "tidak ada perubahan", rilis pers BPS) adalah optimasi yang belum dipakai. Frankfurter dan World Bank baru dipakai di uji akses.
 
 **Cara pengambil BPS bekerja** (`fetch.py`, bagian BPS; semua aturan WebAPI di bawah sudah dicek ke jawaban sungguhan 2026-10-30):
 

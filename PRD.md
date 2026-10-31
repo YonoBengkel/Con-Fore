@@ -119,4 +119,4 @@ Keputusan produk dan alasannya dicatat di catatan proyek pengelola; dokumen ini 
 2. Domain: subdomain Vercel (gratis) atau domain sendiri (berbayar). Masih terbuka; sampai diputuskan, situs memakai subdomain bawaan Vercel.
 3. (Terjawab 2026-10-30) Syarat data IMF (halaman Copyright and Usage, bagian "The Use of IMF Data") membolehkan data diunduh, diolah, dan disebarkan ulang dengan atribusi "International Monetary Fund, nama database, tautan dataset"; olahan yang mengubah data harus dinyatakan, dan penyedia unduhan wajib menyampaikan syarat ini ke penggunanya (berlaku untuk tombol unduh CSV di fase 2). Unduhan massal otomatis tetap butuh izin, jadi pipeline hanya menarik seri yang terdaftar, sekali sehari.
 4. (Disetujui 2026-10-30) Tabel manual selain target resmi (`config/sources.csv`, `config/release_calendar.csv`, `config/holidays.csv`) menjadi pengecualian dari aturan "semua data dari API".
-5. Perlu tidaknya panduan desain (`DESIGN.md`). Usulannya sudah ada di akar repo, ditulis dari tampilan tab Data v0.1, dan menunggu persetujuan pengelola.
+5. (Disetujui 2026-10-31) Panduan desain ada di `DESIGN.md`, ditulis dari tampilan tab Data v0.1.

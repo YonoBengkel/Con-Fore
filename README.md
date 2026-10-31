@@ -2,7 +2,7 @@
 
 Website publik berbahasa Indonesia yang menjelaskan kondisi dan arah ekonomi Indonesia lewat tiga angka (pertumbuhan, inflasi, pengangguran), diperbarui otomatis setiap hari.
 
-Status: fase 1 (pipeline data) jalan di branch `main` dengan jadwal harian. Fase 2 (situs tab Data v0.1 di `web/`) dan pengambil data BPS ada di branch `v0.1-tab-data` dan belum tayang.
+Status: fase 1 (pipeline data) jalan otomatis setiap hari. Fase 2 (situs tab Data v0.1 di `web/`) dan pengambil data BPS sudah di `main`; situs belum tayang.
 
 ## Dokumen
 
@@ -10,7 +10,7 @@ Status: fase 1 (pipeline data) jalan di branch `main` dengan jadwal harian. Fase
 - [ARCHITECTURE.md](ARCHITECTURE.md): komponen, alur data, dan lapisan teknis.
 - [SCHEMA.md](SCHEMA.md): tabel, relasi, dan kebijakan akses database.
 - [RUNBOOK.md](RUNBOOK.md): langkah operasional dan pemulihan.
-- [DESIGN.md](DESIGN.md): panduan tampilan situs (usulan, menunggu persetujuan pengelola).
+- [DESIGN.md](DESIGN.md): panduan tampilan situs.
 - [web/README.md](web/README.md): halaman, route, dan cara menjalankan situs.
 
 ## Menjalankan

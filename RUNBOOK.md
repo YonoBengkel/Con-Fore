@@ -1,4 +1,4 @@
-Status: langkah fase 0 dan 1 sudah dijalankan; langkah situs (bagian 5) ditulis dari kode di branch `v0.1-tab-data` dan belum dicoba. Langkah untuk komponen yang belum ada dicek ulang saat komponennya jadi.
+Status: langkah fase 0 dan 1 sudah dijalankan; langkah situs (bagian 5) ditulis dari kode dan belum selesai dicoba. Langkah untuk komponen yang belum ada dicek ulang saat komponennya jadi.
 
 # Runbook Con-Fore
 
@@ -13,7 +13,7 @@ Langkah operasional dan pemulihan. Arsitekturnya ada di [ARCHITECTURE.md](ARCHIT
 ## 2. Menyimpan kredensial
 
 - Salin string **Session pooler** dari tombol Connect di dashboard Supabase langsung ke GitHub Secrets (`SUPABASE_DB_URL`) dan `.env` laptop. Jangan lewat chat, issue, atau commit.
-- GitHub: **Settings > Secrets and variables > Actions > Secrets**. `pipeline.yml` membaca `SUPABASE_DB_URL`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, dan (mulai branch `v0.1-tab-data`) `BPS_API_KEY` sebagai Secrets. `SUPABASE_URL` tidak rahasia, tetapi memuat ref proyek yang sengaja tidak ditampilkan di log publik.
+- GitHub: **Settings > Secrets and variables > Actions > Secrets**. `pipeline.yml` membaca `SUPABASE_DB_URL`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, dan `BPS_API_KEY` sebagai Secrets. `SUPABASE_URL` tidak rahasia, tetapi memuat ref proyek yang sengaja tidak ditampilkan di log publik.
 - Nilai disimpan tanpa spasi atau tanda kutip di sekitarnya; uji akses menolak key yang formatnya tidak valid.
 - Satu Secret per variabel: nama persis seperti di `.env` (misalnya `SUPABASE_DB_URL`), isinya hanya nilainya (tanpa `NAMA=`).
 - Bila run di GitHub menyebut "... belum diisi" padahal `.env` di laptop terisi, Secret tersimpan di tempat yang tidak dibaca workflow: tab **Variables** (bukan Secrets), menu **Codespaces** atau **Dependabot** (bukan Actions), pengaturan **akun** (bukan pengaturan repo), atau satu Secret berisi seluruh isi `.env`. Yang benar: halaman repo > Settings > Secrets and variables > Actions > tab Secrets > bagian **Repository secrets**.
@@ -53,7 +53,7 @@ Bila koneksi gagal: periksa bahwa `SUPABASE_DB_URL` adalah string **Session pool
 
 Situs ada di folder `web/`. Vercel membangunnya dari branch `main`, jadi kerjakan berurutan.
 
-1. **Gabungkan branch `v0.1-tab-data` ke `main`.** Sebelumnya, pastikan Secret `BPS_API_KEY` ada di GitHub (bagian 2; baris BPS di uji akses bagian 3 berhasil). Merge ini mengubah `config/**`, jadi langsung memicu satu run **Pipeline data** yang menambahkan tiga seri BPS ke Supabase. Tunggu run itu selesai di tab Actions dengan status `ok` atau `partial`. Mulai saat itu jadwal hari rilis BPS (tanggal 1-8) juga aktif.
+1. **Gabungkan branch `v0.1-tab-data` ke `main`** (sudah dilakukan 2026-10-31). Sebelumnya, pastikan Secret `BPS_API_KEY` ada di GitHub (bagian 2; baris BPS di uji akses bagian 3 berhasil). Merge ini mengubah `config/**`, jadi langsung memicu satu run **Pipeline data** yang menambahkan tiga seri BPS ke Supabase. Tunggu run itu selesai di tab Actions dengan status `ok` atau `partial`. Mulai saat itu jadwal hari rilis BPS (tanggal 1-8) juga aktif.
 2. Buat nilai acak untuk `REVALIDATE_SECRET` dan `HEALTH_TOKEN` dengan perintah di bagian 2, satu per variabel.
 3. Di vercel.com: **Add New > Project**, pilih repo GitHub Con-Fore, lalu **Import**.
 4. Di layar konfigurasi, isi **Root Directory** dengan `web` (Framework terdeteksi sebagai Next.js). Di **Environment Variables**, isi empat variabel ini dengan nama persis dan nilai tanpa spasi atau tanda kutip:
@@ -62,6 +62,8 @@ Situs ada di folder `web/`. Vercel membangunnya dari branch `main`, jadi kerjaka
    Jangan beri awalan `NEXT_PUBLIC_`. Tanpa awalan itu, nilainya hanya dibaca server dan tidak pernah sampai ke browser pengunjung.
 5. Klik **Deploy**. Build ikut membaca Supabase, jadi keempat variabel harus terisi dulu dan proyek Supabase tidak sedang dijeda. Region fungsi (`icn1`, Seoul) dan aturan "build hanya bila `web/` berubah" diambil otomatis dari `web/vercel.json`; tidak perlu diatur di dashboard.
 6. Buka alamat `<nama-proyek>.vercel.app` dari Vercel. Cek bahwa `/`, `/sumber`, dan satu halaman `/indikator/...` tampil dengan angka. Domain sendiri belum diputuskan (PRD 9.2), jadi subdomain Vercel dipakai dulu.
+Bila build gagal dengan `PYTHON_ENTRYPOINT_NOT_FOUND`, Vercel membangun dari akar repo (ada `requirements.txt`, jadi dikira proyek Python). Di proyek Vercel: **Settings > Build and Deployment > Root Directory** isi `web`, pastikan Framework Preset menjadi Next.js, simpan, lalu **Deployments > Redeploy** pada deployment terbaru.
+
 7. Nilai `REVALIDATE_SECRET` yang sama nanti juga masuk GitHub Secrets, saat pipeline mulai memanggil revalidasi; `HEALTH_TOKEN` masuk cron-job.org saat pemeriksaan kesehatan dipasang. Sampai pipeline memanggil revalidasi, angka baru tampil setelah cache 6 jam habis.
 
 ## 6. Workflow terjadwal berhenti (mulai jadwal harian aktif)
