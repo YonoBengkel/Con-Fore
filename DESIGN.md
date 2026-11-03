@@ -1,4 +1,4 @@
-Status: disetujui pengelola 2026-10-31.
+Status: disetujui pengelola 2026-10-31. Aturan narasi netral dan status tiga tingkat ditambahkan 2026-11-03 dengan persetujuan pengelola.
 
 # Panduan desain Con-Fore
 
@@ -8,6 +8,7 @@ Panduan tampilan situs Con-Fore, ditulis dari tampilan tab Data v0.1 di `web/`. 
 
 - Tenang dan bisa dipercaya, bukan mencolok. Angka menjadi tokoh utama; hiasan tidak ada.
 - Untuk pembaca awam yang kebanyakan membuka dari HP: satu kolom dulu, kalimat pendek, istilah dijelaskan di tempat ("artinya buatmu").
+- Netral: kalimat menjelaskan dan membandingkan, tanpa vonis dan tanpa nasihat. "Artinya buatmu" menjelaskan arti angka, bukan saran belanja. Aturannya di PRD 4.4.
 - Jelas independen. Tidak memakai lambang negara, warna merah-putih sebagai identitas, atau gaya visual BPS, Bank Indonesia, maupun kementerian. Kalimat "bukan situs resmi" selalu ada di kaki halaman.
 
 ## Warna
@@ -40,6 +41,7 @@ Warna tidak pernah menjadi satu-satunya pembawa arti: status selalu juga tertuli
 - **Kartu angka:** judul, nama seri, angka, periode dan perubahan, grafik kecil, lencana label kejujuran, kotak "Artinya buatmu", rincian sumber dan tanggal, tautan riwayat dan unduh CSV.
 - **Tabel target:** tabel biasa di layar lebar; di HP setiap baris menjadi blok berlabel.
 - **Banner:** kuning lembut, hanya untuk data yang mungkin basi atau sumber yang gagal.
+- **Status tiga tingkat** (rencana, PRD 4.4): lencana kecil di samping skor, selalu berupa kata (normal, perlu waspada, tekanan berat) ditambah ikon atau bentuk yang berbeda per tingkat, sehingga tetap terbaca tanpa warna. Tidak memakai kuning `--peringatan-*` (khusus data basi) atau jingga `--fokus` (khusus fokus keyboard), dan tidak pernah menjadi banner atau judul.
 
 ## Aksesibilitas
 
@@ -51,3 +53,4 @@ Warna tidak pernah menjadi satu-satunya pembawa arti: status selalu juga tertuli
 
 - Logo atau tanda merek (sekarang hanya teks "Con-Fore").
 - Gaya tab Prediksi: garis putus-putus untuk perkiraan dan pita rentang ketidakpastian.
+- Warna status tiga tingkat. Kuning dan jingga sudah terpakai, jadi pilihannya warna lain yang lolos kontras 4,5:1 di kedua tema, atau satu warna aksen dengan tingkat isi yang berbeda.

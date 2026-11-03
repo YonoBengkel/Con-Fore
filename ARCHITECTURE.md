@@ -1,4 +1,4 @@
-Status: pipeline data dan situs tab Data sesuai kode di `main` (2026-10-31), dan pipeline jalan dengan jadwal harian. Deploy situs, panggilan revalidasi dari pipeline, model, backup, dan pemantauan masih rencana yang disetujui pengelola 2026-10-30.
+Status: pipeline data dan situs tab Data sesuai kode di `main` (2026-10-31), dan pipeline jalan dengan jadwal harian. Deploy situs, panggilan revalidasi dari pipeline, model, backup, dan pemantauan masih rencana yang disetujui pengelola 2026-10-30. Seri BPS untuk pekerja formal-informal dan komponen inflasi (4.3) masih rencana yang disetujui 2026-11-03.
 
 # Arsitektur Con-Fore
 
@@ -119,7 +119,8 @@ Di GitHub, nilai ini disimpan sebagai Secrets (`pipeline.yml` hanya membaca Secr
 - Unduh CSV dibuat di server dari `public.chart_series` lewat route `/api/csv/[chart_id]` yang di-cache bersama halaman.
 - Banner "data mungkin belum diperbarui" dihitung di browser dari `last_success_at` (lebih dari 36 jam), supaya tetap muncul walau Supabase sedang mati.
 - Halaman `/sumber` menampilkan kalimat atribusi wajib per sumber dari `public.sources`.
-- Bahasa Indonesia, mengutamakan HP, tema terang dan gelap. Kalimat ringkasan menjadi teks alternatif segitiga. Arah tampilannya diusulkan di [DESIGN.md](DESIGN.md) (belum disetujui).
+- Bahasa Indonesia, mengutamakan HP, tema terang dan gelap. Kalimat ringkasan menjadi teks alternatif segitiga. Arah tampilannya ada di [DESIGN.md](DESIGN.md), disetujui pengelola 2026-10-31.
+- Rencana (PRD 4.4): grafik porsi pekerja formal di halaman detail pengangguran, rincian tiga kelompok di halaman detail inflasi, dan status tiga tingkat setelah ambangnya diputuskan.
 
 ### 4.2 API
 
@@ -145,7 +146,7 @@ Di GitHub, nilai ini disimpan sebagai Secrets (`pipeline.yml` hanya membaca Secr
 | OECD | CLI Indonesia dan Tiongkok (`DF_CLI`) | `sdmx.oecd.org`, tanpa key | Bulanan, 18.00 WIB; masuk API sekitar 4 jam kemudian | `updatedAfter` (404 berarti tidak ada perubahan) + hash, karena riwayat CLI direvisi tiap bulan | Wajib sitasi; maksimal 60 unduhan per jam; dilarang lewat VPN | MVP |
 | ECB, Frankfurter | EUR/IDR dan EUR/USD untuk kurs silang model; kurs versi BI untuk tampilan | `data-api.ecb.europa.eu`, `api.frankfurter.dev` | Hari kerja sekitar 22.00 WIB | Tanggal kurs terakhir | Tanpa batas resmi | MVP |
 | World Bank | Konteks tahunan (WDI, WGI) | `api.worldbank.org` v2 | Tidak teratur | Kolom `lastupdated` per sumber | CC BY 4.0 | MVP, konteks |
-| BPS WebAPI | Inflasi y-on-y (var 2263), pertumbuhan PDB y-on-y (var 104), TPT per ronde Sakernas (var 543 dan 2562); nanti ekspor-impor dan daftar rilis pers | `webapi.bps.go.id`, key gratis di path URL | CPI: hari kerja pertama, sekitar 11.00 WIB. PDB dan TPT: tanggal 5 Feb, Mei, Agu, Nov (ronde triwulanan Sakernas ada sejak 2025) | Rilis pers baru bertanggal hari ini, atau periode baru di variabelnya. PDB: tarik ulang seluruh riwayat karena kuartal lama ikut direvisi. TPT: bandingkan hanya ronde bulan yang sama | Wajib kalimat "Layanan ini menggunakan API Badan Pusat Statistik (BPS)."; situs tidak boleh terkesan resmi BPS; penggunaan komersial butuh persetujuan BPS; data simpanan tidak boleh disajikan sebagai terbaru bila BPS sudah memperbaruinya; batas 60 permintaan per menit, 1.000 per jam, 10.000 per hari (header `RateLimit-Policy`) | MVP (branch `v0.1-tab-data`); syarat rilis v0.1 |
+| BPS WebAPI | Inflasi y-on-y (var 2263), pertumbuhan PDB y-on-y (var 104), TPT per ronde Sakernas (var 543 dan 2562). Rencana: penduduk bekerja menurut status pekerjaan (var 2335) dan komponen inflasi (tabel statis 908). Nanti ekspor-impor dan daftar rilis pers | `webapi.bps.go.id`, key gratis di path URL | CPI: hari kerja pertama, sekitar 11.00 WIB. PDB dan TPT: tanggal 5 Feb, Mei, Agu, Nov (ronde triwulanan Sakernas ada sejak 2025) | Rilis pers baru bertanggal hari ini, atau periode baru di variabelnya. PDB: tarik ulang seluruh riwayat karena kuartal lama ikut direvisi. TPT: bandingkan hanya ronde bulan yang sama | Wajib kalimat "Layanan ini menggunakan API Badan Pusat Statistik (BPS)."; situs tidak boleh terkesan resmi BPS; penggunaan komersial butuh persetujuan BPS; data simpanan tidak boleh disajikan sebagai terbaru bila BPS sudah memperbaruinya; batas 60 permintaan per menit, 1.000 per jam, 10.000 per hari (header `RateLimit-Policy`) | MVP, syarat rilis v0.1. Var 2335 dan tabel 908 setelah v0.1 tayang |
 | `config/*` | Target resmi, sumber, kalender rilis, hari libur | Diisi manual di repo | Saat ada perubahan | Push ke `config/**` | - | MVP |
 | FRED, BI SEKI, halaman BI-Rate, GDELT, Comtrade | Pelengkap | Key, HTML, atau batas ketat | - | - | - | Nanti |
 
@@ -164,6 +165,14 @@ Tidak dipakai: IMF DataMapper (menjawab 403) dan CSV grafik FRED (koneksi ditola
 - Tanggal rilis per observasi tidak dicatat, karena WebAPI hanya memberi tanggal pembaruan per variabel.
 - Atribusi dan syarat ada di baris `bps` di `config/sources.csv` (ketentuan WebAPI di https://webapi.bps.go.id/developer/). Halaman `/sumber` dan setiap CSV menampilkannya.
 
+**Rencana seri BPS berikutnya** (PRD 4.4, dicek ke jawaban WebAPI 2026-11-03, belum ada di kode):
+
+- **Pekerja formal dan informal:** var 2335 (penduduk bekerja menurut provinsi dan status pekerjaan utama), baris INDONESIA (vervar 9999), hanya ronde Februari dan Agustus. Ronde Mei dan November tidak ada di variabel ini. Pekerja formal adalah status "berusaha dibantu buruh tetap/buruh dibayar" ditambah "buruh/karyawan/pegawai". Porsinya terhadap seluruh penduduk bekerja dihitung sebagai turunan di `derive.py`, dan hitungan itu cocok dengan angka rilis BPS untuk lima ronde 2024-2026. Var 2153 (informal) dan 1168 (formal) tidak dipakai karena hanya tahunan (nilai Agustus). Seperti TPT, perbandingan hanya antar-ronde bulan yang sama.
+- **Komponen inflasi** (inti, harga diatur pemerintah, harga bergejolak): tidak ada sebagai variabel WebAPI, hanya sebagai tabel statis 908 (2009 sampai tahun berjalan) di `view/model/statictable/lang/ind/domain/0000/id/908/key/<key>/`. Jawabannya tabel HTML di dalam JSON, berisi perubahan bulanan (m-to-m) dan sejak Januari (y-to-d), bukan y-on-y. Yang dibutuhkan:
+  - Pengurai tabel HTML baru yang memeriksa bentuk tabel dan gagal dengan kode tetap, seperti pengambil BPS yang sudah ada (4.12). Angkanya memakai koma desimal, dan ada sel "~ 0".
+  - Y-on-y dirangkai dari 12 bulan m-to-m (perkalian berantai). Karena m-to-m sudah dibulatkan, hasilnya bisa sedikit berbeda dari y-on-y di rilis pers BPS. Selisihnya diukur sebelum tayang, dan serinya berlabel "dihitung Con-Fore dari data resmi BPS".
+  - Pola query baru untuk tabel statis di registri. `config.py` tetap menolak pola lain, jadi key tetap tidak bisa tertulis di registri.
+
 **Jadwal penarikan**
 
 Cron di GitHub Actions ditulis dalam **UTC** (bawaan; kunci `timezone` juga tersedia, tetapi tidak dipakai supaya konversinya selalu tertulis). WIB = UTC + 7, tanpa musim panas. Semua logika tanggal di kode memakai zona `Asia/Jakarta`.
@@ -171,7 +180,7 @@ Cron di GitHub Actions ditulis dalam **UTC** (bawaan; kunci `timezone` juga ters
 | Run | Cron (UTC) | Waktu WIB | Isi |
 |---|---|---|---|
 | Harian | `17 23 * * *` | 06.17, **tanggal WIB = tanggal UTC + 1** | Cek perubahan semua sumber; ambil yang berubah; model bila input berubah; publikasi |
-| Hari rilis BPS | `17 8,11 1-8 * *` | 15.17 dan 18.17, tanggal 1-8 (tanggal UTC = tanggal WIB) | `run --source bps --trigger release`: ambil hanya seri BPS, beberapa jam setelah rilis sekitar 11.00 WIB, lalu publikasi semua seri. Sudah ditulis di `pipeline.yml` branch `v0.1-tab-data`; GitHub hanya menjalankan jadwal dari branch utama, jadi aktif setelah merge ke `main` |
+| Hari rilis BPS | `17 8,11 1-8 * *` | 15.17 dan 18.17, tanggal 1-8 (tanggal UTC = tanggal WIB) | `run --source bps --trigger release`: ambil hanya seri BPS, beberapa jam setelah rilis sekitar 11.00 WIB, lalu publikasi semua seri. Ada di `pipeline.yml` di `main` sejak penggabungan v0.1 (2026-10-31) |
 | Push `config/**` | - | Saat tabel manual diubah | Muat ulang tabel manual dan publikasi |
 | Manual | `workflow_dispatch` | Kapan saja | Mode `run`, `full_refresh`, `migrate` |
 | Backup | `47 23 * * 0` | Senin 06.47 | Ekspor mingguan (lihat 4.13) |
@@ -240,13 +249,14 @@ Jadwal tabel manual: target diperiksa saat UU APBN baru disahkan (akhir Septembe
 - Ketiga target dihitung dalam satu proses supaya ceritanya konsisten. VAR atau BVAR gabungan menyusul setelah baseline stabil.
 - Hukum Okun di Indonesia lemah menurut sejumlah studi, jadi model TPT sengaja sederhana dan diberi label eksperimental.
 - Variabel hari libur (Ramadan/Lebaran berpindah bulan), dummy kebijakan sekali jalan, dan dummy COVID masuk sebagai fitur.
+- Pemilihan fitur: sampel PDB kuartalan pendek (kurang dari 20 tahun), jadi fitur masuk model hanya bila menurunkan galat backtest dibanding baseline. Seri yang saling berkorelasi tinggi, misalnya empat harga komoditas, diringkas dulu (misalnya menjadi satu faktor), tidak dimasukkan satu per satu. Batas paling banyak 15 indikator di panel penggerak (PRD 4.1) adalah soal keterbacaan, bukan aturan model.
 - Model hanya dijalankan ulang bila target atau fitur periode-lengkap berubah. Data harian (kurs) masuk sebagai rata-rata bulan yang sudah lengkap.
 - Rentang ketidakpastian diambil dari galat backtest (persentil per horizon). Backtest bergulir 2012-2025 menghormati jeda rilis; metriknya MAE dan RMSE per horizon dibanding baseline dan proyeksi IMF.
 - Horizon panjang di MVP memakai proyeksi IMF WEO, bukan model sendiri.
 
 ### 4.7 CI/CD
 
-- **`pipeline.yml`** (satu-satunya workflow yang menulis data). Pemicu: jadwal harian `17 23 * * *` (06.17 WIB), jadwal hari rilis BPS `17 8,11 1-8 * *` (15.17 dan 18.17 WIB tanggal 1-8), push ke `main` yang mengubah `config/**`, dan manual dengan mode `run`, `full_refresh`, atau `migrate`. Jadwal harian dan push memakai mode `run`. Jadwal hari rilis BPS dikenali dari `github.event.schedule` dan selalu menjalankan `python -m confore run --source bps --trigger release`. Jadwal hari rilis BPS dan Secret BPS di langkah `Pipeline` baru ada di branch `v0.1-tab-data`.
+- **`pipeline.yml`** (satu-satunya workflow yang menulis data). Pemicu: jadwal harian `17 23 * * *` (06.17 WIB), jadwal hari rilis BPS `17 8,11 1-8 * *` (15.17 dan 18.17 WIB tanggal 1-8), push ke `main` yang mengubah `config/**`, dan manual dengan mode `run`, `full_refresh`, atau `migrate`. Jadwal harian dan push memakai mode `run`. Jadwal hari rilis BPS dikenali dari `github.event.schedule` dan selalu menjalankan `python -m confore run --source bps --trigger release`.
   - Secret per langkah: langkah `Tes` tidak menerima Secret apa pun; langkah `Pipeline` menerima `SUPABASE_DB_URL`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, dan `BPS_API_KEY`.
   - Job `run`, batas 60 menit: tes, ambil data, cek awal (koneksi, ukuran database, katalog akses), simpan, turunan, model (fase 3), publikasi, revalidasi (fase 2), catat run. Yang sudah ada: semua kecuali model dan revalidasi.
   - Job `backtest` (fase 3): berjalan setelah rilis target atau secara manual, dengan batas waktu sendiri; menulis `etl.backtest`.

@@ -1,6 +1,6 @@
 # PRD Con-Fore
 
-> Status: disetujui pengelola 2026-10-30. Menggantikan `docs/RENCANA-MVP.md`. Detail teknis ada di [ARCHITECTURE.md](ARCHITECTURE.md) dan [SCHEMA.md](SCHEMA.md).
+> Status: disetujui pengelola 2026-10-30. Tambahan 2026-11-03 (bagian 4.4 dan butir terkait di 4, 5, 7, dan 9) disetujui pengelola hari itu. Menggantikan `docs/RENCANA-MVP.md`. Detail teknis ada di [ARCHITECTURE.md](ARCHITECTURE.md) dan [SCHEMA.md](SCHEMA.md).
 
 ## 1. Masalah
 
@@ -29,15 +29,15 @@ Ringkasan di kedua tab berupa **segitiga keseimbangan** (pertumbuhan, harga stab
 - **Target:** pertumbuhan PDB riil, inflasi IHK, dan tingkat pengangguran terbuka (TPT).
 - **Horizon pendek:** nowcast kuartal berjalan dan forecast sampai akhir tahun depan untuk PDB dan inflasi; dua rilis TPT berikutnya.
 - **Horizon panjang:** proyeksi IMF WEO sampai tahun terakhir yang tersedia (kini 2031), diberi label "proyeksi IMF", plus panel target RPJMN dibanding proyeksi. Panel itu terpisah dari segitiga karena target RPJMN berada di atas rekor 2000-2025.
-- **Rilis bertahap:** v0.1 hanya tab Data, karena tidak butuh model; v0.2 menambah tab Prediksi. v0.1 baru dirilis publik setelah key BPS terbukti jalan; sebelum itu situs hanya untuk pengembangan.
+- **Rilis bertahap:** v0.1 hanya tab Data, karena tidak butuh model; v0.2 menambah tab Prediksi. v0.1 baru dirilis publik setelah key BPS terbukti jalan; sebelum itu situs hanya untuk pengembangan. Setelah v0.1 tayang, tab Data ditambah grafik pekerja formal dan informal, lalu rincian inflasi (4.4). Keduanya tidak menunda rilis v0.1.
 
 ### 4.1 Isi halaman
 
 **Tab Data (beranda)**
 
 - Ringkasan: segitiga khusus tahun yang sudah punya data resmi, kalimat ringkasan, pilihan lensa.
-- Tiga angka utama dengan grafik kecil.
-- Panel penggerak: harga komoditas, kurs, BI-Rate, indikator pendahulu OECD, mitra dagang.
+- Tiga angka utama dengan grafik kecil. Kartu pengangguran menambah satu kalimat tentang porsi pekerja formal (4.4).
+- Panel penggerak: harga komoditas, kurs, BI-Rate, indikator pendahulu OECD, mitra dagang. Paling banyak 15 indikator supaya tetap terbaca, masing-masing berlabel tanggal datanya (4.4).
 - Tabel target resmi beserta sumbernya.
 - Untuk setiap angka: sumber, tanggal rilis, penjelasan "artinya buatmu", dan tombol unduh CSV.
 
@@ -50,8 +50,8 @@ Ringkasan di kedua tab berupa **segitiga keseimbangan** (pertumbuhan, harga stab
 
 **Halaman pendukung**
 
-- Detail per target (dibuka dari kartu): riwayat panjang dan jadwal rilis berikutnya.
-- Cara kerja: data, model, dan aturan skor dalam bahasa awam.
+- Detail per target (dibuka dari kartu): riwayat panjang dan jadwal rilis berikutnya. Detail pengangguran menambah grafik porsi pekerja formal dan informal, dan detail inflasi menambah rincian tiga kelompok (4.4).
+- Cara kerja: data, model, aturan skor, dan ambang status dalam bahasa awam.
 - Sumber data: daftar sumber, lisensi, kalimat atribusi wajib (termasuk atribusi BPS), dan tabel target resmi beserta tautannya. Situs tidak boleh terkesan sebagai situs resmi BPS atau lembaga lain.
 
 ### 4.2 Aturan skor segitiga
@@ -66,6 +66,16 @@ Ringkasan di kedua tab berupa **segitiga keseimbangan** (pertumbuhan, harga stab
 - Nilainya tidak ditulis di dokumen ini. Daftar kurasinya (nilai, dokumen sumber, status verifikasi `dokumen` atau `berita`) ada di `config/targets.csv`.
 - Diperiksa ulang setiap UU APBN baru disahkan (sekitar akhir September) dan setiap PMK sasaran inflasi baru terbit.
 
+### 4.4 Aturan penyajian
+
+- **Dua tingkat.** Tingkat utama memuat angka agregat, kalimat ringkasan, dan "artinya buatmu". Tingkat rinci di halaman detail memuat komponen dan konteks. Rentang ramalan (fan chart) hanya ada di tab Prediksi.
+- **Pekerja formal dan informal.** Konteks pendamping TPT dari Sakernas BPS, tersedia untuk ronde Februari dan Agustus. TPT tetap angka utama. Kalimat otomatisnya hanya membandingkan ronde bulan yang sama (Februari dengan Februari), karena porsi pekerja formal berbeda menurut bulan survei. Yang dibandingkan adalah porsi terhadap seluruh pekerja, bukan jumlah orang, karena jumlah pekerja terus bertambah.
+- **Rincian inflasi.** Inflasi umum y-on-y tetap angka utama. Halaman detail inflasi memecahnya menjadi tiga kelompok BPS dengan nama netral: inti, harga diatur pemerintah, dan harga bergejolak. Setiap kelompok dijelaskan dari isinya (contoh barang dan jasa), bukan dari satu sebab tunggal seperti "cuaca" atau "BBM". Penyumbang terbesar bulan itu disebut bila datanya tersedia lewat API.
+- **Tanggal data, bukan "real-time".** Kurs, harga komoditas, dan suku bunga tampil pada periode terbaru yang sudah terbit, berlabel tanggal atau periode datanya. Situs tidak memakai kata "real-time", "langsung", atau "live", karena pipeline berjalan sekali sehari dan seri bulanan bisa tertinggal sekitar sebulan.
+- **Narasi netral.** Kalimat tidak memberi vonis mutlak seperti "solid", "gagal", atau "hancur". Sebutan seperti "baik" atau "lemah" hanya dipakai bersama pembandingnya. Pembandingnya riwayat Indonesia sendiri (lensa masa lalu), target resmi (lensa target), dan pertumbuhan dunia dari IMF WEO setelah serinya ditambahkan. Di lensa target, skor yang turun dijelaskan sebagai jarak ke target APBN tahun itu. Target 8% RPJMN hanya dibahas di panel jangka panjang.
+- **"Artinya buatmu" menjelaskan arti angka** bagi rumah tangga, misalnya "dengan inflasi 3%, belanja yang setahun lalu Rp100.000 kini sekitar Rp103.000". Isinya tidak pernah berupa saran belanja (5).
+- **Status tiga tingkat.** Setiap dimensi segitiga mendapat status normal, perlu waspada, atau tekanan berat, yang diturunkan dari skor lensa yang sedang dipilih. Status selalu tertulis sebagai kata, ambangnya dijelaskan di halaman Cara kerja, dan tidak ada judul atau banner bernada genting. Status belum dibangun sampai ambang dan warnanya diputuskan (9).
+
 ## 5. Bukan tujuan MVP
 
 - Negara lain dan model panel lintas negara.
@@ -73,6 +83,7 @@ Ringkasan di kedua tab berupa **segitiga keseimbangan** (pertumbuhan, harga stab
 - Dasbor fondasi struktural: tata kelola, korupsi, SDG, pendidikan.
 - Sentimen berita (GDELT), data alternatif (kunjungan kapal, lampu malam), dan panel cek silang PDB.
 - Ramalan kurs dan indeks saham.
+- Nasihat keuangan, termasuk saran belanja atau investasi.
 - Akun pengguna, login, komentar, atau personalisasi.
 - Iklan atau penggunaan komersial (paket Vercel Hobby untuk proyek non-komersial).
 - Bahasa selain Indonesia.
@@ -96,7 +107,8 @@ Ringkasan di kedua tab berupa **segitiga keseimbangan** (pertumbuhan, harga stab
 | Perkiraan dibaca sebagai janji | Rentang selalu tampil; label "perkiraan model, bukan angka resmi"; rekam jejak terbuka |
 | Data resmi diperdebatkan publik (contoh: PDB kuartal II 2025) | Sumber dan revisi selalu tampil; panel cek silang di versi berikutnya |
 | Target resmi berubah atau kedaluwarsa | Tabel target bersumber dengan tanggal pemeriksaan terakhir; dicek tiap akhir September |
-| Sampel data pendek membuat model terlalu pas dengan masa lalu | Model sederhana, baseline wajib, backtest jujur |
+| Sampel data pendek membuat model terlalu pas dengan masa lalu | Model sederhana, baseline wajib, backtest jujur. Variabel masuk model hanya bila menurunkan galat backtest dibanding baseline |
+| Narasi dibaca sebagai sikap politik | Narasi netral dan "artinya buatmu" tanpa nasihat (4.4). Target 8% RPJMN hanya di panel jangka panjang |
 
 Risiko teknis ada di [ARCHITECTURE.md](ARCHITECTURE.md#5-risiko-utama).
 
@@ -120,3 +132,4 @@ Keputusan produk dan alasannya dicatat di catatan proyek pengelola; dokumen ini 
 3. (Terjawab 2026-10-30) Syarat data IMF (halaman Copyright and Usage, bagian "The Use of IMF Data") membolehkan data diunduh, diolah, dan disebarkan ulang dengan atribusi "International Monetary Fund, nama database, tautan dataset"; olahan yang mengubah data harus dinyatakan, dan penyedia unduhan wajib menyampaikan syarat ini ke penggunanya (berlaku untuk tombol unduh CSV di fase 2). Unduhan massal otomatis tetap butuh izin, jadi pipeline hanya menarik seri yang terdaftar, sekali sehari.
 4. (Disetujui 2026-10-30) Tabel manual selain target resmi (`config/sources.csv`, `config/release_calendar.csv`, `config/holidays.csv`) menjadi pengecualian dari aturan "semua data dari API".
 5. (Disetujui 2026-10-31) Panduan desain ada di `DESIGN.md`, ditulis dari tampilan tab Data v0.1.
+6. Ambang dan warna status tiga tingkat (4.4). Ambangnya diturunkan dari skor lensa dan perlu diselaraskan dengan sebutan yang sudah dipakai kalimat ringkasan lensa masa lalu (baik, cukup baik, kurang baik, dan lemah, dengan batas 25, 50, dan 75). Warnanya ada di `DESIGN.md`, bagian Belum diputuskan.
