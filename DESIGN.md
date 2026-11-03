@@ -1,4 +1,4 @@
-Status: disetujui pengelola 2026-10-31. Aturan narasi netral dan status tiga tingkat ditambahkan 2026-11-03 dengan persetujuan pengelola.
+Status: disetujui pengelola 2026-10-31. Aturan narasi netral, status tiga tingkat, dan warnanya ditambahkan 2026-11-03 dengan persetujuan pengelola.
 
 # Panduan desain Con-Fore
 
@@ -24,6 +24,8 @@ Satu warna aksen (hijau kebiruan tua) di atas latar kertas hangat; tema gelap me
 | `--garis` | `#d9d6cc` | `#343a40` | Garis dan kisi |
 | `--aksen` | `#0e5c66` | `#74c4cf` | Tautan, garis grafik, segitiga, pilihan aktif |
 | `--peringatan-*` | kuning lembut | cokelat tua | Banner data basi, status "dari pemberitaan" |
+| `--ok-tinta` | `#1f5a2c` | `#9fd8a9` | Status "dicocokkan ke dokumen" di tabel target |
+| `--status-berat` | `#a4133c` | `#ff8fa3` | Status "tekanan berat" (rencana, belum ada di `globals.css`). Kontras minimal 7:1 di latar dan permukaan kedua tema |
 | `--fokus` | `#b34700` | `#ffb070` | Garis fokus keyboard |
 
 Warna tidak pernah menjadi satu-satunya pembawa arti: status selalu juga tertulis.
@@ -41,7 +43,7 @@ Warna tidak pernah menjadi satu-satunya pembawa arti: status selalu juga tertuli
 - **Kartu angka:** judul, nama seri, angka, periode dan perubahan, grafik kecil, lencana label kejujuran, kotak "Artinya buatmu", rincian sumber dan tanggal, tautan riwayat dan unduh CSV.
 - **Tabel target:** tabel biasa di layar lebar; di HP setiap baris menjadi blok berlabel.
 - **Banner:** kuning lembut, hanya untuk data yang mungkin basi atau sumber yang gagal.
-- **Status tiga tingkat** (rencana, PRD 4.4): lencana kecil di samping skor, selalu berupa kata (normal, perlu waspada, tekanan berat) ditambah ikon atau bentuk yang berbeda per tingkat, sehingga tetap terbaca tanpa warna. Tidak memakai kuning `--peringatan-*` (khusus data basi) atau jingga `--fokus` (khusus fokus keyboard), dan tidak pernah menjadi banner atau judul.
+- **Status tiga tingkat** (rencana, PRD 4.4): lencana kecil di samping skor, berupa ikon dan kata, tanpa latar berwarna. Normal memakai `--redup` dengan lingkaran kosong. Perlu waspada memakai `--tinta` tebal dengan lingkaran setengah isi. Tekanan berat memakai `--status-berat` tebal dengan lingkaran penuh. Jadi warna hanya muncul di tingkat terberat. Ikonnya SVG kecil, bukan emoji, dan disembunyikan dari pembaca layar karena katanya sudah tertulis. Tidak memakai kuning `--peringatan-*` (data basi), hijau `--ok-tinta` (sumber dicocokkan ke dokumen), atau jingga `--fokus` (fokus keyboard), dan tidak pernah menjadi banner atau judul.
 
 ## Aksesibilitas
 
@@ -53,4 +55,3 @@ Warna tidak pernah menjadi satu-satunya pembawa arti: status selalu juga tertuli
 
 - Logo atau tanda merek (sekarang hanya teks "Con-Fore").
 - Gaya tab Prediksi: garis putus-putus untuk perkiraan dan pita rentang ketidakpastian.
-- Warna status tiga tingkat. Kuning dan jingga sudah terpakai, jadi pilihannya warna lain yang lolos kontras 4,5:1 di kedua tema, atau satu warna aksen dengan tingkat isi yang berbeda.

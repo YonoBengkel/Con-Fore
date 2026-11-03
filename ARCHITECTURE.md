@@ -120,7 +120,7 @@ Di GitHub, nilai ini disimpan sebagai Secrets (`pipeline.yml` hanya membaca Secr
 - Banner "data mungkin belum diperbarui" dihitung di browser dari `last_success_at` (lebih dari 36 jam), supaya tetap muncul walau Supabase sedang mati.
 - Halaman `/sumber` menampilkan kalimat atribusi wajib per sumber dari `public.sources`.
 - Bahasa Indonesia, mengutamakan HP, tema terang dan gelap. Kalimat ringkasan menjadi teks alternatif segitiga. Arah tampilannya ada di [DESIGN.md](DESIGN.md), disetujui pengelola 2026-10-31.
-- Rencana (PRD 4.4): grafik porsi pekerja formal di halaman detail pengangguran, rincian tiga kelompok di halaman detail inflasi, dan status tiga tingkat setelah ambangnya diputuskan.
+- Rencana (PRD 4.4): grafik porsi pekerja formal di halaman detail pengangguran, rincian tiga kelompok di halaman detail inflasi, dan status tiga tingkat (ambangnya di PRD 4.4, warnanya di DESIGN.md).
 
 ### 4.2 API
 
