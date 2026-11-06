@@ -6,6 +6,10 @@ bps_cpi_yoy_m,2026-11,bps,2026-12-01
 idn_gdp_real_q,2026-Q3,bps,2026-11-05
 idn_gdp_growth_q,2026-Q3,bps,2026-11-05
 bps_gdp_growth_q,2026-Q3,bps,2026-11-05
+idn_gdp_real_q,2026-Q4,bps-perkiraan,2027-02-05
+idn_gdp_growth_q,2026-Q4,bps-perkiraan,2027-02-05
+bps_gdp_growth_q,2026-Q4,bps-perkiraan,2027-02-05
+bps_unemp_round,2026-11,bps-perkiraan,2027-02-05
 idn_cli_m,2026-10,oecd,2026-11-09
 chn_cli_m,2026-10,oecd,2026-11-09
 idn_cli_m,2026-11,oecd,2026-12-07

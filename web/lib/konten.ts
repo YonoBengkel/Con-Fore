@@ -1,7 +1,7 @@
 // Isi tetap situs: seri mana yang tampil di mana, label kejujuran, dan penjelasan "artinya buatmu".
 
 import type { MetaSeri } from "./data";
-import { angka } from "./format";
+import { angka } from "./format.ts";
 
 export type KunciKartu = "pertumbuhan" | "inflasi" | "pengangguran";
 
@@ -115,6 +115,7 @@ export function labelSeri(m: MetaSeri): string {
 
 export const NAMA_KALENDER: Record<string, string> = {
   bps: "jadwal rilis BPS",
+  "bps-perkiraan": "perkiraan dari pola rilis BPS, jadwal resminya belum terbit",
   oecd: "jadwal rilis OECD",
   "bi-rdg": "jadwal Rapat Dewan Gubernur BI",
 };
@@ -128,7 +129,7 @@ export function keteranganJadwal(m: MetaSeri, kalender: string | undefined): str
   if (m.source_id === "imf" && m.country === "IDN") {
     return `${nama}; angka di sini menyusul lewat salinan IMF`;
   }
-  if (kalender && kalender !== m.source_id) {
+  if (kalender && kalender.replace(/-perkiraan$/, "") !== m.source_id) {
     return `${nama}; angka di sini menyusul lewat data ${namaPendek(m.source_id)}`;
   }
   return nama;

@@ -90,9 +90,12 @@ export function perubahan(
   const banding =
     konsep === "round_rate" ? "ronde yang sama tahun lalu" : (PEMBANDING[frekuensi] ?? "periode sebelumnya");
   if (satuan.startsWith("%")) {
-    const selisih = sekarang - sebelum;
     const d = konsep === "rate" || konsep === "round_rate" ? 2 : 1;
-    if (Math.abs(selisih) < 0.5 * 10 ** -d) return `sama dengan ${banding}`;
+    // Dihitung dari angka yang tampil, supaya kalimatnya selalu cocok dengan angka di kartu.
+    const selisih = Number(sekarang.toFixed(d)) - Number(sebelum.toFixed(d));
+    if (Math.abs(selisih) < 0.5 * 10 ** -d) {
+      return `${sekarang === sebelum ? "sama" : "hampir sama"} dengan ${banding}`;
+    }
     return `${selisih > 0 ? "naik" : "turun"} ${angka(Math.abs(selisih), d)} poin persen dari ${banding} (${nilaiPendek(sebelum, satuan, konsep)})`;
   }
   if (sebelum === 0) return null;

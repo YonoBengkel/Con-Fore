@@ -111,3 +111,5 @@ Lakukan bila kredensial bocor atau terpapar (tertempel di chat, log, atau commit
 - [ ] (Fase 1) Tanggal kedaluwarsa token GitHub untuk cron-job.org: `____-__-__`. Perbarui sebelum lewat.
 - [ ] (Fase 1) Ukuran database Supabase di bawah 300 MB; ada aset backup baru di GitHub Releases.
 - [ ] (Fase 2) Pemakaian Vercel Hobby masih jauh dari batas.
+- [ ] (Fase 2) Rencana Terbit BPS (https://www.bps.go.id/id/arc) sudah memuat tahun berikutnya: ganti baris `bps-perkiraan` di `config/release_calendar.csv` dengan tanggal resminya, dan tambahkan rilis yang belum tercatat.
+- [ ] (Fase 2) Naskah UU APBN 2027 sudah ada di JDIH: cocokkan dua baris `berita` di `config/targets.csv`.

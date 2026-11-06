@@ -191,7 +191,7 @@ Cron di GitHub Actions ditulis dalam **UTC** (bawaan; kunci `timezone` juga ters
 
 Menit 17 dan 47 dipilih karena awal jam adalah waktu tersibuk GitHub, dan saat beban tinggi job terjadwal bisa tertunda atau dibatalkan. Tes otomatis memeriksa konversi ini di batas tengah malam. Yang teramati 1-5 November 2026: run harian mulai 09.16 sampai 10.56 WIB, dan run hari rilis BPS tampak hanya sekali sehari, sekitar 22.15 sampai 01.29 WIB. Keterlambatan ini masih memenuhi ukuran Kesegaran di PRD 6.
 
-Jadwal tabel manual: target diperiksa saat UU APBN baru disahkan (akhir September); kalender BPS dan jadwal RDG BI saat terbit (Desember-Januari); hari libur saat SKB tiga menteri terbit (September).
+Jadwal tabel manual: target diperiksa saat UU APBN baru disahkan (akhir September); kalender BPS dan jadwal RDG BI saat terbit (Desember-Januari); hari libur saat SKB tiga menteri terbit (September). Sampai kalender BPS tahun berikutnya terbit, rilis PDB dan TPT berikutnya dicatat sebagai `bps-perkiraan`, mengikuti pola 2026 (tanggal 5 Februari, Mei, Agustus, dan November), dan situs melabelinya perkiraan.
 
 **Aturan inti**
 
@@ -370,6 +370,7 @@ Risiko produk ada di [PRD.md](PRD.md#7-risiko-produk).
 
 - IMF Data (WEO, QNEA, CPI, PCPS): https://data.imf.org
 - BPS WebAPI: https://webapi.bps.go.id (ketentuan penggunaan: https://webapi.bps.go.id/developer/)
+- Rencana Terbit BPS (kalender rilis resmi): https://www.bps.go.id/id/arc
 - BIS Data Portal: https://data.bis.org
 - OECD Data Explorer: https://data-explorer.oecd.org
 - Frankfurter: https://frankfurter.dev
