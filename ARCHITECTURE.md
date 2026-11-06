@@ -1,4 +1,4 @@
-Status: pipeline data, situs tab Data, dan panggilan revalidasi sesuai kode di `main` (2026-11-06). Situs tayang di Vercel, dan pipeline jalan dengan jadwal harian. Model, backup, dan pemantauan masih rencana yang disetujui pengelola 2026-10-30.
+Status: pipeline data, situs tab Data, panggilan revalidasi, dan model (fase 3) sesuai kode di repo (2026-11-07). Situs tayang di Vercel, dan pipeline jalan dengan jadwal harian. Tab Prediksi, backup, dan pemantauan masih rencana yang disetujui pengelola 2026-10-30.
 
 # Arsitektur Con-Fore
 
@@ -18,8 +18,9 @@ Tidak ada server backend yang menyala terus. Data berubah beberapa kali sebulan 
 ```
 Sumber API -> cek perubahan -> unduh -> validasi -> etl.observations (dengan vintage)
                                                  -> etl.fetch_log
-etl.observations -> turunan (di memori) -> [fase 3: model -> etl.forecasts]
-                 -> publikasi satu transaksi -> public.* (hanya-baca)
+etl.observations -> turunan (di memori) -> publikasi satu transaksi -> public.* (hanya-baca)
+                 -> model, bila masukannya berubah -> etl.forecasts
+etl.observations -> backtest bulanan -> etl.backtest -> lebar rentang ramalan
 public.* -> server Vercel (ISR, cache) -> pengunjung
 publikasi selesai -> POST /api/revalidate -> satu GET per alamat -> render baru di latar
 ```
@@ -35,7 +36,7 @@ Con-Fore/
   README.md  PRD.md  ARCHITECTURE.md  SCHEMA.md  RUNBOOK.md   [ada]
   DESIGN.md              panduan desain, disetujui pengelola 2026-10-31   [ada]
   .gitignore  .env.example                                    [ada]
-  requirements.in        dependensi langsung (psycopg)        [ada]
+  requirements.in        dependensi langsung (psycopg, pandas, statsmodels)   [ada]
   requirements.txt       lockfile berhash dari `uv pip compile` [ada]
   confore/               paket Python
     smoke.py             uji akses setiap sumber, satu permintaan kecil per sumber   [ada]
@@ -45,15 +46,22 @@ Con-Fore/
     db.py                migrasi, cek katalog akses, uji Data API, tulis vintage, log   [ada]
     publish.py           isi ulang tabel public.* dalam satu transaksi   [ada]
     revalidate.py        segarkan situs sesudah publikasi: tandai cache basi, lalu picu render baru   [ada]
-    cli.py               perintah: migrate, run (--dry-run, --source, --trigger, --full-refresh)   [ada]
-    models/              baseline, DFM PDB, inflasi, TPT (fase 3)
-  supabase/migrations/   0001-0003: skema, tabel, GRANT, RLS   [ada]
+    cli.py               perintah: migrate, run (--dry-run, --source, --trigger, --full-refresh), backtest (--dry-run)   [ada]
+    models/              model fase 3, hanya diimpor perintah yang memakainya   [ada]
+      data.py            seri pipeline menjadi pandas, dan jadwal rilis per asal backtest
+      baseline.py        sama dengan angka terakhir, dan AR(1)
+      gdp.py             PDB: baseline dan DFM
+      inflation.py       inflasi: baseline, model musiman, dan ARIMAX
+      unemployment.py    TPT: baseline dan dua regresi
+      backtest.py        backtest bergulir, nilai galat, angka utama, rentang, dan isi laporan
+      forecast.py        ramalan harian ke etl.forecasts
+  supabase/migrations/   0001-0004: skema, tabel, GRANT, RLS, tabel model   [ada]
   config/
     series.toml          registri seri dan query API   [ada]
     sources.csv          nama, URL, syarat, lisensi, dan kalimat atribusi per sumber   [ada]
     targets.csv          target resmi bersumber, dengan status verifikasi   [ada]
     release_calendar.csv kalender rilis   [ada]
-    holidays.csv         hari libur dan Ramadan/Lebaran (fase 3, saat model memakainya)
+    holidays.csv         tanggal Lebaran dengan sumbernya, dipakai model inflasi   [ada]
   web/                   situs Next.js (App Router), cara menjalankannya di web/README.md   [ada]
     app/                 halaman dan route API (csv, health, revalidate)   [ada]
     components/          segitiga (SVG), grafik, kartu, komponen browser   [ada]
@@ -61,10 +69,10 @@ Con-Fore/
     scripts/             salin-env.mjs: salin dua baris Supabase dari ../.env ke web/.env.local   [ada]
     vercel.json          region icn1 dan Ignored Build Step   [ada]
     .env.example         daftar variabel environment situs   [ada]
-  tests/                 test_smoke.py, test_pipeline.py, test_bps.py, test_db.py (Postgres lokal)   [ada]
+  tests/                 test_smoke.py, test_pipeline.py, test_bps.py, test_models.py, test_db.py (Postgres lokal)   [ada]
   .github/
     dependabot.yml       pembaruan bulanan untuk action yang dipin   [ada]
-    workflows/           smoke.yml, pipeline.yml [ada]; nanti backup.yml, ci.yml
+    workflows/           smoke.yml, pipeline.yml, ci.yml [ada]; nanti backup.yml
   docs/                  catatan metodologi (tanpa data asli)
 ```
 
@@ -80,6 +88,8 @@ python -m confore run --dry-run    # ambil semua seri dan hitung turunan tanpa d
 python -m confore run              # ambil, cek akses, simpan vintage baru, publikasi public.*
 python -m confore run --source imf # hanya ambil satu sumber; publikasi tetap untuk semua seri
 python -m confore run --source bps --trigger release   # yang dijalankan jadwal hari rilis BPS
+python -m confore backtest --dry-run   # uji model dengan data langsung dari sumber, tanpa database
+python -m confore backtest         # uji model dari database, lalu ganti isi etl.backtest
 ```
 
 Seri BPS butuh `BPS_API_KEY`; tanpa key, semua seri BPS gagal dengan kode "BPS_API_KEY belum diisi" dan seri lain tetap jalan.
@@ -95,7 +105,7 @@ npm run build          # build produksi; ikut membaca Supabase, jadi Supabase ha
 npm start              # sajikan hasil build
 ```
 
-Urutan satu `run`: muat dan periksa `config/`, ambil setiap seri dengan jeda 1 detik (sebelum koneksi database dibuka, supaya koneksi tidak menganggur saat sumber lambat), buka koneksi, ambil kunci advisory (run atau migrasi lain yang sedang berjalan membuat run ini berhenti), cek katalog akses (berhenti bila ada akses yang tidak aman) dan ukuran database, catat baris `etl.runs`, salin `config/` ke `etl`, tulis vintage baru dan `fetch_log` per seri, tentukan status, publikasi, lalu tutup baris run. Setelah koneksi ditutup, pipeline menyegarkan situs (lihat 4.10).
+Urutan satu `run`: muat dan periksa `config/`, ambil setiap seri dengan jeda 1 detik (sebelum koneksi database dibuka, supaya koneksi tidak menganggur saat sumber lambat), buka koneksi, ambil kunci advisory (run atau migrasi lain yang sedang berjalan membuat run ini berhenti), cek katalog akses (berhenti bila ada akses yang tidak aman) dan ukuran database, catat baris `etl.runs`, salin `config/` ke `etl`, tulis vintage baru dan `fetch_log` per seri, tentukan status, publikasi, lalu tutup baris run. Setelah koneksi ditutup, pipeline menyegarkan situs (lihat 4.10), lalu membuka koneksi baru untuk menjalankan model bila sidiknya berubah (lihat 4.6).
 
 | Variabel | Dipakai oleh | Isi |
 |---|---|---|
@@ -143,7 +153,7 @@ Di GitHub, nilai ini disimpan sebagai Secrets (`pipeline.yml` hanya membaca Secr
 |---|---|---|---|---|---|---|
 | IMF WEO | PDB, inflasi akhir tahun (`PCPIEPCH`), pengangguran, proyeksi, vintage | `api.imf.org` SDMX, tanpa key | April dan Oktober | Kolom `PUBLICATION_DATE` | Wajib sitasi IMF; dilarang unduhan massal otomatis tanpa izin | MVP |
 | IMF QNEA | PDB riil kuartalan, harga konstan (`IDN.B1GQ.Q.NSA.XDC.Q`) | sama | Menyusul BPS beberapa minggu | Periode terakhir + hash ternormalisasi (`UPDATE_DATE` tidak bisa dipercaya) | sama | MVP, lalu cadangan |
-| IMF CPI | Inflasi bulanan yoy (`IDN.CPI._T.YOY_PCH_PA_PT.M`) | sama | Menyusul BPS sampai sekitar 3 minggu | sama | sama | MVP, lalu cadangan |
+| IMF CPI | Inflasi bulanan yoy (`IDN.CPI._T.YOY_PCH_PA_PT.M`), dan indeks harga konsumen (`IDN.CPI._T.IX.M`) untuk riwayat perubahan bulanan model inflasi | sama | Menyusul BPS sampai sekitar 3 minggu | sama | sama | MVP, lalu cadangan |
 | IMF PCPS | Batu bara, CPO, nikel, Brent | sama | Minggu pertama setiap bulan | `updatedAfter`; jawaban kosong berarti tidak ada perubahan | sama | MVP |
 | BIS | BI-Rate (`WS_CBPOL`), credit gap | `stats.bis.org` API v2, tanpa key | Kamis mingguan; data harian tertinggal sekitar 8 hari | `updatedAfter`; 404 kode 100 berarti tidak ada perubahan | Wajib sitasi BIS; IP bisa diblokir | MVP |
 | OECD | CLI Indonesia dan Tiongkok (`DF_CLI`) | `sdmx.oecd.org`, tanpa key | Bulanan, 18.00 WIB; masuk API sekitar 4 jam kemudian | `updatedAfter` (404 berarti tidak ada perubahan) + hash, karena riwayat CLI direvisi tiap bulan | Wajib sitasi; maksimal 60 unduhan per jam; dilarang lewat VPN | MVP |
@@ -155,7 +165,7 @@ Di GitHub, nilai ini disimpan sebagai Secrets (`pipeline.yml` hanya membaca Secr
 
 Tidak dipakai: IMF DataMapper (menjawab 403) dan CSV grafik FRED (koneksi ditolak). Pipeline hanya menarik seri yang disebut di `config/series.toml`.
 
-**Yang sudah jalan:** sejak fase 1 (di `main`), IMF (WEO, QNEA, CPI, PCPS), BIS, OECD, dan ECB, 14 seri ditambah 2 turunan. Sejak v0.1, BPS menambah 3 seri rilis pertama, var 2335 menambah 3 seri dan 1 turunan, dan tabel statis 908 menambah 4 seri dan 3 turunan, jadi totalnya 24 seri ditambah 6 turunan. Setiap run mengambil seri penuh (sejak 2000 untuk sumber SDMX; jawaban kecil berkat `detail=dataonly`, kecuali WEO yang butuh kolom `LATEST_ACTUAL_ANNUAL_DATA`), lalu membandingkan hash data ternormalisasi dengan pengambilan terakhir. Kolom "Cara mendeteksi data baru" di atas (`updatedAfter`, 404 sebagai "tidak ada perubahan", rilis pers BPS) adalah optimasi yang belum dipakai. Frankfurter dan World Bank baru dipakai di uji akses.
+**Yang sudah jalan:** sejak fase 1 (di `main`), IMF (WEO, QNEA, CPI, PCPS), BIS, OECD, dan ECB, 14 seri ditambah 2 turunan. Sejak v0.1, BPS menambah 3 seri rilis pertama, var 2335 menambah 3 seri dan 1 turunan, tabel statis 908 menambah 4 seri dan 3 turunan, dan indeks IMF CPI menambah 1 seri, jadi totalnya 25 seri ditambah 6 turunan. Setiap run mengambil seri penuh (sejak 2000 untuk sumber SDMX; jawaban kecil berkat `detail=dataonly`, kecuali WEO yang butuh kolom `LATEST_ACTUAL_ANNUAL_DATA`), lalu membandingkan hash data ternormalisasi dengan pengambilan terakhir. Kolom "Cara mendeteksi data baru" di atas (`updatedAfter`, 404 sebagai "tidak ada perubahan", rilis pers BPS) adalah optimasi yang belum dipakai. Frankfurter dan World Bank baru dipakai di uji akses.
 
 **Cara pengambil BPS bekerja** (`fetch.py`, bagian BPS; semua aturan WebAPI di bawah sudah dicek ke jawaban sungguhan 2026-10-30):
 
@@ -242,35 +252,52 @@ Jadwal tabel manual: target diperiksa saat UU APBN baru disahkan (akhir Septembe
 
 ### 4.6 Compute
 
-- Runner `ubuntu-24.04` standar (gratis di repo publik). `pipeline.yml` memakai Python 3.14 lewat `setup-python`; fase 1 hanya butuh psycopg 3 dari lockfile berhash (`requirements.txt`), sedangkan pandas 3 dan statsmodels 0.15 masuk di fase 3. Uji akses (`smoke.yml`) tetap memakai `python3` bawaan runner (3.12) dan hanya pustaka standar. Seluruh kode dites kompatibel dengan Python 3.12.
-- Job harian dibatasi 60 menit. Backtest berjalan di job `backtest` tersendiri (lihat 4.7), karena lamanya belum terukur.
-- Model (fase 3):
+- Runner `ubuntu-24.04` standar (gratis di repo publik). `pipeline.yml` memakai Python 3.14 lewat `setup-python`, dengan psycopg 3, pandas 3, dan statsmodels 0.15 dari lockfile berhash (`requirements.txt`). Uji akses (`smoke.yml`) tetap memakai `python3` bawaan runner (3.12) dan hanya pustaka standar. Lockfile dibuat untuk Python 3.12 ke atas.
+- Job harian dibatasi 60 menit, dan langkah model di dalamnya hanya beberapa detik. EM dan SARIMAX punya batas iterasi. Backtest berjalan di job `backtest` tersendiri (lihat 4.7), sekitar 3 menit di laptop.
 
-| Target | Baseline | Model MVP | Horizon |
-|---|---|---|---|
-| PDB | AR pada pertumbuhan yoy kuartalan | Dynamic factor model campuran frekuensi (`DynamicFactorMQ`) | Kuartal berjalan sampai akhir tahun depan |
-| Inflasi | AR, atau "sama dengan bulan lalu" | ARIMAX dengan harga komoditas, kurs, BI-Rate | 12-18 bulan |
-| TPT | "Sama dengan rilis terakhir" | Regresi sederhana dengan forecast PDB | Dua rilis berikutnya |
+**Model (fase 3).** Semua angka target berbentuk y-on-y, kecuali TPT.
 
-- Ketiga target dihitung dalam satu proses supaya ceritanya konsisten. VAR atau BVAR gabungan menyusul setelah baseline stabil.
-- Hukum Okun di Indonesia lemah menurut sejumlah studi, jadi model TPT sengaja sederhana dan diberi label eksperimental.
-- Variabel hari libur (Ramadan/Lebaran berpindah bulan), dummy kebijakan sekali jalan, dan dummy COVID masuk sebagai fitur.
-- Pemilihan fitur: sampel PDB kuartalan pendek (kurang dari 20 tahun), jadi fitur masuk model hanya bila menurunkan galat backtest dibanding baseline. Seri yang saling berkorelasi tinggi, misalnya empat harga komoditas, diringkas dulu (misalnya menjadi satu faktor), tidak dimasukkan satu per satu. Batas paling banyak 15 indikator di panel penggerak (PRD 4.1) adalah soal keterbacaan, bukan aturan model.
-- Model hanya dijalankan ulang bila target atau fitur periode-lengkap berubah. Data harian (kurs) masuk sebagai rata-rata bulan yang sudah lengkap.
-- Rentang ketidakpastian diambil dari galat backtest (persentil per horizon). Backtest bergulir 2012-2025 menghormati jeda rilis; metriknya MAE dan RMSE per horizon dibanding baseline dan proyeksi IMF.
+| Target (`series_id`) | Baseline | Model | Horizon | Hasil backtest |
+|---|---|---|---|---|
+| PDB (`bps_gdp_growth_q`) | `sama_terakhir`, `ar1` | `dfm`: `DynamicFactorMQ`, satu faktor | Sampai akhir tahun depan | Baseline menang, jadi angka utamanya `sama_terakhir` |
+| Inflasi (`bps_cpi_yoy_m`) | `sama_terakhir`, `ar1` (10 tahun) | `musiman`, dengan `arimax` sebagai pembanding | Sampai Desember tahun depan | `musiman` menang di semua horizon |
+| TPT (`bps_unemp_round`), eksperimental | `sama_terakhir` | `regresi`, dan `regresi_pdb` sebagai pembanding | Dua rilis berikutnya | Baseline tetap angka utama |
+
+- **`musiman`:** perubahan bulanan IHK diregresikan pada bulan kalender, porsi Ramadan, dan bulan Lebaran (`config/holidays.csv`) selama 60 bulan terakhir, lalu dirangkai di atas indeks yang sudah terbit menjadi y-on-y. Rangkaian inilah yang menangkap efek basis tahun lalu. Bulan yang jauh dari pola bulan kalendernya (lebih dari 3 kali simpangan median) dipangkas saat estimasi, misalnya kenaikan BBM, jadi tidak perlu daftar kebijakan manual. Riwayat indeks berasal dari IMF, disambung ke depan dengan m-to-m tabel BPS 908 yang terbit lebih dulu.
+- **`arimax`:** bentuk rencana awal, yaitu AR(1) dengan pola kalender ditambah perubahan kurs, Brent, dan BI-Rate bulan lalu. Sesudah data habis, ketiganya diasumsikan tidak berubah. Tetap diuji supaya terlihat bahwa variabel pasar tidak menurunkan galat.
+- **`dfm`:** panel bulanan y-on-y berisi IHK, empat harga komoditas, kurs, dan BI-Rate, dengan PDB sebagai seri kuartalan. Kuartal COVID dianggap kosong saat estimasi, kecuali dua kuartal terakhir. EM tidak menjamin model stasioner, jadi ramalan di atas 25 poin persen dibuang, dan asal itu tercatat tanpa hasil. Muatan PDB pada faktornya sangat kecil, jadi model ini tidak banyak memakai panelnya. CLI OECD tidak dipakai, karena riwayatnya direvisi tiap bulan, dan backtest tanpa vintage akan terlalu optimistis.
+- **`regresi`:** TPT sebuah ronde pada TPT ronde sebelumnya dan penanda ronde Agustus. `regresi_pdb` menambah rata-rata pertumbuhan PDB empat kuartal, memakai `ar1` untuk kuartal yang belum terbit. Koefisien PDB mendekati nol, sejalan dengan hukum Okun yang lemah di Indonesia. Ronde Agustus 2020 tidak ikut diestimasi. Butuh minimal 8 pasangan ronde.
+- **Pemilihan bentuk model.** Fitur masuk model hanya bila menurunkan galat backtest dibanding baseline. Lebar jendela, pemangkasan, dan Lebaran dipilih dari asal sampai 2019, dan asal sejak 2022 menjadi pemeriksa. Pemeriksa ini tidak sepenuhnya buta, karena hasilnya ikut terlihat saat memilih. Batas paling banyak 15 indikator di panel penggerak (PRD 4.1) adalah soal keterbacaan, bukan aturan model.
+- **Yang diuji dan tidak lolos:** untuk PDB, ekspor, impor, produksi industri, wisatawan, dan uang beredar dari BPS (DFM tetap kalah dari `sama_terakhir` di masa normal), serta perubahan antarkuartal musiman yang dirangkai seperti `musiman` (lebih buruk di luar masa COVID). Untuk inflasi, kurs, Brent, CPO, dan BI-Rate. Karena itu seri tersebut tidak ditambahkan ke registri. Luciani dkk. (rujukan di bagian 6) mengalahkan baseline dengan indikator yang juga mencakup penjualan mobil, PMI, dan indeks tendensi bisnis Bank Indonesia, yang tidak ditemukan lewat API yang dipakai proyek ini.
+
+**Backtest** (`confore/models/backtest.py`)
+
+- Setiap bulan sejak Januari 2012, asal dianggap tanggal 15. Data dipotong menurut jadwal rilis: IHK dan data pasar sampai bulan sebelumnya, PDB sampai kuartal yang sudah terbit (sekitar tanggal 5 bulan kedua sesudah kuartal berakhir), dan ronde TPT sejak tiga bulan sesudah bulan surveinya. TPT hanya dinilai pada asal pertama sesudah rilis baru. Horizon dihitung dari angka resmi terakhir saat itu, dalam satuan periode seri: kuartal untuk PDB, dan bulan untuk inflasi dan TPT. TPT memakai bulan karena rilis berikutnya kini berjarak 3 bulan, sedangkan dulu 6 bulan, dan galat keduanya tidak sepadan.
+- Dua hal memakai pengetahuan sesudah asal, dengan sengaja: jadwal ronde TPT berikutnya (bukan nilainya), dan daftar periode COVID, yang hanya memengaruhi asal 2020-2021.
+- Vintage baru tersimpan sejak Oktober 2026, jadi backtest memakai nilai terbaru, bukan rilis pertama. Revisi tidak tertiru, dan hasilnya bisa sedikit optimistis. Rekam jejak di fase 4 menilai `etl.forecasts` terhadap rilis pertama.
+- Empat jendela penilaian, atas baris yang sama untuk semua model: masa normal (asal dan periode di luar Februari 2020 sampai Desember 2021), sebelum COVID, data uji (asal sejak 2022), dan semua periode. Sebelum COVID dan data uji tidak bertumpuk, dan keduanya bagian dari masa normal. Metriknya MAE dan RMSE per horizon, ditambah uji Diebold-Mariano dengan koreksi sampel kecil antara model terbaik dan baseline terbaik di masa normal. Baris dengan asal yang berdekatan saling tumpang tindih, jadi `n` bukan jumlah kejadian independen, dan nilai p pada horizon panjang tetap cenderung terlalu kecil.
+- **Angka utama per horizon** (`main_models`, PRD 6): model yang mengalahkan semua baseline di masa normal dan di data uji, dengan minimal 20 baris di keduanya. Tanpa itu, baseline dengan MAE terkecil di masa normal. Data uji yang menentukan, karena tidak dipakai saat memilih bentuk model. Jadi model bisa menang walau kalah di jendela sebelum COVID, misalnya `musiman` pada horizon 15 sampai 17 bulan, dan laporan menampilkan jendela itu.
+- **Rentang ketidakpastian** dari persentil galat per seri, model, dan horizon, minimal 20 galat. Rentang 80% dari masa normal, jadi lebarnya menggambarkan masa biasa. Rentang 95% dari semua periode termasuk masa COVID, jadi guncangan besar ikut tergambar. Laporan menampilkan cakupan rentang 80% yang dibuat dari asal sampai 2019 dan diuji pada asal sejak 2022.
+- Proyeksi IMF lama tidak bisa dibandingkan di backtest, karena API IMF hanya menyediakan vintage WEO Oktober 2025 dan April 2026. Pembanding IMF masuk lewat Rekam jejak di fase 4.
+
+**Ramalan harian** (`confore/models/forecast.py`)
+
+- Ketiga target dihitung dalam satu proses, paling akhir dalam run: sesudah publikasi dan penyegaran situs, dengan koneksi dan kunci sendiri. Jadi model yang gagal atau macet tidak menahan data maupun situs. Kegagalan model membuat job merah. Seri bahan yang belum ada membuat langkah ini dilewati. Bila fase 4 menerbitkan ramalan, urutan ini perlu ditinjau lagi.
+- `config/holidays.csv` dimuat di langkah model, bukan bersama tabel manual lain, supaya baris keliru di sana tidak menghentikan pengambilan data.
+- Model hanya dijalankan ulang bila sidiknya berubah: target, fitur periode-lengkap, kalender Lebaran, waktu backtest terakhir, dan versi kode. Data harian (kurs) masuk sebagai rata-rata bulan yang sudah lengkap.
 - Horizon panjang di MVP memakai proyeksi IMF WEO, bukan model sendiri.
 
 ### 4.7 CI/CD
 
-- **`pipeline.yml`** (satu-satunya workflow yang menulis data). Pemicu: jadwal harian `17 23 * * *` (06.17 WIB), jadwal hari rilis BPS `17 8,11 1-8 * *` (15.17 dan 18.17 WIB tanggal 1-8), push ke `main` yang mengubah `config/**`, dan manual dengan mode `run`, `full_refresh`, atau `migrate`. Jadwal harian dan push memakai mode `run`. Jadwal hari rilis BPS dikenali dari `github.event.schedule` dan selalu menjalankan `python -m confore run --source bps --trigger release`.
+- **`pipeline.yml`** (satu-satunya workflow yang menulis data). Pemicu: jadwal harian `17 23 * * *` (06.17 WIB), jadwal hari rilis BPS `17 8,11 1-8 * *` (15.17 dan 18.17 WIB tanggal 1-8), jadwal backtest `47 9 9 * *` (tanggal 9, 16.47 WIB), push ke `main` yang mengubah `config/**`, dan manual dengan mode `run`, `full_refresh`, `migrate`, atau `backtest`. Jadwal harian dan push memakai mode `run`. Jadwal hari rilis BPS dikenali dari `github.event.schedule` dan selalu menjalankan `python -m confore run --source bps --trigger release`.
   - Secret per langkah: langkah `Tes` tidak menerima Secret apa pun; langkah `Pipeline` menerima `SUPABASE_DB_URL`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `BPS_API_KEY`, `REVALIDATE_SECRET`, dan `SITE_URL`.
-  - Job `run`, batas 60 menit: tes, ambil data, cek awal (koneksi, ukuran database, katalog akses), simpan, turunan, model (fase 3), publikasi, catat run, revalidasi. Yang sudah ada: semua kecuali model.
-  - Job `backtest` (fase 3): berjalan setelah rilis target atau secara manual, dengan batas waktu sendiri; menulis `etl.backtest`.
+  - Job `run`, batas 60 menit: tes (tanpa tes model, supaya tes model yang merah tidak menahan pengambilan data), ambil data, cek awal (koneksi, ukuran database, katalog akses), simpan, turunan, publikasi, catat run, revalidasi, model.
+  - Job `backtest`, batas 120 menit: berjalan pada jadwal backtest atau mode `backtest`, sesudah rilis target bulan itu. Menerima Secret `SUPABASE_DB_URL` saja, menulis `etl.backtest`, dan laporannya muncul di ringkasan job.
   - Job `notify`, terpisah dengan izin `issues: write` saja: membuka atau mengomentari satu issue `pipeline-failure` berisi nama sumber, kode HTTP, dan tautan run.
   - `concurrency: con-fore-pipeline` dengan `queue: max` dan tanpa `cancel-in-progress`. Tanpa `queue: max`, run tertunda (misalnya `migrate` manual) bisa digantikan run berikutnya.
 - **`backup.yml`**: lihat 4.13. Memakai grup concurrency yang sama supaya ekspor tidak terjadi di tengah publikasi.
 - **`smoke.yml`** (ada sejak fase 0): dijalankan manual; menjalankan `tests.test_smoke` lalu uji akses setiap sumber dari runner, dan menulis hasilnya ke ringkasan job. Tes lain butuh psycopg, jadi dijalankan di `pipeline.yml`. Di workflow ini, hanya langkah uji akses yang menerima Secret key BPS dan FRED. Permintaan yang membawa key menolak pengalihan alamat, dan catatan hasil hanya memuat kode HTTP atau jenis error.
-- **`ci.yml`** (mulai fase 3): tes parser dengan fixture, tes batas WIB/UTC, smoke test model, dan uji migrasi terhadap Postgres lokal (`tests/test_db.py` dengan `CONFORE_TEST_DB_URL`). Tanpa secret. Sampai saat itu, tes database dijalankan di laptop. Uji akses ke proyek Supabase sungguhan berjalan di `pipeline.yml` mode `migrate`.
+- **`ci.yml`** (sejak fase 3): setiap push ke `main` dan pull request yang menyentuh selain `web/` dan dokumen, menjalankan seluruh tes termasuk tes model dan uji migrasi terhadap Postgres lokal (`tests/test_db.py` dengan `CONFORE_TEST_DB_URL`, service container `postgres:15`). Tanpa Secret. Uji akses ke proyek Supabase sungguhan berjalan di `pipeline.yml` mode `migrate`.
 - Keamanan workflow: izin bawaan `contents: read`; setiap action dipin ke commit SHA dan diperbarui Dependabot; input manual dibaca lewat `env`; tidak pernah memakai `pull_request_target`.
 - **Deploy situs** (langkahnya di RUNBOOK): Vercel membangun dari branch `main` dengan Root Directory `web`. Ignored Build Step ada di `web/vercel.json` (`ignoreCommand`): build hanya bila `web/` berubah sejak commit yang terakhir dideploy (`VERCEL_GIT_PREVIOUS_SHA`, atau `HEAD^` bila variabel itu kosong). Karena itu, Redeploy manual untuk commit yang sama harus mematikan centang "Use project's Ignore Build Step". Pembaruan data cukup lewat revalidasi.
 
@@ -326,6 +353,7 @@ Semua permintaan diberi jeda 1 detik dari permintaan sebelumnya, hanya mengikuti
 - Pipeline tidak pernah mencetak atau menyimpan teks error bebas, karena pesan error bisa memuat URL ber-key, host, atau user database. `fetch_log` dan ringkasan job hanya memuat kode HTTP, kode tetap (misalnya "tanpa data"), atau nama jenis error plus SQLSTATE. Error tak terduga dicetak sebagai baris kode traceback tanpa pesannya, dan logger psycopg dimatikan. GitHub memang menyamarkan Secret di log, tetapi tidak di isi issue atau database, dan tidak bila nilainya berubah bentuk. Karena tidak ada teks bebas, `redact()` belum dibuat; ia dibuat bila nanti ada teks bebas yang harus masuk issue (job `notify`).
 - Kode tetap khusus pengambil BPS: "BPS_API_KEY belum diisi" dan "format BPS_API_KEY tidak valid" (key tidak pernah ikut di pesan); "bukan JSON", "status bukan OK", "kolom berubah", "kode tidak dikenal", "kode ganda", "periode ganda", "periode tidak valid", dan "nilai tidak valid" (bentuk jawaban berubah); "dimensi berubah" (variabel atau baris vervar dan turvar hilang, bertambah, atau diberi nomor baru); dan "tanpa data" bila satu variabel dalam seri gabungan ` + ` tidak menghasilkan data sama sekali. Dengan dua kode terakhir, variabel yang hilang menggagalkan seluruh seri, bukan diam-diam menghapus rondenya dari seri gabungan. Khusus tabel statis 908: "bulan tidak lengkap" (bulan bolong di tahun yang dipakai) dan "y-to-d tidak cocok" (rangkaian m-to-m setahun menyimpang lebih dari 0,1 poin persen dari baris y-to-d). Galat HTTP dicatat sebagai `HTTP <kode>` tanpa URL, karena URL BPS memuat key.
 - Log runtime Vercel di paket Hobby hanya disimpan 1 jam, jadi riwayat operasional tidak bergantung padanya.
+- Model yang gagal dicetak sebagai baris kode traceback dan nama jenis error, tanpa pesannya, kecuali pesan tabel `config/` yang memang publik. Job berakhir merah, tetapi status run di database tidak berubah, karena data sudah terbit.
 - Satu seri gagal ditandai "terlambat" (`is_stale`) dan run tetap lanjut dengan status `partial`. Run dianggap gagal (`failed`, kode keluar 1) bila database tidak terjangkau, publikasi error, tidak ada satu pun seri yang berhasil diambil, seri mana pun gagal tiga kali berturut-turut, atau (nanti) target gagal validasi pada hari rilisnya. Status dinilai atas semua seri, bukan hanya yang diambil run itu, jadi run `--source` yang sukses tetap `partial` bila sumber lain masih gagal. `public.site_status.last_success_at` hanya maju pada run yang tidak gagal, supaya pemeriksaan kesehatan 36 jam tetap berbunyi saat sumber terus gagal; run yang berhenti karena error menandai `last_run_status = failed`.
 
 ### 4.13 Recovery
@@ -345,7 +373,7 @@ Semua permintaan diberi jeda 1 detik dari permintaan sebelumnya, hanya mengikuti
 | Akses sumber berubah atau diblokir | 403, 429, CSV kosong, periode tidak bergerak (404 dari OECD/BIS bisa berarti tidak ada perubahan) | Satu modul per sumber, uji kontrak, cadangan BPS/IMF, jalur laptop |
 | Revisi dan ganti tahun dasar BPS | Riwayat berbeda dengan unduhan baru | Tabel vintage, kolom tahun dasar, seri baru saat rebasing |
 | Key bocor di repo publik | Peringatan secret scanning | Error hanya berupa kode, key tidak pernah di registri, izin minimal, push protection |
-| Model meleset (Lebaran berpindah bulan, kebijakan sekali jalan, patahan COVID) | Kalah dari baseline berturut-turut | Variabel hari libur dan dummy; baseline selalu tampil; meleset tetap dipublikasikan |
+| Model meleset (Lebaran berpindah bulan, kebijakan sekali jalan, patahan COVID) | Kalah dari baseline berturut-turut | Pola Lebaran dan pemangkasan pencilan; baseline selalu tampil; meleset tetap dipublikasikan |
 | Kebijakan paket gratis berubah | Changelog harga, email penyedia | Python dan SQL standar, backup mingguan, runner cadangan |
 | Dependensi berubah (pandas 3, statsmodels, Node di runner) | FutureWarning, backtest bergeser tanpa data baru | Lockfile berhash, versi paket dicatat di setiap forecast |
 | Salah tanggal: UTC vs WIB, periode vs tanggal rilis | Bulan salah tampil, duplikat tengah malam | `timestamptz` UTC, tampilan Asia/Jakarta, tes batas waktu |

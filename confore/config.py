@@ -19,6 +19,7 @@ CONCEPTS = {"level", "index", "yoy", "avg_yoy", "eop_yoy", "rate", "round_rate"}
 DERIVE_INPUTS = {"yoy": 1, "ratio": 2, "share": 3, "chain": 1}
 TARGET_KINDS = {"apbn", "pmk", "rpjmn"}
 VERIFICATIONS = {"dokumen", "berita"}
+HOLIDAY_VERIFICATIONS = VERIFICATIONS | {"ensiklopedia", "perkiraan"}
 
 
 class ConfigError(ValueError):
@@ -138,6 +139,28 @@ def check_calendar(rows, series):
         out.append((row["series_id"], period, row["calendar_source"],
                     iso_date(row["release_date"], where)))
     return out
+
+
+def check_holidays(rows):
+    """Tanggal Lebaran menurut penetapan pemerintah, dipakai model inflasi (ARCHITECTURE 4.6)."""
+    dates = []
+    for i, row in enumerate(rows, start=2):
+        where = f"holidays.csv baris {i}"
+        if row["kind"] != "lebaran" or row["verification"] not in HOLIDAY_VERIFICATIONS:
+            raise ConfigError(f"{where}: kind atau verification tidak dikenal")
+        if not row["document"] or not row["url"].startswith("https://"):
+            raise ConfigError(f"{where}: document kosong atau url bukan https")
+        iso_date(row["last_verified"], where)
+        day = iso_date(row["date"], where)
+        if dates and day <= dates[-1]:
+            raise ConfigError(f"{where}: tanggal harus urut dan tidak ganda")
+        dates.append(day)
+    return dates
+
+
+def load_holidays():
+    """Dimuat terpisah, supaya baris keliru di tabel ini hanya menghentikan model, bukan pengambilan data."""
+    return check_holidays(read_csv("holidays.csv"))
 
 
 def load():

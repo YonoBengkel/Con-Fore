@@ -4,19 +4,21 @@ name: Pipeline data
 # tersibuk GitHub. Jadwal dan push memakai mode run.
 # - 17 23 * * *: harian 06.17 WIB keesokan harinya, semua sumber.
 # - 17 8,11 1-8 * *: hari rilis BPS (tanggal 1-8), 15.17 dan 18.17 WIB, hanya sumber BPS.
+# - 47 9 9 * *: backtest bulanan tanggal 9, 16.47 WIB, sesudah rilis inflasi, PDB, dan TPT bulan itu.
 on:
   schedule:
     - cron: "17 23 * * *"
     - cron: "17 8,11 1-8 * *"
+    - cron: "47 9 9 * *"
   push:
     branches: [main]
     paths: ["config/**"]
   workflow_dispatch:
     inputs:
       mode:
-        description: "run: ambil dan publikasi; full_refresh: tulis ulang semua observasi; migrate: migrasi SQL lalu uji akses"
+        description: "run: ambil dan publikasi; full_refresh: tulis ulang semua observasi; migrate: migrasi SQL lalu uji akses; backtest: uji model pada data lama"
         type: choice
-        options: [run, full_refresh, migrate]
+        options: [run, full_refresh, migrate, backtest]
         default: run
 
 permissions:
@@ -28,6 +30,7 @@ concurrency:
 
 jobs:
   run:
+    if: github.event.schedule != '47 9 9 * *' && inputs.mode != 'backtest'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -39,8 +42,9 @@ jobs:
           python-version: "3.14"
       - name: Pasang dependensi dari lockfile berhash
         run: python -m pip install --require-hashes -r requirements.txt
+      # Tes model hanya di ci.yml, supaya tes model yang merah tidak menahan pengambilan data.
       - name: Tes
-        run: python -m unittest discover -s tests -v
+        run: python -m unittest tests.test_smoke tests.test_pipeline tests.test_bps tests.test_db -v
       - name: Pipeline
         env:
           MODE: ${{ inputs.mode || 'run' }}
@@ -61,3 +65,21 @@ jobs:
             full_refresh) python -m confore run --full-refresh ;;
             *) python -m confore run ;;
           esac
+
+  backtest:
+    if: github.event.schedule == '47 9 9 * *' || inputs.mode == 'backtest'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+      - name: Pasang dependensi dari lockfile berhash
+        run: python -m pip install --require-hashes -r requirements.txt
+      - name: Backtest
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: python -m confore backtest
