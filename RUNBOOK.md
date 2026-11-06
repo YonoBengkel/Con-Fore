@@ -47,6 +47,8 @@ Bila koneksi gagal: periksa bahwa `SUPABASE_DB_URL` adalah string **Session pool
 10. Bila seri BPS gagal (kodenya tampil di ringkasan run):
     - "BPS_API_KEY belum diisi" atau "format BPS_API_KEY tidak valid": Secret `BPS_API_KEY` tidak sampai ke langkah Pipeline, atau isinya salah (bagian 2).
     - "status bukan OK", "dimensi berubah", "kode tidak dikenal", "kolom berubah", atau "tanpa data": susunan tabel BPS berubah. Cek variabelnya (id di `config/series.toml`) di webapi.bps.go.id. Bila BPS mengganti tahun dasar atau memindahkan data ke variabel baru, tambahkan seri baru, atau satu item ` + ` baru di query seri itu.
+    - "y-to-d tidak cocok" atau "bulan tidak lengkap" di seri `bps_cpi_*_mom_m`: ada sel keliru atau bulan bolong di tabel statis 908, jadi seri itu tertahan di angka terakhir yang baik. Bandingkan baris tahun itu dengan rilis pers BPS, lalu tunggu BPS membetulkan tabelnya. Jangan melonggarkan `BPS_YTD_TOLERANCE` di `confore/fetch.py`, karena satu sel keliru merusak y-on-y setahun penuh.
+    - Bila BPS mengganti tahun dasar IHK (terakhir Januari 2024), rangkaian y-on-y kelompok melewati dua tahun dasar selama 11 bulan dan bisa menyimpang sekitar 0,3 poin persen dari rilis. Naikkan tahun `sejak` di keempat query tabel 908 ke tahun dasar baru, dengan akibat angka setahun per kelompok kosong selama 11 bulan.
     - `HTTP 429`: kuota WebAPI terlampaui. Tunggu run berikutnya dan jangan menjalankan banyak run manual berdekatan.
 
 ## 5. Menayangkan situs pertama kali (fase 2)

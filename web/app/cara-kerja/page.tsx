@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { angka } from "@/lib/format";
+import { KELOMPOK_INFLASI } from "@/lib/konten";
 import { AMBANG_PORSI } from "@/lib/pekerja";
 import { AMBANG_STATUS, PATOKAN_INFLASI, POIN_PER_PP, TAHUN_AKHIR, TAHUN_AWAL } from "@/lib/skor";
 
@@ -137,6 +138,42 @@ export default function CaraKerja() {
         <li>
           Perubahan porsi di bawah {angka(AMBANG_PORSI, 1)} poin persen ditulis &quot;hampir tidak
           berubah&quot;.
+        </li>
+      </ul>
+
+      <h2 id="rincian-inflasi">Rincian inflasi</h2>
+      <p>
+        Halaman inflasi memecah angka umum menjadi tiga kelompok yang dipakai BPS. Penjelasan kelompoknya
+        mengikuti{" "}
+        <a href="https://www.bi.go.id/id/fungsi-utama/moneter/inflasi/default.aspx">Bank Indonesia</a>, dan
+        contoh barangnya dari rilis bulanan BPS dan Bank Indonesia.
+      </p>
+      <ul>
+        {KELOMPOK_INFLASI.map((k) => (
+          <li key={k.setahun}>
+            <strong>{k.nama}:</strong> {k.isi}
+          </li>
+        ))}
+      </ul>
+      <ul>
+        <li>
+          BPS menerbitkan perubahan bulanan tiap kelompok, tetapi tidak menyediakan tabel perubahan
+          setahun per kelompok lewat API. Con-Fore merangkai 12 perubahan bulanan terakhir untuk
+          menghitungnya.
+        </li>
+        <li>
+          Perubahan bulanan sudah dibulatkan, jadi hasilnya bisa sedikit berbeda dari angka rilis BPS.
+          Untuk inflasi umum, Desember 2024 sampai Oktober 2026, hitungan yang sama berbeda paling jauh
+          sekitar 0,02 poin persen dari angka resmi. Karena itu angkanya ditulis dengan satu desimal.
+        </li>
+        <li>
+          Datanya mulai Januari 2024, saat BPS memakai tahun dasar 2022=100. Karena itu angka setahun per
+          kelompok baru ada sejak Desember 2024.
+        </li>
+        <li>Angka kelompok tidak bisa dijumlahkan menjadi angka umum, karena bobot tiap kelompok berbeda.</li>
+        <li>
+          Barang atau jasa penyumbang terbesar tiap bulan belum ditampilkan, karena datanya tidak tersedia
+          lewat API BPS.
         </li>
       </ul>
 

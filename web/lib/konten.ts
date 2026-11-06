@@ -38,6 +38,32 @@ const JENIS_SERI: Record<string, KunciKartu> = {
 export const SERI_FORMAL = "bps_formal_share_round";
 export const SERI_TPT_RONDE = "bps_unemp_round";
 
+/**
+ * Rincian inflasi (PRD 4.4): tiga kelompok BPS dengan nama netral, dijelaskan dari isinya.
+ * `setahun` dirangkai Con-Fore dari 12 perubahan bulanan; `sebulan` data resmi BPS.
+ */
+export const KELOMPOK_INFLASI = [
+  {
+    nama: "Inti",
+    setahun: "bps_cpi_core_yoy_m",
+    sebulan: "bps_cpi_core_mom_m",
+    isi: "Barang dan jasa di luar dua kelompok lain, misalnya biaya sekolah, sepeda motor, telepon seluler, dan emas perhiasan. Sebagai satu kelompok, harganya cenderung bergerak pelan.",
+  },
+  {
+    nama: "Harga diatur pemerintah",
+    setahun: "bps_cpi_admin_yoy_m",
+    sebulan: "bps_cpi_admin_mom_m",
+    isi: "Harga dan tarif yang banyak dipengaruhi kebijakan pemerintah, misalnya bensin, tarif listrik, tarif angkutan, dan rokok.",
+  },
+  {
+    nama: "Harga bergejolak",
+    setahun: "bps_cpi_volatile_yoy_m",
+    sebulan: "bps_cpi_volatile_mom_m",
+    isi: "Sebagian besar bahan makanan yang harganya mudah naik turun, misalnya cabai merah, cabai rawit, dan bawang merah.",
+  },
+];
+export const SERI_INFLASI_BULANAN = "bps_cpi_mom_m";
+
 /** Panel penggerak: kelompok dan urutan seri. Seri yang belum ada di database dilewati. */
 export const PENGGERAK: { judul: string; seri: string[] }[] = [
   { judul: "Harga komoditas dunia", seri: ["wld_coal_m", "wld_cpo_m", "wld_nickel_m", "wld_brent_m"] },
@@ -55,6 +81,7 @@ export const SERI_DITAUTKAN: string[] = [
   ...Object.values(SERI_KARTU).flat(),
   ...PENGGERAK.flatMap((k) => k.seri),
   SERI_FORMAL,
+  ...KELOMPOK_INFLASI.map((k) => k.setahun),
 ];
 
 const ARTINYA_PENGGERAK: Record<string, string> = {
@@ -76,8 +103,26 @@ const ARTINYA_PENGGERAK: Record<string, string> = {
     "Tiongkok adalah mitra dagang terbesar Indonesia. Bila ekonominya melambat, permintaan atas batu bara, sawit, dan nikel kita bisa ikut turun.",
 };
 
+/** "2,6% lebih mahal dibanding setahun sebelumnya", dari angka yang tampil. */
+function gerakHarga(nilai: number, desimal: number, pembanding: string, awalan = ""): string {
+  const tampil = Number(nilai.toFixed(desimal));
+  if (tampil === 0) return `hampir sama dengan ${pembanding}`;
+  return `${awalan}${angka(Math.abs(tampil), desimal)}% ${tampil > 0 ? "lebih mahal" : "lebih murah"} dibanding ${pembanding}`;
+}
+
 /** Penjelasan sehari-hari untuk satu nilai, atau null bila belum ada penjelasan untuk seri itu. */
 export function artinyaBuatmu(seri: string, nilai: number): string | null {
+  const kelompok = KELOMPOK_INFLASI.find((k) => k.setahun === seri || k.sebulan === seri);
+  if (kelompok) {
+    const gerak =
+      kelompok.setahun === seri
+        ? gerakHarga(nilai, 1, "setahun sebelumnya", "sekitar ")
+        : gerakHarga(nilai, 2, "bulan sebelumnya");
+    return `Harga kelompok ini ${gerak}. ${kelompok.isi}`;
+  }
+  if (seri === SERI_INFLASI_BULANAN) {
+    return `Rata-rata harga barang dan jasa ${gerakHarga(nilai, 2, "bulan sebelumnya")}.`;
+  }
   const jenis = JENIS_SERI[seri];
   if (jenis === "pertumbuhan") {
     const arah = nilai >= 0 ? "lebih besar" : "lebih kecil";

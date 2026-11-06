@@ -1,11 +1,13 @@
 """Ambil satu seri dari API sumber dan ubah menjadi observasi ternormalisasi.
 
 IMF, BIS, OECD, dan ECB menjawab dalam CSV SDMX dengan kolom TIME_PERIOD dan OBS_VALUE; BPS
-menjawab dalam JSON WebAPI (lihat parse_bps). Error dilaporkan sebagai FetchError dengan kode
-tetap (misalnya "HTTP 503"), tidak pernah URL atau isi jawaban, karena URL BPS memuat key.
+menjawab dalam JSON WebAPI (lihat parse_bps) atau tabel HTML di dalam JSON (lihat parse_bps_table).
+Error dilaporkan sebagai FetchError dengan kode tetap (misalnya "HTTP 503"), tidak pernah URL atau
+isi jawaban, karena URL BPS memuat key.
 """
 
 import csv
+import functools
 import hashlib
 import http.client
 import io
@@ -18,6 +20,7 @@ import urllib.parse
 import urllib.request
 from datetime import date
 from decimal import Decimal, InvalidOperation
+from html.parser import HTMLParser
 from typing import NamedTuple
 
 from confore.smoke import KEY_FORMAT, NoRedirect
@@ -358,8 +361,138 @@ def fetch_bps(item, today=None):
     return sorted(merged.values(), key=lambda point: point.start)
 
 
+# --- BPS tabel statis ------------------------------------------------------------------------
+
+# Komponen inflasi tidak ada sebagai variabel WebAPI, hanya sebagai tabel statis 908: tabel HTML di
+# dalam JSON, berisi baris per tahun (perubahan sejak Januari, y-to-d) dan per bulan (perubahan dari
+# bulan sebelumnya, m-to-m). Query registri memilih satu kolom dan tahun awalnya: pola ini sekaligus
+# menolak key di registri.
+BPS_TABLE_ITEM = re.compile(r"domain/0000/tabel/908/kolom/(umum|inti|diatur|bergejolak)"
+                            r"/sejak/(\d{4})")
+BPS_TABLE_URL = "https://webapi.bps.go.id/v1/api/view/model/statictable/lang/ind/domain/0000/id/908"
+BPS_TABLE_HEADER = ["Tahun/Bulan", "Umum", "Inti", "Harga-Diatur Pemerintah", "Bergejolak"]
+BPS_TABLE_WIDTH = 6  # sel per baris data; kepala tabel menggabungkan kolom tahun dan bulan
+BPS_TABLE_COLUMNS = {"umum": 2, "inti": 3, "diatur": 4, "bergejolak": 5}
+# Selisih wajar antara rangkaian m-to-m setahun dan baris y-to-d-nya: 12 angka yang dibulatkan ke 2
+# desimal bisa menyimpang sampai sekitar 0,07. Baris Maret 2022 di tabel ini keliru (umum tertulis
+# 0,08, rilis BPS 0,66), dan membuat rangkaian 2022 menyimpang 0,59.
+BPS_YTD_TOLERANCE = Decimal("0.1")
+
+
+class TableCells(HTMLParser):
+    """Kumpulkan teks setiap sel td per baris tr; gaya dan atribut tabel diabaikan."""
+
+    def __init__(self):
+        super().__init__()
+        self.rows, self.cell = [], None
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "tr":
+            self.rows.append([])
+        elif tag == "td" and self.rows:
+            self.cell = []
+            self.rows[-1].append(self.cell)
+
+    def handle_endtag(self, tag):
+        if tag == "td":
+            self.cell = None
+
+    def handle_data(self, data):
+        if self.cell is not None:
+            self.cell.append(data)
+
+    def table(self):
+        return [[" ".join("".join(cell).split()) for cell in row] for row in self.rows]
+
+
+def compound(changes):
+    """Perubahan total (persen) dari perubahan berurutan (persen), lewat perkalian berantai."""
+    factor = Decimal(1)
+    for change in changes:
+        factor *= 1 + change / 100
+    return (factor - 1) * 100
+
+
+def bps_table_value(text):
+    """Sel angka tabel 908: koma atau titik desimal, "~ 0" berarti mendekati nol, kosong None."""
+    if not text:
+        return None
+    if text.replace(" ", "") == "~0":
+        return Decimal(0)
+    if not re.fullmatch(r"-?\d+[,.]\d+", text):
+        raise FetchError("nilai tidak valid", 200)
+    return Decimal(text.replace(",", "."))
+
+
+def parse_bps_table(body, column, since):
+    """JSON tabel statis 908 menjadi daftar Point bulanan satu kolom, sejak tahun since.
+
+    Baris sebelum since hanya diperiksa bentuknya. Setiap tahun yang dipakai diperiksa: bulannya
+    harus berurutan sejak Januari (lengkap 12 kecuali tahun terakhir), dan rangkaiannya harus cocok
+    dengan baris y-to-d, supaya salah ketik di satu sel tidak merusak y-on-y setahun penuh.
+    """
+    try:
+        data = json.loads(body)
+    except ValueError:
+        raise FetchError("bukan JSON", 200) from None
+    if not isinstance(data, dict) or data.get("status") != "OK":
+        raise FetchError("status bukan OK", 200)
+    table = data.get("data")
+    if not isinstance(table, dict) or not isinstance(table.get("table"), str):
+        raise FetchError("kolom berubah", 200)
+    parser = TableCells()
+    parser.feed(table["table"])
+    rows = parser.table()
+    if BPS_TABLE_HEADER not in rows:
+        raise FetchError("kolom berubah", 200)
+    index = BPS_TABLE_COLUMNS[column]
+    months, year_to_date, year = {}, {}, None
+    for row in rows[rows.index(BPS_TABLE_HEADER) + 1:]:
+        if not any(row):
+            continue
+        if len(row) != BPS_TABLE_WIDTH:
+            raise FetchError("kolom berubah", 200)
+        if re.fullmatch(r"\d{4}", row[0]) and not row[1]:
+            year = int(row[0])
+            if year in months:
+                raise FetchError("periode ganda", 200)
+            if year >= since:
+                months[year], year_to_date[year] = {}, bps_table_value(row[index])
+        elif row[0] or row[1] not in BPS_MONTHS or year is None:
+            raise FetchError("periode tidak valid", 200)
+        elif year >= since:
+            month, value = BPS_MONTHS[row[1]], bps_table_value(row[index])
+            if month in months[year]:
+                raise FetchError("periode ganda", 200)
+            if value is not None:
+                months[year][month] = value
+    if not any(months.values()):
+        raise FetchError("tanpa data", 200)
+    points = []
+    for year, values in months.items():
+        expected = len(values) if year == max(months) else 12
+        if sorted(values) != list(range(1, expected + 1)):
+            raise FetchError("bulan tidak lengkap", 200)
+        ordered = [values[month] for month in sorted(values)]
+        target = year_to_date[year]
+        if ordered and target is not None and abs(compound(ordered) - target) > BPS_YTD_TOLERANCE:
+            raise FetchError("y-to-d tidak cocok", 200)
+        points += [Point(*period_of(f"{year}-{month:02d}", "M"), values[month])
+                   for month in sorted(values)]
+    return sorted(points, key=lambda point: point.start)
+
+
+@functools.lru_cache(maxsize=1)
+def bps_table_body():
+    """Satu tabel melayani beberapa seri, jadi jawabannya disimpan selama proses."""
+    return get(f"{BPS_TABLE_URL}/key/{bps_key()}/", {}, KEYED_OPENER, json_complete)
+
+
 def fetch_series(item):
     if item["source"] == "bps":
+        table = BPS_TABLE_ITEM.fullmatch(item["query"])
+        if table:
+            return parse_bps_table(bps_table_body(), table[1], int(table[2]))
         return fetch_bps(item)
     base, headers = BASES[item["source"]]
     return parse(get(base + item["query"], headers), item["frequency"],

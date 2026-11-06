@@ -10,13 +10,13 @@ from datetime import date
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
-from confore.fetch import bps_items, period_of
+from confore.fetch import BPS_TABLE_ITEM, bps_items, period_of
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "config"
 FREQUENCIES = {"A", "Q", "M", "D"}
 CONCEPTS = {"level", "index", "yoy", "avg_yoy", "eop_yoy", "rate", "round_rate"}
-DERIVE_INPUTS = {"yoy": 1, "ratio": 2, "share": 3}
+DERIVE_INPUTS = {"yoy": 1, "ratio": 2, "share": 3, "chain": 1}
 TARGET_KINDS = {"apbn", "pmk", "rpjmn"}
 VERIFICATIONS = {"dokumen", "berita"}
 
@@ -85,10 +85,11 @@ def check_series(items, source_ids):
             raise ConfigError(f"series.toml {sid}: butuh dataset dan query, atau derive")
         elif item["source"] == "bps":
             # Format ketat (angka saja) juga mencegah key BPS tertulis di registri dan database.
-            try:
-                bps_items(item["query"])
-            except ValueError:
-                raise ConfigError(f"series.toml {sid}: query BPS tidak valid") from None
+            if not BPS_TABLE_ITEM.fullmatch(item["query"]):
+                try:
+                    bps_items(item["query"])
+                except ValueError:
+                    raise ConfigError(f"series.toml {sid}: query BPS tidak valid") from None
             if item["frequency"] not in {"M", "Q"}:
                 raise ConfigError(f"series.toml {sid}: seri BPS harus bulanan atau kuartalan")
         seen[sid] = item

@@ -203,17 +203,116 @@ class FetchTest(TestCase):
         self.assertTrue(any(isinstance(h, NoRedirect) for h in fetch.KEYED_OPENER.handlers))
 
 
+def table_cells(*cells):
+    return "<tr>" + "".join(f"<td>{cell}</td>" for cell in cells) + "</tr>"
+
+
+def table_body(years, header=None, status="OK"):
+    """Tabel 908 versi kecil. years: {tahun: (y-to-d, [m-to-m sejak Januari])} untuk kolom Inti;
+    kolom lain berisi nol. Bentuknya mengikuti jawaban asli: gaya, judul, baris tahun lalu bulannya
+    dari yang terbaru, dan baris kosong di akhir."""
+    first, *rest = header or fetch.BPS_TABLE_HEADER
+    rows = ['<tr><td colspan="6">Inflasi Umum , Inti</td></tr><tr><td colspan="6"></td></tr>',
+            f'<tr><td colspan="2">{first}</td>' + "".join(f"<td>{cell}</td>" for cell in rest) + "</tr>"]
+    for year, (year_to_date, months) in years.items():
+        rows.append(table_cells(year, "", "0,00", year_to_date, "0,00", "0,00"))
+        rows += [table_cells("", name, "0,00", value, "0,00", "0,00")
+                 for name, value in reversed(list(zip(fetch.BPS_MONTHS, months)))]
+    rows.append(table_cells("", "", "", "", "", ""))
+    html = "<style>table {color:#000}</style><table>" + "".join(rows) + "</table>"
+    return json.dumps({"status": status, "data-availability": "available",
+                       "data": {"table_id": 908, "title": "Inflasi", "table": html}})
+
+
+YEAR_2025 = ("1,21", ["0,10"] * 12)
+# Baris 2022 sengaja rusak (mirip Maret 2022 di tabel asli): di luar tahun yang diminta, jadi diabaikan.
+TABLE = table_body({2026: ("0,06", ["-0,15", "~ 0", "0.21"]), 2025: YEAR_2025,
+                    2022: ("9,99", ["0,08"])})
+
+
+class TableTest(TestCase):
+    def setUp(self):
+        fetch.bps_table_body.cache_clear()
+        self.addCleanup(fetch.bps_table_body.cache_clear)
+
+    def test_reads_one_column_since_year_in_time_order(self):
+        result = fetch.parse_bps_table(TABLE, "inti", 2025)
+        self.assertEqual(len(result), 15)
+        self.assertEqual(result[0].period, "2025-01")
+        # Koma, tanda "~ 0" (mendekati nol), dan titik desimal yang tersesat di tabel asli.
+        self.assertEqual([(p.period, p.value) for p in result[-3:]],
+                         [("2026-01", Decimal("-0.15")), ("2026-02", Decimal("0")),
+                          ("2026-03", Decimal("0.21"))])
+        self.assertEqual({p.value for p in fetch.parse_bps_table(TABLE, "umum", 2025)},
+                         {Decimal("0.00")})
+
+    def test_wrong_cell_fails_the_year_to_date_check(self):
+        body = table_body({2025: ("1,21", ["0,10"] * 2 + ["0,80"] + ["0,10"] * 9)})
+        with self.assertRaises(FetchError) as caught:
+            fetch.parse_bps_table(body, "inti", 2025)
+        self.assertEqual(caught.exception.code, "y-to-d tidak cocok")
+
+    def test_rounding_stays_inside_the_year_to_date_check(self):
+        # Selisih sekecil pembulatan: 12 x 0,10 menghasilkan 1,2066, baris y-to-d menulis 1,25.
+        result = fetch.parse_bps_table(table_body({2025: ("1,25", ["0,10"] * 12)}), "inti", 2025)
+        self.assertEqual(len(result), 12)
+
+    def test_contract_errors(self):
+        months = ["0,10"] * 12
+        cases = {
+            "bukan JSON": TABLE[:-20],
+            "status bukan OK": table_body({2025: YEAR_2025}, status="Error"),
+            "kolom berubah": table_body({2025: YEAR_2025},
+                                        header=["Tahun/Bulan", "Umum", "Inti", "Bergejolak"]),
+            "bulan tidak lengkap": table_body({2026: ("0,10", ["0,10"]), 2025: ("1,11", months[:11])}),
+            "nilai tidak valid": table_body({2025: ("1,21", ["abc"] + months[1:])}),
+            "periode tidak valid": table_body({2025: YEAR_2025}).replace("<td>Mei</td>",
+                                                                         "<td>Semester I</td>"),
+            "periode ganda": table_body({2025: YEAR_2025}).replace("<td>Mei</td>", "<td>Juni</td>"),
+        }
+        for code, body in cases.items():
+            with self.subTest(code=code), self.assertRaises(FetchError) as caught:
+                fetch.parse_bps_table(body, "inti", 2025)
+            self.assertEqual(caught.exception.code, code)
+
+    def test_blank_month_inside_the_year_is_a_gap(self):
+        body = table_body({2026: ("0,20", ["0,10", "", "0,10"])})
+        with self.assertRaises(FetchError) as caught:
+            fetch.parse_bps_table(body, "inti", 2026)
+        self.assertEqual(caught.exception.code, "bulan tidak lengkap")
+
+    def test_no_row_since_year_is_no_data(self):
+        with self.assertRaises(FetchError) as caught:
+            fetch.parse_bps_table(TABLE, "inti", 2030)
+        self.assertEqual(caught.exception.code, "tanpa data")
+
+    def test_one_request_for_all_columns_and_key_only_in_url(self):
+        items = [{"source": "bps", "frequency": "M",
+                  "query": f"domain/0000/tabel/908/kolom/{column}/sejak/2025"}
+                 for column in ("inti", "umum")]
+        with mock.patch.dict(os.environ, {"BPS_API_KEY": FAKE_KEY}), \
+                mock.patch.object(fetch.KEYED_OPENER, "open", return_value=response(TABLE)) as opened:
+            results = [fetch.fetch_series(item) for item in items]
+        self.assertEqual([len(points) for points in results], [15, 15])
+        opened.assert_called_once()
+        self.assertEqual(opened.call_args.args[0].full_url,
+                         "https://webapi.bps.go.id/v1/api/view/model/statictable/lang/ind/domain/0000"
+                         f"/id/908/key/{FAKE_KEY}/")
+
+
 class ConfigTest(TestCase):
     def test_registry_has_bps_series_without_key(self):
         cfg = config.load()
         bps = {s["id"]: s for s in cfg["series"] if s["source"] == "bps" and "derive" not in s}
         self.assertEqual(set(bps), {"bps_cpi_yoy_m", "bps_gdp_growth_q", "bps_unemp_round",
                                     "bps_work_employer_round", "bps_work_employee_round",
-                                    "bps_work_total_round"})
+                                    "bps_work_total_round", "bps_cpi_mom_m", "bps_cpi_core_mom_m",
+                                    "bps_cpi_admin_mom_m", "bps_cpi_volatile_mom_m"})
         self.assertEqual(bps["bps_unemp_round"]["concept"], "round_rate")
         for item in bps.values():
             self.assertNotIn("key", item["query"])
-            self.assertTrue(fetch.bps_items(item["query"]))
+            self.assertTrue(fetch.BPS_TABLE_ITEM.fullmatch(item["query"])
+                            or fetch.bps_items(item["query"]))
         source = next(row for row in cfg["sources"] if row["source_id"] == "bps")
         self.assertIn("Layanan ini menggunakan API Badan Pusat Statistik (BPS).",
                       source["attribution_text"])
@@ -225,7 +324,11 @@ class ConfigTest(TestCase):
                 "concept": "yoy", "name": "B", "citation": "c"}
         config.check_series([{**item, "query": "domain/0000/var/2263/sejak/2024?vervar=9999"}],
                             {"bps"})
-        for query in ["domain/0000/var/2263/sejak/2024/key/ABC123",
+        config.check_series([{**item, "query": "domain/0000/tabel/908/kolom/inti/sejak/2024"}], {"bps"})
+        for query in ["domain/0000/tabel/908/kolom/inti/sejak/2024/key/ABC123",
+                      "domain/0000/tabel/909/kolom/inti/sejak/2024",
+                      "domain/0000/tabel/908/kolom/lain/sejak/2024",
+                      "domain/0000/var/2263/sejak/2024/key/ABC123",
                       "domain/0000/var/2263/sejak/2024?vervar=9999&key=ABC123",
                       "domain/0000/var/2263/th/124?vervar=9999",
                       "domain/0000/var/2263/sejak/2024?vervar=ABC"]:

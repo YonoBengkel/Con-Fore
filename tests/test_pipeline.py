@@ -12,7 +12,7 @@ from io import BytesIO
 from unittest import mock
 
 from confore import cli, config, db, fetch, revalidate
-from confore.derive import derive_all, ratio, share, yoy
+from confore.derive import chain, derive_all, ratio, share, yoy
 from confore.fetch import FetchError, Point
 from confore.publish import next_releases, previous_value
 
@@ -235,6 +235,13 @@ class DeriveTest(unittest.TestCase):
         bottom = points(("2026-10-29", "1.113"), frequency="D")
         self.assertEqual([(p.period, p.value) for p in ratio(top, bottom)],
                          [("2026-10-29", Decimal("18143.0009"))])
+
+    def test_chain_compounds_only_twelve_consecutive_months(self):
+        months = [f"2025-{month:02d}" for month in range(1, 13)] + ["2026-01", "2026-03"]
+        result = chain(points(*[(month, "1") for month in months], frequency="M"))
+        self.assertEqual([(p.period, p.value) for p in result],
+                         [("2025-12", Decimal("12.6825")), ("2026-01", Decimal("12.6825"))])
+        self.assertEqual(chain(points(("2025-01", "1"), frequency="M")), [])
 
     def test_share_needs_every_part_in_the_same_period(self):
         first = points(("2025-08", "5063122"), ("2026-02", "5310544"), frequency="M")

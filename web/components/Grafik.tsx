@@ -92,6 +92,61 @@ export function GrafikRiwayat({
   );
 }
 
+/**
+ * Satu panel kecil per kelompok dengan skala yang sama, supaya besar geraknya bisa dibandingkan.
+ * Garis ketiga kelompok sering bersilangan, jadi tidak digambar dalam satu bidang.
+ */
+export function GrafikKelompok({ kelompok }: { kelompok: { nama: string; titik: Titik[] }[] }) {
+  const isi = kelompok.filter((k) => k.titik.length >= 2);
+  if (!isi.length) return <p>Riwayat belum cukup untuk digambar.</p>;
+  const W = 320;
+  const H = 150;
+  const kiri = 44;
+  const atas = 10;
+  const lebar = W - kiri - 44;
+  const tinggi = H - atas - 24;
+  const nilai = isi.flatMap((k) => k.titik.map((t) => t[1]));
+  const min = Math.min(0, ...nilai);
+  const max = Math.max(0, ...nilai);
+  const y = (v: number) => atas + tinggi - ((v - min) / (max - min || 1)) * tinggi;
+  const persen = (v: number) => `${angka(v, 1)}%`;
+  return (
+    <div className="kisi-kelompok">
+      {isi.map(({ nama, titik }) => {
+        const x = (i: number) => kiri + (i * lebar) / (titik.length - 1);
+        const akhir = titik[titik.length - 1];
+        const rendah = titik.reduce((a, t) => (t[1] < a[1] ? t : a));
+        const puncak = titik.reduce((a, t) => (t[1] > a[1] ? t : a));
+        const alt =
+          `Grafik ${nama}, dibanding bulan yang sama tahun sebelumnya, ${periode(titik[0][0])} sampai ${periode(akhir[0])}. ` +
+          `Terendah ${persen(rendah[1])} pada ${periode(rendah[0])}, tertinggi ${persen(puncak[1])} pada ${periode(puncak[0])}, ` +
+          `terakhir ${persen(akhir[1])}.`;
+        return (
+          <figure key={nama} className="grafik-kelompok">
+            <figcaption>{nama}</figcaption>
+            <svg className="grafik-riwayat" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={alt}>
+              <line x1={kiri} x2={kiri + lebar} y1={y(max)} y2={y(max)} className="kisi" />
+              <line x1={kiri} x2={kiri + lebar} y1={y(min)} y2={y(min)} className="kisi" />
+              <line x1={kiri} x2={kiri + lebar} y1={y(0)} y2={y(0)} className="kisi-nol" />
+              {max > 0 && <text x={kiri - 6} y={y(max) + 4} textAnchor="end" className="sumbu">{persen(max)}</text>}
+              {min < 0 && <text x={kiri - 6} y={y(min) + 4} textAnchor="end" className="sumbu">{persen(min)}</text>}
+              <text x={kiri - 6} y={y(0) + 4} textAnchor="end" className="sumbu">0</text>
+              <text x={kiri} y={H - 6} className="sumbu">{periode(titik[0][0])}</text>
+              <text x={kiri + lebar} y={H - 6} textAnchor="end" className="sumbu">{periode(akhir[0])}</text>
+              <path
+                d={titik.map((t, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(t[1]).toFixed(1)}`).join("")}
+                className="garis"
+              />
+              <circle cx={x(titik.length - 1)} cy={y(akhir[1])} r={4} className="titik-akhir" />
+              <text x={kiri + lebar + 8} y={y(akhir[1]) + 4} className="sumbu-nilai">{persen(akhir[1])}</text>
+            </svg>
+          </figure>
+        );
+      })}
+    </div>
+  );
+}
+
 /** Satu garis per bulan survei, karena ronde yang berbeda bulan tidak sepadan (PRD 4.4). */
 export function GrafikRonde({ titik, nama }: { titik: Titik[]; nama: string }) {
   if (titik.length < 2) return <p>Riwayat belum cukup untuk digambar.</p>;

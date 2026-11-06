@@ -5,12 +5,14 @@
 # Seri yang diambil dari API: dataset dan query (path + query string setelah alamat dasar sumber).
 # Query BPS: "domain/<kode>/var/<id variabel>/sejak/<tahun>" plus filter opsional "?vervar=..&turvar=.."
 # (angka saja); beberapa variabel dipisah " + " dan untuk periode yang sama variabel terakhir menang.
+# Query tabel statis BPS: "domain/0000/tabel/908/kolom/<umum, inti, diatur, atau bergejolak>/sejak/<tahun>".
 # Key dan id tahun (th) ditambahkan kode saat permintaan dibuat; key tidak pernah ditulis di sini.
-# Seri turunan: derive ("yoy", "ratio", atau "share") dan inputs (id seri lain), tanpa query.
+# Seri turunan: derive ("yoy", "ratio", "share", atau "chain") dan inputs (id seri lain), tanpa query.
 # Opsional: country (bawaan IDN), is_target (bawaan false), actual_only (khusus WEO: buang tahun
 # proyeksi, simpan hanya tahun sampai LATEST_ACTUAL_ANNUAL_DATA).
 # concept: level, index, yoy, avg_yoy, eop_yoy, rate, round_rate (lihat SCHEMA.md). round_rate dipakai
 # semua nilai per ronde Sakernas, termasuk jumlah orang, karena pembandingnya ronde bulan yang sama.
+# rate juga dipakai perubahan bulanan (m-to-m) BPS: dua desimal, dan pembandingnya bulan sebelumnya.
 
 # --- Target, tahunan (IMF WEO) ---
 
@@ -174,6 +176,87 @@ unit = "% pekerja"
 concept = "round_rate"
 name = "Porsi pekerja formal per ronde Sakernas"
 citation = "Dihitung Con-Fore dari Badan Pusat Statistik, Penduduk Berumur 15 Tahun Keatas yang Bekerja Selama Seminggu Terakhir Menurut Provinsi dan Status Pekerjaan Utama, baris INDONESIA, https://www.bps.go.id/id/statistics-table/2/MjMzNSMy/penduduk-berumur-15-tahun-keatas-yang-bekerja-selama-seminggu-terakhir-menurut-provinsi-dan-status-pekerjaan-utama.html"
+
+# --- Rincian inflasi: tabel statis BPS 908, sejak tahun dasar 2022=100 (Januari 2024) ---
+# Tahun dasar baru berarti seri baru, jadi riwayat sebelum 2024 tidak diambil. Tabel ini tidak memuat
+# y-on-y per kelompok, jadi y-on-y dirangkai dari 12 perubahan bulanan dan berlabel "dihitung Con-Fore".
+
+[[series]]
+id = "bps_cpi_mom_m"
+source = "bps"
+dataset = "WebAPI tabel statis 908"
+query = "domain/0000/tabel/908/kolom/umum/sejak/2024"
+frequency = "M"
+unit = "%"
+concept = "rate"
+name = "Inflasi umum bulanan (dibanding bulan sebelumnya)"
+citation = "Badan Pusat Statistik, Inflasi Umum, Inti, Harga Diatur Pemerintah, dan Bergejolak Nasional (M-to-M dan Y-to-D), kolom Umum, https://www.bps.go.id/id/statistics-table/1/OTA4IzE=/inflasi-umum--inti--harga-diatur-pemerintah--dan-bergejolak-nasional--m-to-m-dan-y-to-d---2009-2026.html"
+
+[[series]]
+id = "bps_cpi_core_mom_m"
+source = "bps"
+dataset = "WebAPI tabel statis 908"
+query = "domain/0000/tabel/908/kolom/inti/sejak/2024"
+frequency = "M"
+unit = "%"
+concept = "rate"
+name = "Inflasi inti bulanan (dibanding bulan sebelumnya)"
+citation = "Badan Pusat Statistik, Inflasi Umum, Inti, Harga Diatur Pemerintah, dan Bergejolak Nasional (M-to-M dan Y-to-D), kolom Inti, https://www.bps.go.id/id/statistics-table/1/OTA4IzE=/inflasi-umum--inti--harga-diatur-pemerintah--dan-bergejolak-nasional--m-to-m-dan-y-to-d---2009-2026.html"
+
+[[series]]
+id = "bps_cpi_admin_mom_m"
+source = "bps"
+dataset = "WebAPI tabel statis 908"
+query = "domain/0000/tabel/908/kolom/diatur/sejak/2024"
+frequency = "M"
+unit = "%"
+concept = "rate"
+name = "Inflasi harga diatur pemerintah bulanan (dibanding bulan sebelumnya)"
+citation = "Badan Pusat Statistik, Inflasi Umum, Inti, Harga Diatur Pemerintah, dan Bergejolak Nasional (M-to-M dan Y-to-D), kolom Harga Diatur Pemerintah, https://www.bps.go.id/id/statistics-table/1/OTA4IzE=/inflasi-umum--inti--harga-diatur-pemerintah--dan-bergejolak-nasional--m-to-m-dan-y-to-d---2009-2026.html"
+
+[[series]]
+id = "bps_cpi_volatile_mom_m"
+source = "bps"
+dataset = "WebAPI tabel statis 908"
+query = "domain/0000/tabel/908/kolom/bergejolak/sejak/2024"
+frequency = "M"
+unit = "%"
+concept = "rate"
+name = "Inflasi harga bergejolak bulanan (dibanding bulan sebelumnya)"
+citation = "Badan Pusat Statistik, Inflasi Umum, Inti, Harga Diatur Pemerintah, dan Bergejolak Nasional (M-to-M dan Y-to-D), kolom Bergejolak, https://www.bps.go.id/id/statistics-table/1/OTA4IzE=/inflasi-umum--inti--harga-diatur-pemerintah--dan-bergejolak-nasional--m-to-m-dan-y-to-d---2009-2026.html"
+
+[[series]]
+id = "bps_cpi_core_yoy_m"
+source = "bps"
+derive = "chain"
+inputs = ["bps_cpi_core_mom_m"]
+frequency = "M"
+unit = "%"
+concept = "yoy"
+name = "Inflasi inti (dibanding bulan yang sama tahun lalu)"
+citation = "Dihitung Con-Fore dengan merangkai 12 perubahan bulanan dari Badan Pusat Statistik, Inflasi Umum, Inti, Harga Diatur Pemerintah, dan Bergejolak Nasional (M-to-M dan Y-to-D), kolom Inti, https://www.bps.go.id/id/statistics-table/1/OTA4IzE=/inflasi-umum--inti--harga-diatur-pemerintah--dan-bergejolak-nasional--m-to-m-dan-y-to-d---2009-2026.html"
+
+[[series]]
+id = "bps_cpi_admin_yoy_m"
+source = "bps"
+derive = "chain"
+inputs = ["bps_cpi_admin_mom_m"]
+frequency = "M"
+unit = "%"
+concept = "yoy"
+name = "Inflasi harga diatur pemerintah (dibanding bulan yang sama tahun lalu)"
+citation = "Dihitung Con-Fore dengan merangkai 12 perubahan bulanan dari Badan Pusat Statistik, Inflasi Umum, Inti, Harga Diatur Pemerintah, dan Bergejolak Nasional (M-to-M dan Y-to-D), kolom Harga Diatur Pemerintah, https://www.bps.go.id/id/statistics-table/1/OTA4IzE=/inflasi-umum--inti--harga-diatur-pemerintah--dan-bergejolak-nasional--m-to-m-dan-y-to-d---2009-2026.html"
+
+[[series]]
+id = "bps_cpi_volatile_yoy_m"
+source = "bps"
+derive = "chain"
+inputs = ["bps_cpi_volatile_mom_m"]
+frequency = "M"
+unit = "%"
+concept = "yoy"
+name = "Inflasi harga bergejolak (dibanding bulan yang sama tahun lalu)"
+citation = "Dihitung Con-Fore dengan merangkai 12 perubahan bulanan dari Badan Pusat Statistik, Inflasi Umum, Inti, Harga Diatur Pemerintah, dan Bergejolak Nasional (M-to-M dan Y-to-D), kolom Bergejolak, https://www.bps.go.id/id/statistics-table/1/OTA4IzE=/inflasi-umum--inti--harga-diatur-pemerintah--dan-bergejolak-nasional--m-to-m-dan-y-to-d---2009-2026.html"
 
 # --- Penggerak: harga komoditas (IMF PCPS, rata-rata bulanan) ---
 

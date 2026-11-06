@@ -3,6 +3,13 @@ idn_cpi_yoy_m,2026-10,bps,2026-11-02
 bps_cpi_yoy_m,2026-10,bps,2026-11-02
 idn_cpi_yoy_m,2026-11,bps,2026-12-01
 bps_cpi_yoy_m,2026-11,bps,2026-12-01
+bps_cpi_mom_m,2026-11,bps,2026-12-01
+bps_cpi_core_mom_m,2026-11,bps,2026-12-01
+bps_cpi_admin_mom_m,2026-11,bps,2026-12-01
+bps_cpi_volatile_mom_m,2026-11,bps,2026-12-01
+bps_cpi_core_yoy_m,2026-11,bps,2026-12-01
+bps_cpi_admin_yoy_m,2026-11,bps,2026-12-01
+bps_cpi_volatile_yoy_m,2026-11,bps,2026-12-01
 idn_gdp_real_q,2026-Q3,bps,2026-11-05
 idn_gdp_growth_q,2026-Q3,bps,2026-11-05
 bps_gdp_growth_q,2026-Q3,bps,2026-11-05

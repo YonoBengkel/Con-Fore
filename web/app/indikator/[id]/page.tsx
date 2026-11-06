@@ -3,7 +3,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { GrafikRiwayat, GrafikRonde } from "@/components/Grafik";
+import { GrafikKelompok, GrafikRiwayat, GrafikRonde } from "@/components/Grafik";
 import { Lencana, Sitasi, TabelTarget } from "@/components/Kartu";
 import { BannerBasi } from "@/components/Klien";
 import {
@@ -18,15 +18,24 @@ import {
 } from "@/lib/data";
 import { angka, nilaiSeri, perubahan, periode, tanggal, waktuWIB } from "@/lib/format";
 import {
+  KELOMPOK_INFLASI,
   NAMA_KALENDER,
   SERI_DITAUTKAN,
   SERI_FORMAL,
+  SERI_INFLASI_BULANAN,
   SERI_KARTU,
   SERI_TPT_RONDE,
   artinyaBuatmu,
   labelSeri,
 } from "@/lib/konten";
 import { kalimatPekerja } from "@/lib/pekerja";
+import { rincianInflasi } from "@/lib/rincian";
+
+const SERI_RINCIAN = [
+  SERI_KARTU.inflasi[0],
+  SERI_INFLASI_BULANAN,
+  ...KELOMPOK_INFLASI.flatMap((k) => [k.setahun, k.sebulan]),
+];
 
 // 6 jam; pipeline memanggil /api/revalidate setelah setiap publikasi.
 export const revalidate = 21600;
@@ -54,11 +63,16 @@ export default async function Indikator({ params }: Props) {
   const { id } = await params;
   if (!POLA_ID.test(id)) notFound();
   const halamanTpt = SERI_KARTU.pengangguran.includes(id);
+  const halamanInflasi = SERI_KARTU.inflasi.includes(id);
   const [meta, nilai, status, grafik, kalender, target] = await Promise.all([
     bacaMeta(),
     bacaNilai(),
     bacaStatus(),
-    bacaGrafik(halamanTpt ? [id, SERI_FORMAL, SERI_TPT_RONDE] : [id]),
+    bacaGrafik([
+      id,
+      ...(halamanTpt ? [SERI_FORMAL, SERI_TPT_RONDE] : []),
+      ...(halamanInflasi ? SERI_RINCIAN : []),
+    ]),
     bacaKalender(),
     bacaTarget(),
   ]);
@@ -72,6 +86,7 @@ export default async function Indikator({ params }: Props) {
   const terbaru = titik.slice(-12).reverse();
   const formal = halamanTpt ? titikSeri(grafik, SERI_FORMAL) : [];
   const pekerja = kalimatPekerja(formal, halamanTpt ? titikSeri(grafik, SERI_TPT_RONDE) : []);
+  const rincian = halamanInflasi ? rincianInflasi((s) => titikSeri(grafik, s)) : null;
 
   return (
     <>
@@ -152,6 +167,57 @@ export default async function Indikator({ params }: Props) {
             </div>
             <p>
               <Link href={`/indikator/${SERI_FORMAL}`}>Riwayat lengkap porsi pekerja formal</Link>
+            </p>
+          </div>
+        </section>
+      )}
+
+      {rincian && (
+        <section aria-labelledby="judul-rincian">
+          <h2 id="judul-rincian">Rincian inflasi</h2>
+          <div className="panel">
+            <p>{rincian.kalimat}</p>
+            <div className="gulir-tabel" role="region" aria-labelledby="judul-rincian" tabIndex={0}>
+              <table className="kepala-bungkus">
+                <thead>
+                  <tr>
+                    <th scope="col">Kelompok</th>
+                    <th scope="col">Dibanding setahun lalu</th>
+                    <th scope="col">Dibanding bulan lalu</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rincian.baris.map((b) => (
+                    <tr key={b.nama}>
+                      <th scope="row">{b.nama}</th>
+                      <td className="angka">{b.setahun == null ? "-" : nilaiSeri(b.setahun, "%", "yoy")}</td>
+                      <td className="angka">{b.sebulan == null ? "-" : nilaiSeri(b.sebulan, "%", "rate")}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <ul>
+              {KELOMPOK_INFLASI.map((k) => (
+                <li key={k.setahun}>
+                  <strong>{k.nama}:</strong> {k.isi}{" "}
+                  <Link href={`/indikator/${k.setahun}`}>Riwayat {k.nama.toLowerCase()}</Link>
+                </li>
+              ))}
+            </ul>
+            <h3>Dibanding bulan yang sama tahun sebelumnya</h3>
+            <GrafikKelompok
+              kelompok={KELOMPOK_INFLASI.map((k) => ({ nama: k.nama, titik: titikSeri(grafik, k.setahun) }))}
+            />
+            <p className="catatan">
+              Skala ketiga grafik sama. Lonjakan harga diatur pemerintah pada awal 2026 dan penurunannya
+              pada awal 2025 berkaitan dengan diskon tarif listrik 50 persen pada awal 2025, menurut BPS.
+            </p>
+            <p className="catatan">
+              Angka kelompok tidak bisa dijumlahkan menjadi angka umum, karena bobot tiap kelompok berbeda.
+              Angka dibanding bulan lalu dan angka umum adalah data resmi BPS. Angka setahun per kelompok
+              dihitung Con-Fore dari 12 perubahan bulanan, jadi bisa berbeda sekitar 0,02 poin persen dari
+              angka rilis BPS. Lihat <Link href="/cara-kerja#rincian-inflasi">Cara kerja</Link>.
             </p>
           </div>
         </section>

@@ -44,6 +44,7 @@ Warna tidak pernah menjadi satu-satunya pembawa arti: status selalu juga tertuli
 - **Tabel target:** tabel biasa di layar lebar; di HP setiap baris menjadi blok berlabel.
 - **Banner:** kuning lembut, hanya untuk data yang mungkin basi atau sumber yang gagal.
 - **Grafik per ronde:** satu garis per bulan survei, garis kedua putus-putus, dan label langsung di ujung garis. Dipakai untuk porsi pekerja formal, karena ronde yang berbeda bulan tidak sepadan.
+- **Grafik per kelompok:** satu panel kecil per kelompok dengan skala yang sama dan garis nol, warna `--aksen`, titik dan label angka di ujung garis, tanpa legenda karena judul panel sudah menyebut kelompoknya. Dipakai untuk rincian inflasi, karena ketiga garisnya sering bersilangan. Satu kolom di HP, tiga kolom mulai 960 px. Teks panel tetap terbaca di HP karena lebar gambarnya 320, bukan 640.
 - **Status tiga tingkat** (PRD 4.4): daftar tiga baris di samping segitiga, berisi nama dimensi, skor, ikon, dan kata, tanpa latar berwarna. Normal memakai `--redup` dengan lingkaran kosong. Perlu waspada memakai `--tinta` tebal dengan lingkaran setengah isi. Tekanan berat memakai `--status-berat` tebal dengan lingkaran penuh. Jadi warna hanya muncul di tingkat terberat. Ikonnya SVG kecil, bukan emoji, dan disembunyikan dari pembaca layar karena katanya sudah tertulis. Tidak memakai kuning `--peringatan-*` (data basi), hijau `--ok-tinta` (sumber dicocokkan ke dokumen), atau jingga `--fokus` (fokus keyboard), dan tidak pernah menjadi banner atau judul.
 
 ## Aksesibilitas

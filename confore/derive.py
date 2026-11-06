@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 
-from confore.fetch import Point
+from confore.fetch import Point, compound
 
 STEP = Decimal("0.0001")
 
@@ -54,7 +54,24 @@ def share(first, second, total):
     return out
 
 
-FUNCTIONS = {"yoy": yoy, "ratio": ratio, "share": share}
+def chain(points):
+    """Perubahan 12 bulan (persen) yang dirangkai dari perubahan bulanan (persen).
+
+    Hanya untuk 12 bulan yang berurutan. Karena perubahan bulanan sudah dibulatkan, hasilnya bisa
+    sedikit berbeda dari y-on-y yang dirilis sumber.
+    """
+    out = []
+    for i in range(11, len(points)):
+        window = points[i - 11:i + 1]
+        first, last = window[0].start, window[-1].start
+        if (last.year - first.year) * 12 + last.month - first.month != 11:
+            continue
+        value = compound(p.value for p in window).quantize(STEP)
+        out.append(Point(window[-1].period, last, value, seen=latest_seen(*window)))
+    return out
+
+
+FUNCTIONS = {"yoy": yoy, "ratio": ratio, "share": share, "chain": chain}
 
 
 def derive_all(items, data):

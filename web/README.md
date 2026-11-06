@@ -34,11 +34,12 @@ npm start              # sajikan hasil build
 
 ```
 app/            halaman dan route API
-components/     Segitiga (SVG), Grafik (garis kecil dan riwayat), Kartu (kartu angka, tabel target), Klien (banner basi, pilihan lensa, navigasi)
+components/     Segitiga (SVG), Grafik (garis kecil, riwayat, per ronde, per kelompok), Kartu (kartu angka, tabel target), Klien (banner basi, pilihan lensa, navigasi)
 lib/data.ts     pembacaan Data API (fetch biasa, melempar error bila gagal atau tabel wajib kosong)
 lib/skor.ts     aturan skor segitiga PRD 4.2 (fungsi murni, dites di skor.test.ts)
 lib/konten.ts   seri untuk tiga kartu (SERI_KARTU), panel penggerak, label, penjelasan "artinya buatmu"
 lib/pekerja.ts  kalimat otomatis pekerja formal dan informal PRD 4.4 (fungsi murni, dites di pekerja.test.ts)
+lib/rincian.ts  kalimat dan tabel rincian inflasi PRD 4.4 (fungsi murni, dites di rincian.test.ts)
 lib/format.ts   format angka, periode, dan tanggal Indonesia
 scripts/        salin-env.mjs
 vercel.json     region icn1 (Seoul, dekat Supabase) dan build hanya bila web/ berubah sejak deploy terakhir (VERCEL_GIT_PREVIOUS_SHA)
@@ -46,4 +47,4 @@ vercel.json     region icn1 (Seoul, dekat Supabase) dan build hanya bila web/ be
 
 Pindah ke seri BPS untuk tiga kartu cukup mengubah `SERI_KARTU` di `lib/konten.ts`, misalnya `inflasi: ["bps_cpi_yoy_m", "idn_cpi_yoy_m"]`. Seri yang belum ada di database dilewati, dan kartu tanpa seri menampilkan "Data belum tersedia".
 
-Halaman `/indikator/[id]` dan `/api/csv/[chart_id]` memakai `dynamicParams = false`, jadi alamat dengan id karangan tidak menulis cache ISR. Seri di `SERI_KARTU` dan `PENGGERAK` selalu dibangun (sebagai 404 sampai datanya terbit, lalu hidup setelah revalidasi). Seri baru lain baru mendapat halaman setelah build web berikutnya.
+Halaman `/indikator/[id]` dan `/api/csv/[chart_id]` memakai `dynamicParams = false`, jadi alamat dengan id karangan tidak menulis cache ISR. Seri di `SERI_DITAUTKAN` (kartu, penggerak, porsi pekerja formal, dan angka setahun kelompok inflasi) selalu dibangun (sebagai 404 sampai datanya terbit, lalu hidup setelah revalidasi). Seri baru lain baru mendapat halaman setelah build web berikutnya.

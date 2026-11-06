@@ -19,6 +19,7 @@ import {
 import { periode, waktuWIB } from "@/lib/format";
 import {
   JUDUL_KARTU,
+  KELOMPOK_INFLASI,
   PENGGERAK,
   SERI_FORMAL,
   SERI_KARTU,
@@ -169,7 +170,13 @@ export default async function Beranda() {
                 nilai={nilaiPer.get(id)!}
                 titik={titikSeri(grafik, id)}
                 kalender={jadwal(id)}
-                tambahan={kunci === "pengangguran" ? pekerja?.porsi : undefined}
+                tambahan={
+                  kunci === "pengangguran"
+                    ? pekerja?.porsi
+                    : kunci === "inflasi" && nilaiPer.has(KELOMPOK_INFLASI[0].setahun)
+                      ? "Rincian inti, harga diatur pemerintah, dan harga bergejolak ada di Riwayat lengkap."
+                      : undefined
+                }
               />
             );
           })}
