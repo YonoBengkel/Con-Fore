@@ -25,7 +25,7 @@ Satu warna aksen (hijau kebiruan tua) di atas latar kertas hangat; tema gelap me
 | `--aksen` | `#0e5c66` | `#74c4cf` | Tautan, garis grafik, segitiga, pilihan aktif |
 | `--peringatan-*` | kuning lembut | cokelat tua | Banner data basi, status "dari pemberitaan" |
 | `--ok-tinta` | `#1f5a2c` | `#9fd8a9` | Status "dicocokkan ke dokumen" di tabel target |
-| `--status-berat` | `#a4133c` | `#ff8fa3` | Status "tekanan berat" (rencana, belum ada di `globals.css`). Kontras minimal 7:1 di latar dan permukaan kedua tema |
+| `--status-berat` | `#a4133c` | `#ff8fa3` | Status "tekanan berat". Kontras minimal 7:1 di latar dan permukaan kedua tema |
 | `--fokus` | `#b34700` | `#ffb070` | Garis fokus keyboard |
 
 Warna tidak pernah menjadi satu-satunya pembawa arti: status selalu juga tertulis.
@@ -43,7 +43,8 @@ Warna tidak pernah menjadi satu-satunya pembawa arti: status selalu juga tertuli
 - **Kartu angka:** judul, nama seri, angka, periode dan perubahan, grafik kecil, lencana label kejujuran, kotak "Artinya buatmu", rincian sumber dan tanggal, tautan riwayat dan unduh CSV.
 - **Tabel target:** tabel biasa di layar lebar; di HP setiap baris menjadi blok berlabel.
 - **Banner:** kuning lembut, hanya untuk data yang mungkin basi atau sumber yang gagal.
-- **Status tiga tingkat** (rencana, PRD 4.4): lencana kecil di samping skor, berupa ikon dan kata, tanpa latar berwarna. Normal memakai `--redup` dengan lingkaran kosong. Perlu waspada memakai `--tinta` tebal dengan lingkaran setengah isi. Tekanan berat memakai `--status-berat` tebal dengan lingkaran penuh. Jadi warna hanya muncul di tingkat terberat. Ikonnya SVG kecil, bukan emoji, dan disembunyikan dari pembaca layar karena katanya sudah tertulis. Tidak memakai kuning `--peringatan-*` (data basi), hijau `--ok-tinta` (sumber dicocokkan ke dokumen), atau jingga `--fokus` (fokus keyboard), dan tidak pernah menjadi banner atau judul.
+- **Grafik per ronde:** satu garis per bulan survei, garis kedua putus-putus, dan label langsung di ujung garis. Dipakai untuk porsi pekerja formal, karena ronde yang berbeda bulan tidak sepadan.
+- **Status tiga tingkat** (PRD 4.4): daftar tiga baris di samping segitiga, berisi nama dimensi, skor, ikon, dan kata, tanpa latar berwarna. Normal memakai `--redup` dengan lingkaran kosong. Perlu waspada memakai `--tinta` tebal dengan lingkaran setengah isi. Tekanan berat memakai `--status-berat` tebal dengan lingkaran penuh. Jadi warna hanya muncul di tingkat terberat. Ikonnya SVG kecil, bukan emoji, dan disembunyikan dari pembaca layar karena katanya sudah tertulis. Tidak memakai kuning `--peringatan-*` (data basi), hijau `--ok-tinta` (sumber dicocokkan ke dokumen), atau jingga `--fokus` (fokus keyboard), dan tidak pernah menjadi banner atau judul.
 
 ## Aksesibilitas
 

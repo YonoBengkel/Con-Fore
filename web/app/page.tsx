@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { KartuKosong, KartuSeri, TabelTarget } from "@/components/Kartu";
 import { BannerBasi, PilihLensa } from "@/components/Klien";
-import { Segitiga } from "@/components/Segitiga";
+import { DaftarStatus, Segitiga } from "@/components/Segitiga";
 import {
   bacaGrafik,
   bacaKalender,
@@ -17,7 +17,17 @@ import {
   type NilaiTerakhir,
 } from "@/lib/data";
 import { periode, waktuWIB } from "@/lib/format";
-import { JUDUL_KARTU, PENGGERAK, SERI_KARTU, STATUS_VERIFIKASI, namaPendek, type KunciKartu } from "@/lib/konten";
+import {
+  JUDUL_KARTU,
+  PENGGERAK,
+  SERI_FORMAL,
+  SERI_KARTU,
+  SERI_TPT_RONDE,
+  STATUS_VERIFIKASI,
+  namaPendek,
+  type KunciKartu,
+} from "@/lib/konten";
+import { kalimatPekerja } from "@/lib/pekerja";
 import { buatRingkasan, type Lensa } from "@/lib/ringkasan";
 import { SERI_SEGITIGA } from "@/lib/skor";
 
@@ -40,6 +50,7 @@ function PanelLensa({
       <div className="ringkasan">
         <Segitiga skor={lensa.skor} labelId={id} />
         <div>
+          <DaftarStatus skor={lensa.skor} status={lensa.status} />
           <p id={id} className="kalimat-ringkasan">
             {lensa.kalimat}
           </p>
@@ -58,7 +69,7 @@ export default async function Beranda() {
     bacaNilai(),
     bacaStatus(),
     bacaTarget(),
-    bacaGrafik([...Object.values(SERI_SEGITIGA), ...idKartu, ...idPenggerak], true),
+    bacaGrafik([...Object.values(SERI_SEGITIGA), ...idKartu, ...idPenggerak, SERI_FORMAL], true),
     bacaKalender(),
   ]);
 
@@ -70,6 +81,7 @@ export default async function Beranda() {
     return kalender.find((r) => r.series_id === id && r.release_date.slice(0, 10) === tgl)?.calendar_source;
   };
   const ringkasan = buatRingkasan(grafik, target);
+  const pekerja = kalimatPekerja(titikSeri(grafik, SERI_FORMAL), titikSeri(grafik, SERI_TPT_RONDE));
   const tahunTarget = ringkasan?.tahun ?? 0;
   const targetTerdekat = target.filter((t) => t.year >= tahunTarget && t.target_kind !== "rpjmn");
   const adaBerita = ringkasan?.target?.sumber.some((s) => s.verification === "berita");
@@ -157,6 +169,7 @@ export default async function Beranda() {
                 nilai={nilaiPer.get(id)!}
                 titik={titikSeri(grafik, id)}
                 kalender={jadwal(id)}
+                tambahan={kunci === "pengangguran" ? pekerja?.porsi : undefined}
               />
             );
           })}

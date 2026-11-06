@@ -14,6 +14,7 @@
   --peringatan-tinta: #5e4200;
   --ok-tinta: #1f5a2c;
   --ok-latar: #e3f1e5;
+  --status-berat: #a4133c;
   --fokus: #b34700;
   --radius: 10px;
   --huruf: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue",
@@ -34,6 +35,7 @@
     --peringatan-tinta: #f4d88e;
     --ok-tinta: #9fd8a9;
     --ok-latar: #183322;
+    --status-berat: #ff8fa3;
     --fokus: #ffb070;
   }
 }
@@ -284,6 +286,53 @@ main.wadah {
 
 .kalimat-ringkasan {
   font-size: 1.05rem;
+}
+
+.status-dimensi {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+}
+
+.status-dimensi li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.15rem 0.75rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--garis);
+}
+
+.status-skor {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.tingkat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.tingkat-ikon {
+  width: 0.8em;
+  height: 0.8em;
+  flex: none;
+}
+
+.tingkat-normal {
+  color: var(--redup);
+}
+
+.tingkat-waspada {
+  color: var(--tinta);
+  font-weight: 600;
+}
+
+.tingkat-berat {
+  color: var(--status-berat);
+  font-weight: 600;
 }
 
 .pilih-lensa {
@@ -578,6 +627,10 @@ td.angka {
   stroke: var(--aksen);
   stroke-width: 2;
   stroke-linejoin: round;
+}
+
+.grafik-riwayat .garis-putus {
+  stroke-dasharray: 6 4;
 }
 
 .grafik-riwayat .kisi {

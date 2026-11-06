@@ -3,7 +3,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { GrafikRiwayat } from "@/components/Grafik";
+import { GrafikRiwayat, GrafikRonde } from "@/components/Grafik";
 import { Lencana, Sitasi, TabelTarget } from "@/components/Kartu";
 import { BannerBasi } from "@/components/Klien";
 import {
@@ -16,8 +16,17 @@ import {
   bacaTarget,
   titikSeri,
 } from "@/lib/data";
-import { nilaiSeri, perubahan, periode, tanggal, waktuWIB } from "@/lib/format";
-import { NAMA_KALENDER, SERI_DITAUTKAN, artinyaBuatmu, labelSeri } from "@/lib/konten";
+import { angka, nilaiSeri, perubahan, periode, tanggal, waktuWIB } from "@/lib/format";
+import {
+  NAMA_KALENDER,
+  SERI_DITAUTKAN,
+  SERI_FORMAL,
+  SERI_KARTU,
+  SERI_TPT_RONDE,
+  artinyaBuatmu,
+  labelSeri,
+} from "@/lib/konten";
+import { kalimatPekerja } from "@/lib/pekerja";
 
 // 6 jam; pipeline memanggil /api/revalidate setelah setiap publikasi.
 export const revalidate = 21600;
@@ -44,11 +53,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Indikator({ params }: Props) {
   const { id } = await params;
   if (!POLA_ID.test(id)) notFound();
+  const halamanTpt = SERI_KARTU.pengangguran.includes(id);
   const [meta, nilai, status, grafik, kalender, target] = await Promise.all([
     bacaMeta(),
     bacaNilai(),
     bacaStatus(),
-    bacaGrafik([id]),
+    bacaGrafik(halamanTpt ? [id, SERI_FORMAL, SERI_TPT_RONDE] : [id]),
     bacaKalender(),
     bacaTarget(),
   ]);
@@ -60,6 +70,8 @@ export default async function Indikator({ params }: Props) {
   const targetSeri = target.filter((t) => t.series_id === id);
   const artinya = n ? artinyaBuatmu(id, n.value) : null;
   const terbaru = titik.slice(-12).reverse();
+  const formal = halamanTpt ? titikSeri(grafik, SERI_FORMAL) : [];
+  const pekerja = kalimatPekerja(formal, halamanTpt ? titikSeri(grafik, SERI_TPT_RONDE) : []);
 
   return (
     <>
@@ -96,9 +108,54 @@ export default async function Indikator({ params }: Props) {
       <section aria-labelledby="judul-riwayat">
         <h2 id="judul-riwayat">Riwayat</h2>
         <div className="panel">
-          <GrafikRiwayat titik={titik} nama={m.name_id} konsep={m.concept} />
+          {id === SERI_FORMAL ? (
+            <GrafikRonde titik={titik} nama={m.name_id} />
+          ) : (
+            <GrafikRiwayat titik={titik} nama={m.name_id} konsep={m.concept} />
+          )}
         </div>
       </section>
+
+      {pekerja && (
+        <section aria-labelledby="judul-pekerja">
+          <h2 id="judul-pekerja">Pekerja formal dan informal</h2>
+          <div className="panel">
+            <p>
+              {pekerja.porsi} {pekerja.hubungan}
+            </p>
+            <GrafikRonde titik={formal} nama="porsi pekerja formal" />
+            <p className="catatan">
+              Pekerja formal menurut BPS adalah yang berusaha dibantu buruh tetap dan dibayar, serta
+              buruh, karyawan, atau pegawai. Selebihnya informal. Garisnya dipisah per bulan survei,
+              karena porsinya berbeda antara Februari dan Agustus. Lihat{" "}
+              <Link href="/cara-kerja#pekerja-formal">Cara kerja</Link>.
+            </p>
+            <div className="gulir-tabel" role="region" aria-labelledby="judul-pekerja" tabIndex={0}>
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Ronde</th>
+                    <th scope="col">Formal</th>
+                    <th scope="col">Informal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {formal.slice(-6).reverse().map(([p, v]) => (
+                    <tr key={p}>
+                      <th scope="row">{periode(p)}</th>
+                      <td className="angka">{angka(v, 2)}%</td>
+                      <td className="angka">{angka(100 - v, 2)}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p>
+              <Link href={`/indikator/${SERI_FORMAL}`}>Riwayat lengkap porsi pekerja formal</Link>
+            </p>
+          </div>
+        </section>
+      )}
 
       <div className="dua-kolom">
         <section aria-labelledby="judul-tabel">

@@ -41,7 +41,20 @@ def ratio(top, bottom):
     return out
 
 
-FUNCTIONS = {"yoy": yoy, "ratio": ratio}
+def share(first, second, total):
+    """Porsi dua seri terhadap total pada periode yang sama, dalam persen."""
+    others, totals = {p.period: p for p in second}, {p.period: p for p in total}
+    out = []
+    for p in first:
+        other, whole = others.get(p.period), totals.get(p.period)
+        if other is None or whole is None or not whole.value:
+            continue
+        value = ((p.value + other.value) / whole.value * 100).quantize(STEP)
+        out.append(Point(p.period, p.start, value, seen=latest_seen(p, other, whole)))
+    return out
+
+
+FUNCTIONS = {"yoy": yoy, "ratio": ratio, "share": share}
 
 
 def derive_all(items, data):

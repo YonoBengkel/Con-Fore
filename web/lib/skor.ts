@@ -22,6 +22,36 @@ export const POIN_PER_PP = 25;
 
 const TOLERANSI = 1e-9;
 
+export type Status = "normal" | "waspada" | "berat";
+export type NamaLensa = "masaLalu" | "target";
+
+/** Ambang status (PRD 4.4): skor di bawah `waspada` perlu waspada, di bawah `berat` tekanan berat. */
+export const AMBANG_STATUS: Record<NamaLensa, { waspada: number; berat: number }> = {
+  masaLalu: { waspada: 25, berat: 10 },
+  target: { waspada: 75, berat: 50 },
+};
+
+export const NAMA_STATUS: Record<Status, string> = {
+  normal: "normal",
+  waspada: "perlu waspada",
+  berat: "tekanan berat",
+};
+
+/** Status satu skor, dihitung sebelum skor dibulatkan untuk tampilan. */
+export function statusSkor(skor: number, lensa: NamaLensa): Status {
+  const a = AMBANG_STATUS[lensa];
+  if (skor + TOLERANSI < a.berat) return "berat";
+  return skor + TOLERANSI < a.waspada ? "waspada" : "normal";
+}
+
+export function statusLensa(skor: Skor, lensa: NamaLensa): Record<Dimensi, Status> {
+  return {
+    pertumbuhan: statusSkor(skor.pertumbuhan, lensa),
+    harga: statusSkor(skor.harga, lensa),
+    kerja: statusSkor(skor.kerja, lensa),
+  };
+}
+
 /**
  * Persentil x di antara nilai pembanding (makin besar makin baik): persen tahun yang lebih buruk,
  * ditambah separuh tahun yang sama nilainya (tahun itu sendiri ikut dihitung sama).

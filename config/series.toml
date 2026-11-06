@@ -6,10 +6,11 @@
 # Query BPS: "domain/<kode>/var/<id variabel>/sejak/<tahun>" plus filter opsional "?vervar=..&turvar=.."
 # (angka saja); beberapa variabel dipisah " + " dan untuk periode yang sama variabel terakhir menang.
 # Key dan id tahun (th) ditambahkan kode saat permintaan dibuat; key tidak pernah ditulis di sini.
-# Seri turunan: derive ("yoy" atau "ratio") dan inputs (id seri lain), tanpa query.
+# Seri turunan: derive ("yoy", "ratio", atau "share") dan inputs (id seri lain), tanpa query.
 # Opsional: country (bawaan IDN), is_target (bawaan false), actual_only (khusus WEO: buang tahun
 # proyeksi, simpan hanya tahun sampai LATEST_ACTUAL_ANNUAL_DATA).
-# concept: level, index, yoy, avg_yoy, eop_yoy, rate, round_rate (lihat SCHEMA.md).
+# concept: level, index, yoy, avg_yoy, eop_yoy, rate, round_rate (lihat SCHEMA.md). round_rate dipakai
+# semua nilai per ronde Sakernas, termasuk jumlah orang, karena pembandingnya ronde bulan yang sama.
 
 # --- Target, tahunan (IMF WEO) ---
 
@@ -126,6 +127,53 @@ concept = "round_rate"
 is_target = true
 name = "Tingkat pengangguran terbuka per ronde Sakernas"
 citation = "Badan Pusat Statistik, Tingkat Pengangguran Terbuka Menurut Provinsi, https://www.bps.go.id/id/statistics-table/2/NTQzIzI=/tingkat-pengangguran-terbuka-menurut-provinsi.html (ronde Februari dan Agustus), dan Tingkat Pengangguran Terbuka menurut Provinsi (Triwulanan), https://www.bps.go.id/id/statistics-table/2/MjU2MiMy/tingkat-pengangguran-terbuka-menurut-provinsi--triwulanan-.html (ronde triwulanan sejak 2025), baris INDONESIA"
+
+# --- Konteks pendamping TPT: pekerja formal dan informal (ronde Februari dan Agustus) ---
+# Formal menurut BPS: berusaha dibantu buruh tetap dan dibayar, ditambah buruh, karyawan, atau pegawai.
+
+[[series]]
+id = "bps_work_employer_round"
+source = "bps"
+dataset = "WebAPI var 2335"
+query = "domain/0000/var/2335/sejak/2017?vervar=9999&turvar=2088"
+frequency = "M"
+unit = "orang"
+concept = "round_rate"
+name = "Penduduk bekerja berstatus berusaha dibantu buruh tetap dan dibayar"
+citation = "Badan Pusat Statistik, Penduduk Berumur 15 Tahun Keatas yang Bekerja Selama Seminggu Terakhir Menurut Provinsi dan Status Pekerjaan Utama, baris INDONESIA, https://www.bps.go.id/id/statistics-table/2/MjMzNSMy/penduduk-berumur-15-tahun-keatas-yang-bekerja-selama-seminggu-terakhir-menurut-provinsi-dan-status-pekerjaan-utama.html"
+
+[[series]]
+id = "bps_work_employee_round"
+source = "bps"
+dataset = "WebAPI var 2335"
+query = "domain/0000/var/2335/sejak/2017?vervar=9999&turvar=2089"
+frequency = "M"
+unit = "orang"
+concept = "round_rate"
+name = "Penduduk bekerja berstatus buruh, karyawan, atau pegawai"
+citation = "Badan Pusat Statistik, Penduduk Berumur 15 Tahun Keatas yang Bekerja Selama Seminggu Terakhir Menurut Provinsi dan Status Pekerjaan Utama, baris INDONESIA, https://www.bps.go.id/id/statistics-table/2/MjMzNSMy/penduduk-berumur-15-tahun-keatas-yang-bekerja-selama-seminggu-terakhir-menurut-provinsi-dan-status-pekerjaan-utama.html"
+
+[[series]]
+id = "bps_work_total_round"
+source = "bps"
+dataset = "WebAPI var 2335"
+query = "domain/0000/var/2335/sejak/2017?vervar=9999&turvar=2093"
+frequency = "M"
+unit = "orang"
+concept = "round_rate"
+name = "Penduduk bekerja, semua status pekerjaan"
+citation = "Badan Pusat Statistik, Penduduk Berumur 15 Tahun Keatas yang Bekerja Selama Seminggu Terakhir Menurut Provinsi dan Status Pekerjaan Utama, baris INDONESIA, https://www.bps.go.id/id/statistics-table/2/MjMzNSMy/penduduk-berumur-15-tahun-keatas-yang-bekerja-selama-seminggu-terakhir-menurut-provinsi-dan-status-pekerjaan-utama.html"
+
+[[series]]
+id = "bps_formal_share_round"
+source = "bps"
+derive = "share"
+inputs = ["bps_work_employer_round", "bps_work_employee_round", "bps_work_total_round"]
+frequency = "M"
+unit = "% pekerja"
+concept = "round_rate"
+name = "Porsi pekerja formal per ronde Sakernas"
+citation = "Dihitung Con-Fore dari Badan Pusat Statistik, Penduduk Berumur 15 Tahun Keatas yang Bekerja Selama Seminggu Terakhir Menurut Provinsi dan Status Pekerjaan Utama, baris INDONESIA, https://www.bps.go.id/id/statistics-table/2/MjMzNSMy/penduduk-berumur-15-tahun-keatas-yang-bekerja-selama-seminggu-terakhir-menurut-provinsi-dan-status-pekerjaan-utama.html"
 
 # --- Penggerak: harga komoditas (IMF PCPS, rata-rata bulanan) ---
 

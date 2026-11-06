@@ -2,7 +2,9 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PATOKAN_INFLASI, POIN_PER_PP, TAHUN_AKHIR, TAHUN_AWAL } from "@/lib/skor";
+import { angka } from "@/lib/format";
+import { AMBANG_PORSI } from "@/lib/pekerja";
+import { AMBANG_STATUS, PATOKAN_INFLASI, POIN_PER_PP, TAHUN_AKHIR, TAHUN_AWAL } from "@/lib/skor";
 
 export const metadata: Metadata = {
   title: "Cara kerja",
@@ -96,6 +98,45 @@ export default function CaraKerja() {
         <li>
           Daftar target beserta dokumen dan status pemeriksaannya ada di{" "}
           <Link href="/sumber#target">Sumber data</Link>.
+        </li>
+      </ul>
+      <h3>Status tiga tingkat</h3>
+      <p>
+        Setiap sudut juga diberi status supaya skornya lebih mudah dibaca. Status menunjukkan posisi
+        angka dibanding pembandingnya, bukan vonis tentang ekonomi. Status dihitung dari skor sebelum
+        dibulatkan, dan ambangnya berbeda per lensa karena arti skornya berbeda.
+      </p>
+      <ul>
+        <li>
+          Lensa masa lalu: normal bila skor {AMBANG_STATUS.masaLalu.waspada} ke atas, perlu waspada bila{" "}
+          {AMBANG_STATUS.masaLalu.berat} sampai di bawah {AMBANG_STATUS.masaLalu.waspada}, dan tekanan
+          berat bila di bawah {AMBANG_STATUS.masaLalu.berat}. Jadi tekanan berat kira-kira sepersepuluh
+          tahun terburuk sejak {TAHUN_AWAL}.
+        </li>
+        <li>
+          Lensa target: normal bila skor {AMBANG_STATUS.target.waspada} ke atas (di dalam zona atau
+          meleset paling banyak 1 poin persen), perlu waspada bila {AMBANG_STATUS.target.berat} sampai di
+          bawah {AMBANG_STATUS.target.waspada}, dan tekanan berat bila di bawah{" "}
+          {AMBANG_STATUS.target.berat} (meleset lebih dari 2 poin persen).
+        </li>
+      </ul>
+
+      <h2 id="pekerja-formal">Pekerja formal dan informal</h2>
+      <p>
+        Angka pengangguran yang turun belum menunjukkan jenis pekerjaannya. Karena itu, kartu dan halaman
+        pengangguran menambahkan porsi pekerja formal dari survei Sakernas BPS.
+      </p>
+      <ul>
+        <li>
+          Pekerja formal: berusaha dibantu buruh tetap dan dibayar, serta buruh, karyawan, atau pegawai.
+          Selebihnya informal.
+        </li>
+        <li>Datanya hanya ada untuk ronde Februari dan Agustus.</li>
+        <li>Perbandingan hanya antar-ronde bulan yang sama, karena porsinya berbeda menurut bulan survei.</li>
+        <li>Yang dibandingkan porsi, bukan jumlah orang, karena jumlah pekerja terus bertambah.</li>
+        <li>
+          Perubahan porsi di bawah {angka(AMBANG_PORSI, 1)} poin persen ditulis &quot;hampir tidak
+          berubah&quot;.
         </li>
       </ul>
 

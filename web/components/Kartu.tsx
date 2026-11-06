@@ -45,6 +45,7 @@ export function KartuSeri({
   nilai,
   titik,
   kalender,
+  tambahan,
   utama = false,
 }: {
   judul?: string;
@@ -53,6 +54,8 @@ export function KartuSeri({
   titik: Titik[];
   /** calendar_source untuk next_release_date seri ini, bila tercatat. */
   kalender?: string;
+  /** Satu kalimat konteks di bawah penjelasan, misalnya porsi pekerja formal. */
+  tambahan?: string;
   utama?: boolean;
 }) {
   const ubah = perubahan(nilai.value, nilai.previous_value, meta.unit, meta.concept, meta.frequency);
@@ -78,6 +81,7 @@ export function KartuSeri({
           <strong>Artinya buatmu:</strong> {artinya}
         </p>
       )}
+      {tambahan && <p className="catatan">{tambahan}</p>}
       <dl className="rincian">
         <div>
           <dt>Sumber</dt>

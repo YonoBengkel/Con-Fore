@@ -91,3 +91,50 @@ export function GrafikRiwayat({
     </svg>
   );
 }
+
+/** Satu garis per bulan survei, karena ronde yang berbeda bulan tidak sepadan (PRD 4.4). */
+export function GrafikRonde({ titik, nama }: { titik: Titik[]; nama: string }) {
+  if (titik.length < 2) return <p>Riwayat belum cukup untuk digambar.</p>;
+  const W = 640;
+  const H = 260;
+  const kiri = 56;
+  const atas = 12;
+  const lebar = W - kiri - 104;
+  const tinggi = H - atas - 32;
+  const tahun = (p: string) => Number(p.slice(0, 4));
+  const awal = tahun(titik[0][0]);
+  const akhir = tahun(titik[titik.length - 1][0]);
+  const nilai = titik.map((t) => t[1]);
+  const min = Math.min(...nilai);
+  const max = Math.max(...nilai);
+  const x = (p: string) => kiri + (akhir > awal ? ((tahun(p) - awal) / (akhir - awal)) * lebar : lebar / 2);
+  const y = (v: number) => atas + tinggi - ((v - min) / (max - min || 1)) * tinggi;
+  const garis = [...new Set(titik.map(([p]) => p.slice(5)))].sort().map((bulan) => {
+    const isi = titik.filter(([p]) => p.slice(5) === bulan);
+    return { isi, terakhir: isi[isi.length - 1], nama: periode(isi[0][0]).split(" ")[0] };
+  });
+  const alt =
+    `Grafik ${nama}, satu garis per bulan survei, ${awal} sampai ${akhir}. ` +
+    garis.map((g) => `${g.nama} ${tahun(g.terakhir[0])}: ${angka(g.terakhir[1], 2)}%.`).join(" ");
+  return (
+    <svg className="grafik-riwayat" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={alt}>
+      <line x1={kiri} x2={kiri + lebar} y1={atas} y2={atas} className="kisi" />
+      <line x1={kiri} x2={kiri + lebar} y1={atas + tinggi} y2={atas + tinggi} className="kisi" />
+      <text x={kiri - 8} y={atas + 4} textAnchor="end" className="sumbu">{angka(max, 1)}%</text>
+      <text x={kiri - 8} y={atas + tinggi + 4} textAnchor="end" className="sumbu">{angka(min, 1)}%</text>
+      <text x={kiri} y={H - 8} className="sumbu">{awal}</text>
+      <text x={kiri + lebar} y={H - 8} textAnchor="end" className="sumbu">{akhir}</text>
+      {garis.map((g, i) => (
+        <g key={g.nama}>
+          <path
+            d={g.isi.map(([p, v], j) => `${j ? "L" : "M"}${x(p).toFixed(1)} ${y(v).toFixed(1)}`).join("")}
+            className={i ? "garis garis-putus" : "garis"}
+          />
+          <text x={x(g.terakhir[0]) + 8} y={y(g.terakhir[1]) + 4} className="sumbu">
+            {g.nama} {angka(g.terakhir[1], 2)}%
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+}

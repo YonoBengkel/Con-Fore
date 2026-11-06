@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "config"
 FREQUENCIES = {"A", "Q", "M", "D"}
 CONCEPTS = {"level", "index", "yoy", "avg_yoy", "eop_yoy", "rate", "round_rate"}
-DERIVE_INPUTS = {"yoy": 1, "ratio": 2}
+DERIVE_INPUTS = {"yoy": 1, "ratio": 2, "share": 3}
 TARGET_KINDS = {"apbn", "pmk", "rpjmn"}
 VERIFICATIONS = {"dokumen", "berita"}
 

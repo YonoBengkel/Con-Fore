@@ -34,6 +34,10 @@ const JENIS_SERI: Record<string, KunciKartu> = {
   bps_unemp_round: "pengangguran",
 };
 
+/** Konteks pendamping TPT (PRD 4.4). TPT per ronde menjadi pembanding kalimatnya. */
+export const SERI_FORMAL = "bps_formal_share_round";
+export const SERI_TPT_RONDE = "bps_unemp_round";
+
 /** Panel penggerak: kelompok dan urutan seri. Seri yang belum ada di database dilewati. */
 export const PENGGERAK: { judul: string; seri: string[] }[] = [
   { judul: "Harga komoditas dunia", seri: ["wld_coal_m", "wld_cpo_m", "wld_nickel_m", "wld_brent_m"] },
@@ -50,6 +54,7 @@ export const PENGGERAK: { judul: string; seri: string[] }[] = [
 export const SERI_DITAUTKAN: string[] = [
   ...Object.values(SERI_KARTU).flat(),
   ...PENGGERAK.flatMap((k) => k.seri),
+  SERI_FORMAL,
 ];
 
 const ARTINYA_PENGGERAK: Record<string, string> = {
@@ -84,6 +89,9 @@ export function artinyaBuatmu(seri: string, nilai: number): string | null {
   }
   if (jenis === "pengangguran") {
     return `Dari setiap 100 orang angkatan kerja (yang bekerja atau sedang mencari kerja), sekitar ${angka(nilai, 0)} belum mendapat pekerjaan. Makin rendah angkanya, makin mudah orang mendapat kerja.`;
+  }
+  if (seri === SERI_FORMAL) {
+    return `Dari setiap 100 orang yang bekerja, sekitar ${angka(nilai, 0)} adalah pekerja formal: pengusaha dengan buruh tetap, atau buruh, karyawan, dan pegawai. Sisanya pekerja informal, misalnya berusaha sendiri atau pekerja lepas.`;
   }
   return ARTINYA_PENGGERAK[seri] ?? null;
 }

@@ -23,7 +23,7 @@ export function angka(n: number, desimal: number): string {
 
 /** Jumlah desimal yang wajar menurut konsep dan besar angka. */
 export function desimalUntuk(n: number, konsep: string): number {
-  if (konsep === "rate" || konsep === "round_rate") return 2;
+  if (konsep === "rate" || konsep === "round_rate") return Math.abs(n) >= 1000 ? 0 : 2; // >= 1000: jumlah orang per ronde
   if (konsep !== "level") return 1;
   const besar = Math.abs(n);
   return besar >= 1000 ? 0 : besar >= 10 ? 1 : 4;

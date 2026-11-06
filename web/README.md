@@ -38,6 +38,7 @@ components/     Segitiga (SVG), Grafik (garis kecil dan riwayat), Kartu (kartu a
 lib/data.ts     pembacaan Data API (fetch biasa, melempar error bila gagal atau tabel wajib kosong)
 lib/skor.ts     aturan skor segitiga PRD 4.2 (fungsi murni, dites di skor.test.ts)
 lib/konten.ts   seri untuk tiga kartu (SERI_KARTU), panel penggerak, label, penjelasan "artinya buatmu"
+lib/pekerja.ts  kalimat otomatis pekerja formal dan informal PRD 4.4 (fungsi murni, dites di pekerja.test.ts)
 lib/format.ts   format angka, periode, dan tanggal Indonesia
 scripts/        salin-env.mjs
 vercel.json     region icn1 (Seoul, dekat Supabase) dan build hanya bila web/ berubah sejak deploy terakhir (VERCEL_GIT_PREVIOUS_SHA)

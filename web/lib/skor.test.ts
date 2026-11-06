@@ -6,9 +6,27 @@ import {
   persentil,
   skorMasaLalu,
   skorTarget,
+  statusSkor,
   tahunLengkap,
   zonaTarget,
 } from "./skor.ts";
+
+test("status: batas tiap lensa, dihitung sebelum dibulatkan", () => {
+  assert.equal(statusSkor(25, "masaLalu"), "normal");
+  assert.equal(statusSkor(24.9, "masaLalu"), "waspada");
+  assert.equal(statusSkor(10, "masaLalu"), "waspada");
+  assert.equal(statusSkor(9.6, "masaLalu"), "berat");
+  assert.equal(statusSkor(100, "target"), "normal");
+  assert.equal(statusSkor(75, "target"), "normal");
+  assert.equal(statusSkor(74.9, "target"), "waspada");
+  assert.equal(statusSkor(50, "target"), "waspada");
+  assert.equal(statusSkor(49.9, "target"), "berat");
+});
+
+test("status: galat pembulatan komputer tidak menggeser tingkat", () => {
+  assert.equal(statusSkor(74.99999999999999, "target"), "normal");
+  assert.equal(statusSkor(9.999999999999998, "masaLalu"), "waspada");
+});
 
 test("persentil: terbaik, terburuk, dan tengah", () => {
   const acuan = [1, 2, 3, 4];

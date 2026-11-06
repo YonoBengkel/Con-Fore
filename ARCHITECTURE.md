@@ -1,4 +1,4 @@
-Status: pipeline data, situs tab Data, dan panggilan revalidasi sesuai kode di `main` (2026-11-06). Situs tayang di Vercel, dan pipeline jalan dengan jadwal harian. Model, backup, dan pemantauan masih rencana yang disetujui pengelola 2026-10-30. Seri BPS untuk pekerja formal-informal dan komponen inflasi (4.3) masih rencana yang disetujui 2026-11-03.
+Status: pipeline data, situs tab Data, dan panggilan revalidasi sesuai kode di `main` (2026-11-06). Situs tayang di Vercel, dan pipeline jalan dengan jadwal harian. Model, backup, dan pemantauan masih rencana yang disetujui pengelola 2026-10-30. Rincian komponen inflasi (4.3) masih rencana yang disetujui 2026-11-03.
 
 # Arsitektur Con-Fore
 
@@ -41,7 +41,7 @@ Con-Fore/
     smoke.py             uji akses setiap sumber, satu permintaan kecil per sumber   [ada]
     config.py            muat dan periksa config/ (seri, sumber, target, kalender, format query BPS)   [ada]
     fetch.py             pengambil CSV SDMX (IMF, BIS, OECD, ECB) dan JSON WebAPI BPS: retry, batas kuota, normalisasi periode, hash   [ada]
-    derive.py            turunan di memori: yoy, rasio (kurs silang)   [ada]
+    derive.py            turunan di memori: yoy, rasio (kurs silang), porsi (pekerja formal)   [ada]
     db.py                migrasi, cek katalog akses, uji Data API, tulis vintage, log   [ada]
     publish.py           isi ulang tabel public.* dalam satu transaksi   [ada]
     revalidate.py        segarkan situs sesudah publikasi: tandai cache basi, lalu picu render baru   [ada]
@@ -57,7 +57,7 @@ Con-Fore/
   web/                   situs Next.js (App Router), cara menjalankannya di web/README.md   [ada]
     app/                 halaman dan route API (csv, health, revalidate)   [ada]
     components/          segitiga (SVG), grafik, kartu, komponen browser   [ada]
-    lib/                 pembacaan Data API, aturan skor, isi tetap (SERI_KARTU), format   [ada]
+    lib/                 pembacaan Data API, aturan skor dan status, isi tetap (SERI_KARTU), kalimat pekerja formal, format   [ada]
     scripts/             salin-env.mjs: salin dua baris Supabase dari ../.env ke web/.env.local   [ada]
     vercel.json          region icn1 dan Ignored Build Step   [ada]
     .env.example         daftar variabel environment situs   [ada]
@@ -82,7 +82,7 @@ python -m confore run --source imf # hanya ambil satu sumber; publikasi tetap un
 python -m confore run --source bps --trigger release   # yang dijalankan jadwal hari rilis BPS
 ```
 
-Seri BPS butuh `BPS_API_KEY`; tanpa key, ketiga seri BPS gagal dengan kode "BPS_API_KEY belum diisi" dan seri lain tetap jalan.
+Seri BPS butuh `BPS_API_KEY`; tanpa key, semua seri BPS gagal dengan kode "BPS_API_KEY belum diisi" dan seri lain tetap jalan.
 
 Situs lokal (Node 24), dari folder `web/` (detailnya di `web/README.md`):
 
@@ -122,7 +122,8 @@ Di GitHub, nilai ini disimpan sebagai Secrets (`pipeline.yml` hanya membaca Secr
 - Banner "data mungkin belum diperbarui" dihitung di browser dari `last_success_at` (lebih dari 36 jam), supaya tetap muncul walau Supabase sedang mati.
 - Halaman `/sumber` menampilkan kalimat atribusi wajib per sumber dari `public.sources`.
 - Bahasa Indonesia, mengutamakan HP, tema terang dan gelap. Kalimat ringkasan menjadi teks alternatif segitiga. Arah tampilannya ada di [DESIGN.md](DESIGN.md), disetujui pengelola 2026-10-31.
-- Rencana (PRD 4.4): grafik porsi pekerja formal di halaman detail pengangguran, rincian tiga kelompok di halaman detail inflasi, dan status tiga tingkat (ambangnya di PRD 4.4, warnanya di DESIGN.md).
+- Status tiga tingkat (`statusSkor` di `web/lib/skor.ts`, ambangnya di PRD 4.4) tampil di samping segitiga dan di kalimat ringkasan. Kalimat dan grafik pekerja formal ada di kartu dan halaman detail pengangguran (`web/lib/pekerja.ts`, `GrafikRonde`), dan hilang sendiri bila serinya belum terbit.
+- Rencana (PRD 4.4): rincian tiga kelompok di halaman detail inflasi.
 
 ### 4.2 API
 
@@ -148,13 +149,13 @@ Di GitHub, nilai ini disimpan sebagai Secrets (`pipeline.yml` hanya membaca Secr
 | OECD | CLI Indonesia dan Tiongkok (`DF_CLI`) | `sdmx.oecd.org`, tanpa key | Bulanan, 18.00 WIB; masuk API sekitar 4 jam kemudian | `updatedAfter` (404 berarti tidak ada perubahan) + hash, karena riwayat CLI direvisi tiap bulan | Wajib sitasi; maksimal 60 unduhan per jam; dilarang lewat VPN | MVP |
 | ECB, Frankfurter | EUR/IDR dan EUR/USD untuk kurs silang model; kurs versi BI untuk tampilan | `data-api.ecb.europa.eu`, `api.frankfurter.dev` | Hari kerja sekitar 22.00 WIB | Tanggal kurs terakhir | Tanpa batas resmi | MVP |
 | World Bank | Konteks tahunan (WDI, WGI) | `api.worldbank.org` v2 | Tidak teratur | Kolom `lastupdated` per sumber | CC BY 4.0 | MVP, konteks |
-| BPS WebAPI | Inflasi y-on-y (var 2263), pertumbuhan PDB y-on-y (var 104), TPT per ronde Sakernas (var 543 dan 2562). Rencana: penduduk bekerja menurut status pekerjaan (var 2335) dan komponen inflasi (tabel statis 908). Nanti ekspor-impor dan daftar rilis pers | `webapi.bps.go.id`, key gratis di path URL | CPI: hari kerja pertama, sekitar 11.00 WIB. PDB dan TPT: tanggal 5 Feb, Mei, Agu, Nov (ronde triwulanan Sakernas ada sejak 2025) | Rilis pers baru bertanggal hari ini, atau periode baru di variabelnya. PDB: tarik ulang seluruh riwayat karena kuartal lama ikut direvisi. TPT: bandingkan hanya ronde bulan yang sama | Wajib kalimat "Layanan ini menggunakan API Badan Pusat Statistik (BPS)."; situs tidak boleh terkesan resmi BPS; penggunaan komersial butuh persetujuan BPS; data simpanan tidak boleh disajikan sebagai terbaru bila BPS sudah memperbaruinya; batas 60 permintaan per menit, 1.000 per jam, 10.000 per hari (header `RateLimit-Policy`) | MVP, syarat rilis v0.1. Var 2335 dan tabel 908 setelah v0.1 tayang |
+| BPS WebAPI | Inflasi y-on-y (var 2263), pertumbuhan PDB y-on-y (var 104), TPT per ronde Sakernas (var 543 dan 2562), penduduk bekerja menurut status pekerjaan (var 2335). Rencana: komponen inflasi (tabel statis 908). Nanti ekspor-impor dan daftar rilis pers | `webapi.bps.go.id`, key gratis di path URL | CPI: hari kerja pertama, sekitar 11.00 WIB. PDB dan TPT: tanggal 5 Feb, Mei, Agu, Nov (ronde triwulanan Sakernas ada sejak 2025) | Rilis pers baru bertanggal hari ini, atau periode baru di variabelnya. PDB: tarik ulang seluruh riwayat karena kuartal lama ikut direvisi. TPT: bandingkan hanya ronde bulan yang sama | Wajib kalimat "Layanan ini menggunakan API Badan Pusat Statistik (BPS)."; situs tidak boleh terkesan resmi BPS; penggunaan komersial butuh persetujuan BPS; data simpanan tidak boleh disajikan sebagai terbaru bila BPS sudah memperbaruinya; batas 60 permintaan per menit, 1.000 per jam, 10.000 per hari (header `RateLimit-Policy`) | MVP, syarat rilis v0.1. Tabel 908 menyusul |
 | `config/*` | Target resmi, sumber, kalender rilis, hari libur | Diisi manual di repo | Saat ada perubahan | Push ke `config/**` | - | MVP |
 | FRED, BI SEKI, halaman BI-Rate, GDELT, Comtrade | Pelengkap | Key, HTML, atau batas ketat | - | - | - | Nanti |
 
 Tidak dipakai: IMF DataMapper (menjawab 403) dan CSV grafik FRED (koneksi ditolak). Pipeline hanya menarik seri yang disebut di `config/series.toml`.
 
-**Yang sudah jalan:** sejak fase 1 (di `main`), IMF (WEO, QNEA, CPI, PCPS), BIS, OECD, dan ECB, 14 seri ditambah 2 turunan. Sejak v0.1, BPS menambah 3 seri rilis pertama, jadi totalnya 17 seri ditambah 2 turunan. Setiap run mengambil seri penuh (sejak 2000 untuk sumber SDMX; jawaban kecil berkat `detail=dataonly`, kecuali WEO yang butuh kolom `LATEST_ACTUAL_ANNUAL_DATA`), lalu membandingkan hash data ternormalisasi dengan pengambilan terakhir. Kolom "Cara mendeteksi data baru" di atas (`updatedAfter`, 404 sebagai "tidak ada perubahan", rilis pers BPS) adalah optimasi yang belum dipakai. Frankfurter dan World Bank baru dipakai di uji akses.
+**Yang sudah jalan:** sejak fase 1 (di `main`), IMF (WEO, QNEA, CPI, PCPS), BIS, OECD, dan ECB, 14 seri ditambah 2 turunan. Sejak v0.1, BPS menambah 3 seri rilis pertama, dan var 2335 menambah 3 seri dan 1 turunan, jadi totalnya 20 seri ditambah 3 turunan. Setiap run mengambil seri penuh (sejak 2000 untuk sumber SDMX; jawaban kecil berkat `detail=dataonly`, kecuali WEO yang butuh kolom `LATEST_ACTUAL_ANNUAL_DATA`), lalu membandingkan hash data ternormalisasi dengan pengambilan terakhir. Kolom "Cara mendeteksi data baru" di atas (`updatedAfter`, 404 sebagai "tidak ada perubahan", rilis pers BPS) adalah optimasi yang belum dipakai. Frankfurter dan World Bank baru dipakai di uji akses.
 
 **Cara pengambil BPS bekerja** (`fetch.py`, bagian BPS; semua aturan WebAPI di bawah sudah dicek ke jawaban sungguhan 2026-10-30):
 
@@ -163,13 +164,14 @@ Tidak dipakai: IMF DataMapper (menjawab 403) dan CSV grafik FRED (koneksi ditola
 - Saat permintaan dibuat, kode menyusun `.../domain/<kode>/var/<id>/th/<th>/key/<key>/`. Id tahun `th` adalah tahun dikurangi 1900 (126 = 2026). WebAPI hanya menerima paling banyak 3 tahun per permintaan, jadi riwayat diminta per potongan 3 tahun, mulai dari yang terbaru.
 - Membaca nilai: kunci `datacontent` adalah gabungan id vervar, var, turvar, tahun, dan turunan tahun tanpa pemisah. Parser tidak memecah kunci, tetapi menyusun setiap kunci dari daftar label lalu mencocokkannya. Januari sampai Desember menjadi `YYYY-MM` (ronde Sakernas memakai bulan survei), Triwulan I sampai IV menjadi `YYYY-Qn`, dan "Tahunan" dilewati.
 - Tahun yang belum punya data dijawab OK dengan `datacontent` kosong. Variabel atau baris yang tidak dikenal juga dijawab begitu, tetapi dimensinya kosong; karena itu dimensi diperiksa lebih dulu (kode error di 4.12).
-- 14 permintaan per run di 2026 (inflasi 1, PDB 6, TPT 6 + 1), sekitar 24 detik.
+- 26 permintaan per run di 2026 (inflasi 1, PDB 6, TPT 6 + 1, var 2335 tiga seri masing-masing 4), sekitar 40 detik.
 - Tanggal rilis per observasi tidak dicatat, karena WebAPI hanya memberi tanggal pembaruan per variabel.
 - Atribusi dan syarat ada di baris `bps` di `config/sources.csv` (ketentuan WebAPI di https://webapi.bps.go.id/developer/). Halaman `/sumber` dan setiap CSV menampilkannya.
 
+**Pekerja formal dan informal** (PRD 4.4): var 2335 (penduduk bekerja menurut provinsi dan status pekerjaan utama), baris INDONESIA (vervar 9999), sejak 2017, hanya ronde Februari dan Agustus. Ronde Mei dan November tidak ada di variabel ini. Tiga seri diambil per turvar: `bps_work_employer_round` (2088, berusaha dibantu buruh tetap dan dibayar), `bps_work_employee_round` (2089, buruh, karyawan, atau pegawai), dan `bps_work_total_round` (2093, total). Turunan `bps_formal_share_round` (fungsi `share` di `derive.py`) menghitung porsi dua seri pertama terhadap total, dan hitungan itu cocok dengan angka rilis BPS untuk lima ronde 2024-2026. Var 2153 (informal) dan 1168 (formal) tidak dipakai karena hanya tahunan (nilai Agustus). Keempat seri memakai konsep `round_rate`, supaya pembandingnya ronde bulan yang sama tahun lalu.
+
 **Rencana seri BPS berikutnya** (PRD 4.4, dicek ke jawaban WebAPI 2026-11-03, belum ada di kode):
 
-- **Pekerja formal dan informal:** var 2335 (penduduk bekerja menurut provinsi dan status pekerjaan utama), baris INDONESIA (vervar 9999), hanya ronde Februari dan Agustus. Ronde Mei dan November tidak ada di variabel ini. Pekerja formal adalah status "berusaha dibantu buruh tetap/buruh dibayar" ditambah "buruh/karyawan/pegawai". Porsinya terhadap seluruh penduduk bekerja dihitung sebagai turunan di `derive.py`, dan hitungan itu cocok dengan angka rilis BPS untuk lima ronde 2024-2026. Var 2153 (informal) dan 1168 (formal) tidak dipakai karena hanya tahunan (nilai Agustus). Seperti TPT, perbandingan hanya antar-ronde bulan yang sama.
 - **Komponen inflasi** (inti, harga diatur pemerintah, harga bergejolak): tidak ada sebagai variabel WebAPI, hanya sebagai tabel statis 908 (2009 sampai tahun berjalan) di `view/model/statictable/lang/ind/domain/0000/id/908/key/<key>/`. Jawabannya tabel HTML di dalam JSON, berisi perubahan bulanan (m-to-m) dan sejak Januari (y-to-d), bukan y-on-y. Yang dibutuhkan:
   - Pengurai tabel HTML baru yang memeriksa bentuk tabel dan gagal dengan kode tetap, seperti pengambil BPS yang sudah ada (4.12). Angkanya memakai koma desimal, dan ada sel "~ 0".
   - Y-on-y dirangkai dari 12 bulan m-to-m (perkalian berantai). Karena m-to-m sudah dibulatkan, hasilnya bisa sedikit berbeda dari y-on-y di rilis pers BPS. Selisihnya diukur sebelum tayang, dan serinya berlabel "dihitung Con-Fore dari data resmi BPS".
@@ -287,7 +289,7 @@ Jadwal tabel manual: target diperiksa saat UU APBN baru disahkan (akhir Septembe
 | OECD | Maksimal 60 unduhan per jam (batas resmi); tanpa VPN |
 | FRED | Maksimal 120 permintaan per menit |
 | IMF | Hanya seri di `config/series.toml`, sekali sehari, tanpa unduhan massal |
-| BPS | Batas WebAPI 60 permintaan per menit, 1.000 per jam, 10.000 per hari (header `RateLimit-Policy`). Pipeline memakai 14 permintaan per run dengan jeda 1 detik di antaranya |
+| BPS | Batas WebAPI 60 permintaan per menit, 1.000 per jam, 10.000 per hari (header `RateLimit-Policy`). Pipeline memakai 26 permintaan per run dengan jeda 1 detik di antaranya |
 | GDELT, Comtrade (nanti) | 1 permintaan per 5 detik dan 1 per detik |
 
 Semua permintaan diberi jeda 1 detik dari permintaan sebelumnya, hanya mengikuti pengalihan ke `https` (permintaan ber-key tidak mengikuti pengalihan sama sekali), dan mendapat maksimal 3 percobaan untuk 429, 5xx, koneksi putus, atau jawaban terpotong (Content-Length belum terpenuhi, atau tidak berakhir seperti jawaban utuh: baris baru untuk CSV, `}` untuk JSON BPS), dengan jeda 5 lalu 10 detik atau sesuai `Retry-After` (maksimal 60 detik). Setelah jawaban sukses, bila header `RateLimit-Remaining` bernilai 5 atau kurang, pipeline menunggu dulu sebanyak `RateLimit-Reset` detik (maksimal 60), atau 60 detik bila header itu tidak ada. BPS mengirim `RateLimit-Limit`, `RateLimit-Remaining`, dan `RateLimit-Policy`, tetapi tidak `RateLimit-Reset`. Aturan ini berlaku untuk semua sumber yang mengirim header tersebut, bukan hanya BPS. Setelah `updatedAfter` dipakai, jawaban "tidak ada perubahan" (OECD 404, BIS 404 kode 100, IMF kosong) dicatat sebagai normal, bukan kegagalan.

@@ -12,7 +12,7 @@ from io import BytesIO
 from unittest import mock
 
 from confore import cli, config, db, fetch, revalidate
-from confore.derive import derive_all, ratio, yoy
+from confore.derive import derive_all, ratio, share, yoy
 from confore.fetch import FetchError, Point
 from confore.publish import next_releases, previous_value
 
@@ -236,12 +236,20 @@ class DeriveTest(unittest.TestCase):
         self.assertEqual([(p.period, p.value) for p in ratio(top, bottom)],
                          [("2026-10-29", Decimal("18143.0009"))])
 
+    def test_share_needs_every_part_in_the_same_period(self):
+        first = points(("2025-08", "5063122"), ("2026-02", "5310544"), frequency="M")
+        second = points(("2025-08", "56777423"), ("2026-02", "54615241"), frequency="M")
+        total = points(("2026-02", "147667630"), ("2026-08", "150000000"), frequency="M")
+        self.assertEqual([(p.period, p.value) for p in share(first, second, total)],
+                         [("2026-02", Decimal("40.5815"))])
+
     def test_registry_derivations_follow_inputs(self):
         cfg = config.load()
         data = {s["id"]: [] for s in cfg["series"] if "derive" not in s}
         derive_all(cfg["series"], data)
         self.assertEqual(data["idn_gdp_growth_q"], [])
         self.assertIn("usd_idr_d", data)
+        self.assertEqual(data["bps_formal_share_round"], [])
 
 
 class ConfigTest(unittest.TestCase):

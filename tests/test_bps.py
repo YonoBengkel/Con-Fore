@@ -206,8 +206,10 @@ class FetchTest(TestCase):
 class ConfigTest(TestCase):
     def test_registry_has_bps_series_without_key(self):
         cfg = config.load()
-        bps = {s["id"]: s for s in cfg["series"] if s["source"] == "bps"}
-        self.assertEqual(set(bps), {"bps_cpi_yoy_m", "bps_gdp_growth_q", "bps_unemp_round"})
+        bps = {s["id"]: s for s in cfg["series"] if s["source"] == "bps" and "derive" not in s}
+        self.assertEqual(set(bps), {"bps_cpi_yoy_m", "bps_gdp_growth_q", "bps_unemp_round",
+                                    "bps_work_employer_round", "bps_work_employee_round",
+                                    "bps_work_total_round"})
         self.assertEqual(bps["bps_unemp_round"]["concept"], "round_rate")
         for item in bps.values():
             self.assertNotIn("key", item["query"])

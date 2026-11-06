@@ -1,7 +1,7 @@
 // Segitiga keseimbangan sebagai SVG. Setiap sudut satu dimensi; titik makin ke luar makin baik.
 // Teks alternatifnya adalah kalimat ringkasan (aria-labelledby), bukan deskripsi bentuk.
 
-import type { Skor } from "@/lib/skor";
+import { NAMA_STATUS, type Dimensi, type Skor, type Status } from "@/lib/skor";
 
 const C = { x: 160, y: 168 };
 const R = 116;
@@ -56,5 +56,40 @@ export function Segitiga({ skor, labelId }: { skor: Skor; labelId: string }) {
         </text>
       ))}
     </svg>
+  );
+}
+
+const URUTAN_STATUS: { kunci: Dimensi; teks: string }[] = [
+  { kunci: "pertumbuhan", teks: "Pertumbuhan" },
+  { kunci: "harga", teks: "Harga stabil" },
+  { kunci: "kerja", teks: "Lapangan kerja" },
+];
+
+/** Lingkaran kosong, setengah, atau penuh. Disembunyikan dari pembaca layar: katanya sudah tertulis. */
+function IkonStatus({ status }: { status: Status }) {
+  return (
+    <svg className="tingkat-ikon" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+      <circle cx="6" cy="6" r="5" fill={status === "berat" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5" />
+      {status === "waspada" && <path d="M6 1a5 5 0 0 1 0 10z" fill="currentColor" />}
+    </svg>
+  );
+}
+
+/** Skor dan status tiap dimensi (PRD 4.4), dengan urutan yang sama seperti kalimat ringkasan. */
+export function DaftarStatus({ skor, status }: { skor: Skor; status: Record<Dimensi, Status> }) {
+  return (
+    <ul className="status-dimensi">
+      {URUTAN_STATUS.map(({ kunci, teks }) => (
+        <li key={kunci}>
+          <span>
+            {teks} <span className="status-skor">{Math.round(skor[kunci])}</span>
+          </span>
+          <span className={`tingkat tingkat-${status[kunci]}`}>
+            <IkonStatus status={status[kunci]} />
+            {NAMA_STATUS[status[kunci]]}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }
