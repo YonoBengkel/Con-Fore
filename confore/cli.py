@@ -12,7 +12,7 @@ import time
 import traceback
 from datetime import datetime, timedelta, timezone
 
-from confore import config, db, fetch, publish
+from confore import config, db, fetch, publish, revalidate
 from confore.derive import derive_all
 from confore.smoke import load_dotenv
 
@@ -93,7 +93,28 @@ def cmd_run(args):
     results = fetch_all(items)
     today = wib_date()
     with db.connect() as conn:
-        return write_and_publish(conn, args, cfg, items, results, today)
+        code = write_and_publish(conn, args, cfg, items, results, today)
+    return refresh_site(cfg) or code
+
+
+def refresh_site(cfg):
+    """Segarkan situs sesudah data terbit. Data sudah aman, jadi kegagalan di sini hanya membuat
+    job merah (GitHub mengirim email), tanpa mengubah status run di database."""
+    try:
+        result = revalidate.refresh([s["id"] for s in cfg["series"]])
+    except fetch.FetchError as error:
+        print(f"Revalidasi situs gagal: {error.code}", file=sys.stderr)
+        return 1
+    if result is None:
+        if os.environ.get("GITHUB_ACTIONS") == "true":
+            print("Revalidasi situs gagal: Secret SITE_URL dan REVALIDATE_SECRET belum diisi",
+                  file=sys.stderr)
+            return 1
+        print("Revalidasi situs dilewati: SITE_URL atau REVALIDATE_SECRET belum diisi")
+        return 0
+    report("Revalidasi situs", ["Alamat dipicu", "Belum punya halaman (404)", "Pemanasan berhenti"],
+           [(result.warmed, result.missing, result.stopped or "-")])
+    return 0
 
 
 def write_and_publish(conn, args, cfg, items, results, today):

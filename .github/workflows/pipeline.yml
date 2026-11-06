@@ -49,6 +49,8 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
           BPS_API_KEY: ${{ secrets.BPS_API_KEY }}
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+          SITE_URL: ${{ secrets.SITE_URL }}
         run: |
           if [ "$JADWAL" = "17 8,11 1-8 * *" ]; then
             python -m confore run --source bps --trigger release

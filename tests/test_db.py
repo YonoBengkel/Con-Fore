@@ -162,6 +162,7 @@ class DatabaseTest(unittest.TestCase):
         args = Namespace(source=source, trigger="laptop", dry_run=False, full_refresh=False)
         with mock.patch.dict(os.environ, {"SUPABASE_DB_URL": url}), \
                 mock.patch.object(cli.fetch, "fetch_series", side_effect=fake_fetch), \
+                mock.patch.object(cli, "refresh_site", return_value=0), \
                 mock.patch.object(cli, "PAUSE", 0):
             code = cli.cmd_run(args)
         row = self.conn.execute("select status from etl.runs order by run_id desc limit 1").fetchone()

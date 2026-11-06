@@ -1,4 +1,4 @@
-Status: langkah fase 0 dan 1 sudah dijalankan; langkah situs (bagian 5) ditulis dari kode dan belum selesai dicoba. Langkah untuk komponen yang belum ada dicek ulang saat komponennya jadi.
+Status: langkah fase 0, fase 1, dan penayangan situs (bagian 5) sudah dijalankan. Pemeriksaan kesehatan cron-job.org belum dipasang. Langkah untuk komponen yang belum ada dicek ulang saat komponennya jadi.
 
 # Runbook Con-Fore
 
@@ -13,7 +13,7 @@ Langkah operasional dan pemulihan. Arsitekturnya ada di [ARCHITECTURE.md](ARCHIT
 ## 2. Menyimpan kredensial
 
 - Salin string **Session pooler** dari tombol Connect di dashboard Supabase langsung ke GitHub Secrets (`SUPABASE_DB_URL`) dan `.env` laptop. Jangan lewat chat, issue, atau commit.
-- GitHub: **Settings > Secrets and variables > Actions > Secrets**. `pipeline.yml` membaca `SUPABASE_DB_URL`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, dan `BPS_API_KEY` sebagai Secrets. `SUPABASE_URL` tidak rahasia, tetapi memuat ref proyek yang sengaja tidak ditampilkan di log publik.
+- GitHub: **Settings > Secrets and variables > Actions > Secrets**. `pipeline.yml` membaca `SUPABASE_DB_URL`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `BPS_API_KEY`, `REVALIDATE_SECRET`, dan `SITE_URL` sebagai Secrets. `SUPABASE_URL` tidak rahasia, tetapi memuat ref proyek yang sengaja tidak ditampilkan di log publik.
 - Nilai disimpan tanpa spasi atau tanda kutip di sekitarnya; uji akses menolak key yang formatnya tidak valid.
 - Satu Secret per variabel: nama persis seperti di `.env` (misalnya `SUPABASE_DB_URL`), isinya hanya nilainya (tanpa `NAMA=`).
 - Bila run di GitHub menyebut "... belum diisi" padahal `.env` di laptop terisi, Secret tersimpan di tempat yang tidak dibaca workflow: tab **Variables** (bukan Secrets), menu **Codespaces** atau **Dependabot** (bukan Actions), pengaturan **akun** (bukan pengaturan repo), atau satu Secret berisi seluruh isi `.env`. Yang benar: halaman repo > Settings > Secrets and variables > Actions > tab Secrets > bagian **Repository secrets**.
@@ -59,12 +59,16 @@ Situs ada di folder `web/`. Vercel membangunnya dari branch `main`, jadi kerjaka
 4. Di layar konfigurasi, isi **Root Directory** dengan `web` (Framework terdeteksi sebagai Next.js). Di **Environment Variables**, isi empat variabel ini dengan nama persis dan nilai tanpa spasi atau tanda kutip:
    - `SUPABASE_URL` dan `SUPABASE_PUBLISHABLE_KEY`: sama dengan di `.env`.
    - `REVALIDATE_SECRET` dan `HEALTH_TOKEN`: nilai dari langkah 2.
-   Jangan beri awalan `NEXT_PUBLIC_`. Tanpa awalan itu, nilainya hanya dibaca server dan tidak pernah sampai ke browser pengunjung.
+   Jangan beri awalan `NEXT_PUBLIC_`. Tanpa awalan itu, nilainya hanya dibaca server dan tidak pernah sampai ke browser pengunjung. Jangan impor seluruh `.env`: situs tidak memakai `SUPABASE_DB_URL` (memuat password database) maupun key BPS dan FRED.
 5. Klik **Deploy**. Build ikut membaca Supabase, jadi keempat variabel harus terisi dulu dan proyek Supabase tidak sedang dijeda. Region fungsi (`icn1`, Seoul) dan aturan "build hanya bila `web/` berubah" diambil otomatis dari `web/vercel.json`; tidak perlu diatur di dashboard.
 6. Buka alamat `<nama-proyek>.vercel.app` dari Vercel. Cek bahwa `/`, `/sumber`, dan satu halaman `/indikator/...` tampil dengan angka. Domain sendiri belum diputuskan (PRD 9.2), jadi subdomain Vercel dipakai dulu.
-Bila build gagal dengan `PYTHON_ENTRYPOINT_NOT_FOUND`, Vercel membangun dari akar repo (ada `requirements.txt`, jadi dikira proyek Python). Di proyek Vercel: **Settings > Build and Deployment > Root Directory** isi `web`, pastikan Framework Preset menjadi Next.js, simpan, lalu **Deployments > Redeploy** pada deployment terbaru.
+Bila build gagal dengan `PYTHON_ENTRYPOINT_NOT_FOUND`, Vercel membangun dari akar repo (ada `requirements.txt`, jadi dikira proyek Python). Di proyek Vercel: **Settings > Build and Deployment > Root Directory** isi `web`, pastikan Framework Preset menjadi Next.js, simpan, lalu Redeploy seperti di bawah.
 
-7. Nilai `REVALIDATE_SECRET` yang sama nanti juga masuk GitHub Secrets, saat pipeline mulai memanggil revalidasi; `HEALTH_TOKEN` masuk cron-job.org saat pemeriksaan kesehatan dipasang. Sampai pipeline memanggil revalidasi, angka baru tampil setelah cache 6 jam habis.
+Perubahan variabel environment baru berlaku di deployment baru. Untuk Redeploy: **Deployments**, ⋯ di deployment teratas, **Redeploy**, matikan centang **Use project's Ignore Build Step**, lalu konfirmasi. Centang itu harus mati, karena commit yang sama tidak mengubah `web/`. Tanda berhasil: `GET /api/health` tanpa token menjawab 401, bukan 503.
+
+7. Tambahkan dua Secret di GitHub (bagian 2): `REVALIDATE_SECRET` dengan nilai yang sama seperti di Vercel, dan `SITE_URL` berisi alamat situs yang diawali `https://`. Setiap run lalu menyegarkan situs, dan hasilnya muncul sebagai tabel "Revalidasi situs" di ringkasan job. `HEALTH_TOKEN` masuk cron-job.org saat pemeriksaan kesehatan dipasang.
+
+Bila run berakhir merah dengan `Revalidasi situs gagal`, datanya tetap sudah terbit. Artinya: `HTTP 401` berarti nilai di GitHub dan Vercel berbeda, `HTTP 503` berarti Vercel belum memuat rahasia itu (Redeploy), dan `Secret ... belum diisi` berarti Secret-nya belum ada di GitHub.
 
 ## 6. Workflow terjadwal berhenti (mulai jadwal harian aktif)
 
@@ -91,7 +95,7 @@ Lakukan bila kredensial bocor atau terpapar (tertempel di chat, log, atau commit
 | Password database | Dashboard Supabase > pengaturan Database > reset password. Perbarui `SUPABASE_DB_URL` di GitHub Secrets dan `.env` |
 | Key BPS | Buat key baru di akun webapi.bps.go.id, hapus yang lama. Perbarui `BPS_API_KEY` di GitHub Secrets (dipakai `pipeline.yml` dan `smoke.yml`) dan `.env` |
 | Key FRED | Buat key baru di akun FRED, hapus yang lama. Perbarui `FRED_API_KEY` |
-| `REVALIDATE_SECRET`, `HEALTH_TOKEN` (fase 2) | Buat nilai baru (lihat bagian 2), perbarui di GitHub, Vercel, dan cron-job.org sekaligus |
+| `REVALIDATE_SECRET`, `HEALTH_TOKEN` (fase 2) | Buat nilai baru (lihat bagian 2), perbarui di GitHub, Vercel, dan cron-job.org sekaligus, lalu Redeploy situs (bagian 5) |
 | Token GitHub untuk cron-job.org (fase 1) | Buat token fine-grained baru (repo ini saja, Actions: write), ganti di cron-job.org, cabut yang lama |
 | Kunci Supabase | Publishable key baru di dashboard; nonaktifkan legacy `anon` dan `service_role` bila masih aktif |
 

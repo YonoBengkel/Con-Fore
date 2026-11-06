@@ -1,4 +1,5 @@
 import logging
+import os
 import tempfile
 import unittest
 import urllib.error
@@ -10,7 +11,7 @@ from email.message import Message
 from io import BytesIO
 from unittest import mock
 
-from confore import cli, config, db, fetch
+from confore import cli, config, db, fetch, revalidate
 from confore.derive import derive_all, ratio, yoy
 from confore.fetch import FetchError, Point
 from confore.publish import next_releases, previous_value
@@ -130,6 +131,97 @@ class GetTest(unittest.TestCase):
         self.assertEqual(caught.exception.code, "HTTP 404")
         self.assertIsNone(caught.exception.__cause__)
         self.assertTrue(caught.exception.__suppress_context__)
+
+    def test_data_sends_post(self):
+        with mock.patch.object(fetch.KEYED_OPENER, "open", return_value=response(b'{"ok":true}')) as opened:
+            fetch.get("https://example.test", {}, opener=fetch.KEYED_OPENER,
+                      complete=fetch.json_complete, data=b"")
+        self.assertEqual(opened.call_args.args[0].get_method(), "POST")
+
+
+class RevalidateTest(unittest.TestCase):
+    SITE = {"SITE_URL": "https://situs.test/", "REVALIDATE_SECRET": "RAHASIA"}
+    KOSONG = {"SITE_URL": "", "REVALIDATE_SECRET": ""}
+
+    def refresh(self, env, side_effect=None):
+        with mock.patch.dict(os.environ, env), mock.patch("time.sleep"), \
+                mock.patch.object(fetch, "get", side_effect=side_effect) as get:
+            return revalidate.refresh(["a"]), get
+
+    def test_skipped_without_config(self):
+        result, get = self.refresh(self.KOSONG)
+        self.assertIsNone(result)
+        get.assert_not_called()
+
+    def test_posts_without_redirect_then_warms_every_address(self):
+        result, get = self.refresh(self.SITE)
+        self.assertEqual(result, revalidate.Result(4, 0, None))
+        post, *warm = get.call_args_list
+        self.assertEqual(post.args, ("https://situs.test/api/revalidate", {"x-revalidate-secret": "RAHASIA"}))
+        self.assertIs(post.kwargs["opener"], fetch.KEYED_OPENER)
+        self.assertEqual(post.kwargs["data"], b"")
+        self.assertEqual([call.args for call in warm],
+                         [(f"https://situs.test{path}", {})
+                          for path in ["/", "/sumber", "/indikator/a", "/api/csv/a"]])
+
+    def test_new_series_404_is_counted(self):
+        result, _ = self.refresh(self.SITE, [None, None, None, FetchError("HTTP 404", 404), None])
+        self.assertEqual(result, revalidate.Result(3, 1, None))
+
+    def test_other_warm_error_stops_without_raising(self):
+        result, get = self.refresh(self.SITE, [None, None, FetchError("HTTP 500", 500)])
+        self.assertEqual(result, revalidate.Result(1, 0, "HTTP 500"))
+        self.assertEqual(get.call_count, 3)
+
+    def test_post_error_reaches_caller(self):
+        with self.assertRaises(FetchError):
+            self.refresh(self.SITE, FetchError("HTTP 401", 401))
+
+    def test_rejects_plain_http(self):
+        with mock.patch.dict(os.environ, {**self.SITE, "SITE_URL": "http://situs.test"}), \
+                mock.patch.object(fetch, "get") as get:
+            with self.assertRaises(FetchError):
+                revalidate.refresh(["a"])
+        get.assert_not_called()
+
+    def test_refresh_site_exit_code(self):
+        cfg = {"series": [{"id": "a"}]}
+        for name, env, outcome, code in [
+                ("berhasil", {}, {"return_value": revalidate.Result(1, 0, None)}, 0),
+                ("pemanasan berhenti", {}, {"return_value": revalidate.Result(1, 0, "HTTP 500")}, 0),
+                ("POST gagal", {}, {"side_effect": FetchError("HTTP 401", 401)}, 1),
+                ("kosong di laptop", {"GITHUB_ACTIONS": "false"}, {"return_value": None}, 0),
+                ("kosong di GitHub", {"GITHUB_ACTIONS": "true"}, {"return_value": None}, 1)]:
+            with self.subTest(name), mock.patch.dict(os.environ, env), \
+                    mock.patch.object(revalidate, "refresh", **outcome), \
+                    mock.patch.object(cli, "report"), mock.patch("builtins.print"):
+                self.assertEqual(cli.refresh_site(cfg), code)
+
+    def test_cmd_run_refreshes_after_connection_closes(self):
+        args = mock.Mock(source=None, dry_run=False)
+        for written, refreshed, code in [(0, 0, 0), (1, 0, 1), (0, 1, 1)]:
+            order = mock.MagicMock()
+            order.write.return_value = written
+            order.refresh.return_value = refreshed
+            with self.subTest(written=written, refreshed=refreshed), \
+                    mock.patch.object(config, "load", return_value={"series": []}), \
+                    mock.patch.object(db, "connect", order.connect), \
+                    mock.patch.object(cli, "write_and_publish", order.write), \
+                    mock.patch.object(cli, "refresh_site", order.refresh):
+                self.assertEqual(cli.cmd_run(args), code)
+            names = [call[0] for call in order.mock_calls]
+            self.assertLess(names.index("connect().__exit__"), names.index("refresh"))
+            self.assertLess(names.index("write"), names.index("connect().__exit__"))
+
+    def test_cmd_run_does_not_refresh_when_publish_raises(self):
+        args = mock.Mock(source=None, dry_run=False)
+        with mock.patch.object(config, "load", return_value={"series": []}), \
+                mock.patch.object(db, "connect", mock.MagicMock()), \
+                mock.patch.object(cli, "write_and_publish", side_effect=db.Stop("x")), \
+                mock.patch.object(cli, "refresh_site") as refresh:
+            with self.assertRaises(db.Stop):
+                cli.cmd_run(args)
+        refresh.assert_not_called()
 
 
 class DeriveTest(unittest.TestCase):

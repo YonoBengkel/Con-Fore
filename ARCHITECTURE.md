@@ -1,4 +1,4 @@
-Status: pipeline data dan situs tab Data sesuai kode di `main` (2026-10-31), dan pipeline jalan dengan jadwal harian. Deploy situs, panggilan revalidasi dari pipeline, model, backup, dan pemantauan masih rencana yang disetujui pengelola 2026-10-30. Seri BPS untuk pekerja formal-informal dan komponen inflasi (4.3) masih rencana yang disetujui 2026-11-03.
+Status: pipeline data, situs tab Data, dan panggilan revalidasi sesuai kode di `main` (2026-11-06). Situs tayang di Vercel, dan pipeline jalan dengan jadwal harian. Model, backup, dan pemantauan masih rencana yang disetujui pengelola 2026-10-30. Seri BPS untuk pekerja formal-informal dan komponen inflasi (4.3) masih rencana yang disetujui 2026-11-03.
 
 # Arsitektur Con-Fore
 
@@ -21,6 +21,7 @@ Sumber API -> cek perubahan -> unduh -> validasi -> etl.observations (dengan vin
 etl.observations -> turunan (di memori) -> [fase 3: model -> etl.forecasts]
                  -> publikasi satu transaksi -> public.* (hanya-baca)
 public.* -> server Vercel (ISR, cache) -> pengunjung
+publikasi selesai -> POST /api/revalidate -> satu GET per alamat -> render baru di latar
 ```
 
 Semua logika ada di satu paket Python, `confore`, yang bisa dijalankan sama persis di GitHub Actions, di laptop, atau di runner cadangan.
@@ -43,6 +44,7 @@ Con-Fore/
     derive.py            turunan di memori: yoy, rasio (kurs silang)   [ada]
     db.py                migrasi, cek katalog akses, uji Data API, tulis vintage, log   [ada]
     publish.py           isi ulang tabel public.* dalam satu transaksi   [ada]
+    revalidate.py        segarkan situs sesudah publikasi: tandai cache basi, lalu picu render baru   [ada]
     cli.py               perintah: migrate, run (--dry-run, --source, --trigger, --full-refresh)   [ada]
     models/              baseline, DFM PDB, inflasi, TPT (fase 3)
   supabase/migrations/   0001-0003: skema, tabel, GRANT, RLS   [ada]
@@ -93,24 +95,24 @@ npm run build          # build produksi; ikut membaca Supabase, jadi Supabase ha
 npm start              # sajikan hasil build
 ```
 
-Urutan satu `run`: muat dan periksa `config/`, ambil setiap seri dengan jeda 1 detik (sebelum koneksi database dibuka, supaya koneksi tidak menganggur saat sumber lambat), buka koneksi, ambil kunci advisory (run atau migrasi lain yang sedang berjalan membuat run ini berhenti), cek katalog akses (berhenti bila ada akses yang tidak aman) dan ukuran database, catat baris `etl.runs`, salin `config/` ke `etl`, tulis vintage baru dan `fetch_log` per seri, tentukan status, publikasi, lalu tutup baris run. Pemanggilan `/api/revalidate` dari pipeline belum dibuat (lihat 4.10).
+Urutan satu `run`: muat dan periksa `config/`, ambil setiap seri dengan jeda 1 detik (sebelum koneksi database dibuka, supaya koneksi tidak menganggur saat sumber lambat), buka koneksi, ambil kunci advisory (run atau migrasi lain yang sedang berjalan membuat run ini berhenti), cek katalog akses (berhenti bila ada akses yang tidak aman) dan ukuran database, catat baris `etl.runs`, salin `config/` ke `etl`, tulis vintage baru dan `fetch_log` per seri, tentukan status, publikasi, lalu tutup baris run. Setelah koneksi ditutup, pipeline menyegarkan situs (lihat 4.10).
 
 | Variabel | Dipakai oleh | Isi |
 |---|---|---|
 | `SUPABASE_DB_URL` | Pipeline | String koneksi **session pooler** (berisi password database) |
 | `BPS_API_KEY`, `FRED_API_KEY` | Pipeline dan uji akses | Key gratis; BPS sudah dipakai, FRED nanti |
-| `REVALIDATE_SECRET` | Vercel; pipeline nanti | Rahasia bersama untuk `/api/revalidate` |
+| `REVALIDATE_SECRET` | Vercel dan pipeline | Rahasia bersama untuk `/api/revalidate` |
 | `HEALTH_TOKEN` | Vercel dan cron-job.org | Token header untuk `/api/health` |
 | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | Vercel (hanya server); pipeline untuk uji akses setelah migrasi | Alamat proyek dan kunci publik |
-| `SITE_URL` | Pipeline (nanti, untuk revalidasi) | Domain produksi situs |
+| `SITE_URL` | Pipeline (untuk revalidasi) | Alamat produksi situs, diawali `https://` |
 
-Di GitHub, nilai ini disimpan sebagai Secrets (`pipeline.yml` hanya membaca Secrets). Di Vercel, sebagai Environment Variables tanpa awalan `NEXT_PUBLIC_`, supaya hanya server yang bisa membacanya. Untuk situs lokal, `web/.env.local` (daftarnya di `web/.env.example`). String session pooler disalin dari tombol Connect di dashboard Supabase (pilihan "Session pooler") langsung ke tempat-tempat itu, tidak pernah lewat chat atau commit.
+Di GitHub, nilai ini disimpan sebagai Secrets (`pipeline.yml` hanya membaca Secrets). Di Vercel, sebagai Environment Variables tanpa awalan `NEXT_PUBLIC_`, supaya hanya server yang bisa membacanya. Vercel hanya menyimpan empat variabel yang dibaca situs, jadi `SUPABASE_DB_URL` dan key sumber tidak boleh ada di sana. Untuk situs lokal, `web/.env.local` (daftarnya di `web/.env.example`). String session pooler disalin dari tombol Connect di dashboard Supabase (pilihan "Session pooler") langsung ke tempat-tempat itu, tidak pernah lewat chat atau commit.
 
 ## 4. Lapisan aplikasi
 
 ### 4.1 Front end
 
-- Next.js 16 App Router di runtime Node 24, untuk Vercel (kode di `web/`, belum tayang).
+- Next.js 16 App Router di runtime Node 24, di Vercel (kode di `web/`, tayang di `con-fore.vercel.app`).
 - Halaman: `/` (tab Data), `/indikator/[id]` (detail per seri), `/cara-kerja`, `/sumber`, dan `/prediksi` (penanda "segera" sampai v0.2).
 - Data dibaca di server lalu dirender sebagai halaman statis yang di-cache (ISR, 6 jam). Browser hanya menerima HTML dan data grafik.
 - `/indikator/[id]` dan `/api/csv/[chart_id]` dibangun saat build untuk seri di `public.series_meta` ditambah `SERI_DITAUTKAN` (seri kartu dan panel penggerak), dengan `dynamicParams = false`: id lain langsung 404 tanpa render. Seri baru di luar daftar itu baru mendapat halaman setelah build web berikutnya.
@@ -126,7 +128,7 @@ Di GitHub, nilai ini disimpan sebagai Secrets (`pipeline.yml` hanya membaca Secr
 
 - **Tidak ada API buatan sendiri untuk data.** Server Vercel membaca Data API (PostgREST) bawaan Supabase dengan publishable key, memakai `fetch` biasa tanpa pustaka klien Supabase (`web/lib/data.ts`).
 - Route milik situs (`/api/revalidate` dan `/api/health` selalu menjawab dengan `Cache-Control: private, no-store`):
-  - `POST /api/revalidate`: untuk pipeline setelah publikasi (pemanggilnya belum dibuat). Wajib header `x-revalidate-secret`; 401 bila rahasianya salah, 503 bila `REVALIDATE_SECRET` belum diisi, 405 untuk GET. Menjalankan `revalidateTag('supabase', 'max')` (lihat 4.10).
+  - `POST /api/revalidate`: dipanggil pipeline setelah publikasi. Wajib header `x-revalidate-secret`; 401 bila rahasianya salah, 503 bila `REVALIDATE_SECRET` belum diisi, 405 untuk GET. Menjalankan `revalidateTag('supabase', 'max')` (lihat 4.10).
   - `GET /api/health`: dipanggil cron-job.org. Wajib header `x-health-token`; 401 tanpa token yang benar. Jawaban JSON (`status`, `last_success_at`, `last_run_status`, `umur_jam`, `stale_sources`): 200 bila run sukses terakhir paling lama 36 jam lalu, 503 bila lebih (`basi`), Supabase tidak terbaca (`supabase_gagal`), atau `HEALTH_TOKEN` belum diisi.
   - `GET /api/csv/[chart_id]`: unduhan CSV untuk pengunjung. Baris awal berawalan `#` memuat sitasi, kalimat atribusi, dan syarat penggunaan setiap sumber.
 - Header rahasia dibandingkan dengan waktu tetap (`web/lib/rahasia.ts`), supaya isinya tidak bocor lewat lama jawaban.
@@ -187,7 +189,7 @@ Cron di GitHub Actions ditulis dalam **UTC** (bawaan; kunci `timezone` juga ters
 | Kesehatan (cron-job.org) | - | 09.17 setiap hari | `GET /api/health`; email ke pengelola bila 503 |
 | Penyalaan ulang (cron-job.org) | - | Setiap hari | `PUT .../actions/workflows/pipeline.yml/enable` |
 
-Menit 17 dan 47 dipilih karena awal jam adalah waktu tersibuk GitHub, dan saat beban tinggi job terjadwal bisa tertunda atau dibatalkan. Tes otomatis memeriksa konversi ini di batas tengah malam.
+Menit 17 dan 47 dipilih karena awal jam adalah waktu tersibuk GitHub, dan saat beban tinggi job terjadwal bisa tertunda atau dibatalkan. Tes otomatis memeriksa konversi ini di batas tengah malam. Yang teramati 1-5 November 2026: run harian mulai 09.16 sampai 10.56 WIB, dan run hari rilis BPS tampak hanya sekali sehari, sekitar 22.15 sampai 01.29 WIB. Keterlambatan ini masih memenuhi ukuran Kesegaran di PRD 6.
 
 Jadwal tabel manual: target diperiksa saat UU APBN baru disahkan (akhir September); kalender BPS dan jadwal RDG BI saat terbit (Desember-Januari); hari libur saat SKB tiga menteri terbit (September).
 
@@ -257,8 +259,8 @@ Jadwal tabel manual: target diperiksa saat UU APBN baru disahkan (akhir Septembe
 ### 4.7 CI/CD
 
 - **`pipeline.yml`** (satu-satunya workflow yang menulis data). Pemicu: jadwal harian `17 23 * * *` (06.17 WIB), jadwal hari rilis BPS `17 8,11 1-8 * *` (15.17 dan 18.17 WIB tanggal 1-8), push ke `main` yang mengubah `config/**`, dan manual dengan mode `run`, `full_refresh`, atau `migrate`. Jadwal harian dan push memakai mode `run`. Jadwal hari rilis BPS dikenali dari `github.event.schedule` dan selalu menjalankan `python -m confore run --source bps --trigger release`.
-  - Secret per langkah: langkah `Tes` tidak menerima Secret apa pun; langkah `Pipeline` menerima `SUPABASE_DB_URL`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, dan `BPS_API_KEY`.
-  - Job `run`, batas 60 menit: tes, ambil data, cek awal (koneksi, ukuran database, katalog akses), simpan, turunan, model (fase 3), publikasi, revalidasi (fase 2), catat run. Yang sudah ada: semua kecuali model dan revalidasi.
+  - Secret per langkah: langkah `Tes` tidak menerima Secret apa pun; langkah `Pipeline` menerima `SUPABASE_DB_URL`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `BPS_API_KEY`, `REVALIDATE_SECRET`, dan `SITE_URL`.
+  - Job `run`, batas 60 menit: tes, ambil data, cek awal (koneksi, ukuran database, katalog akses), simpan, turunan, model (fase 3), publikasi, catat run, revalidasi. Yang sudah ada: semua kecuali model.
   - Job `backtest` (fase 3): berjalan setelah rilis target atau secara manual, dengan batas waktu sendiri; menulis `etl.backtest`.
   - Job `notify`, terpisah dengan izin `issues: write` saja: membuka atau mengomentari satu issue `pipeline-failure` berisi nama sumber, kode HTTP, dan tautan run.
   - `concurrency: con-fore-pipeline` dengan `queue: max` dan tanpa `cancel-in-progress`. Tanpa `queue: max`, run tertunda (misalnya `migrate` manual) bisa digantikan run berikutnya.
@@ -266,7 +268,7 @@ Jadwal tabel manual: target diperiksa saat UU APBN baru disahkan (akhir Septembe
 - **`smoke.yml`** (ada sejak fase 0): dijalankan manual; menjalankan `tests.test_smoke` lalu uji akses setiap sumber dari runner, dan menulis hasilnya ke ringkasan job. Tes lain butuh psycopg, jadi dijalankan di `pipeline.yml`. Di workflow ini, hanya langkah uji akses yang menerima Secret key BPS dan FRED. Permintaan yang membawa key menolak pengalihan alamat, dan catatan hasil hanya memuat kode HTTP atau jenis error.
 - **`ci.yml`** (mulai fase 3): tes parser dengan fixture, tes batas WIB/UTC, smoke test model, dan uji migrasi terhadap Postgres lokal (`tests/test_db.py` dengan `CONFORE_TEST_DB_URL`). Tanpa secret. Sampai saat itu, tes database dijalankan di laptop. Uji akses ke proyek Supabase sungguhan berjalan di `pipeline.yml` mode `migrate`.
 - Keamanan workflow: izin bawaan `contents: read`; setiap action dipin ke commit SHA dan diperbarui Dependabot; input manual dibaca lewat `env`; tidak pernah memakai `pull_request_target`.
-- **Deploy situs** (rencana; belum dideploy, langkahnya di RUNBOOK): Vercel membangun dari branch `main` dengan Root Directory `web`. Ignored Build Step ada di `web/vercel.json` (`ignoreCommand`): build hanya bila `web/` berubah sejak commit yang terakhir dideploy (`VERCEL_GIT_PREVIOUS_SHA`, atau `HEAD^` bila variabel itu kosong). Pembaruan data cukup lewat revalidasi.
+- **Deploy situs** (langkahnya di RUNBOOK): Vercel membangun dari branch `main` dengan Root Directory `web`. Ignored Build Step ada di `web/vercel.json` (`ignoreCommand`): build hanya bila `web/` berubah sejak commit yang terakhir dideploy (`VERCEL_GIT_PREVIOUS_SHA`, atau `HEAD^` bila variabel itu kosong). Karena itu, Redeploy manual untuk commit yang sama harus mematikan centang "Use project's Ignore Build Step". Pembaruan data cukup lewat revalidasi.
 
 ### 4.8 Row-level security
 
@@ -299,9 +301,9 @@ Semua permintaan diberi jeda 1 detik dari permintaan sebelumnya, hanya mengikuti
 
 ### 4.10 Cache dan CDN
 
-- Halaman dan CSV memakai ISR dengan `revalidate` 6 jam sebagai cadangan. Selama pipeline belum memanggil revalidasi, angka baru baru tampil setelah cache 6 jam itu habis.
+- Halaman dan CSV memakai ISR dengan `revalidate` 6 jam sebagai cadangan. Tanpa revalidasi dari pipeline, pengunjung pertama setelah situs sepi menerima halaman lama, berapa pun umurnya, dan render baru baru tersedia untuk pengunjung berikutnya. Saat dicek 2026-11-05, beranda yang tersaji berumur 54 jam.
 - Setiap pembacaan Supabase diberi tag `supabase`. `POST /api/revalidate` menjalankan `revalidateTag('supabase', 'max')`: semua halaman dan CSV yang membaca Supabase ditandai basi, tetapi tidak langsung dibuang. Permintaan pertama sesudahnya masih mendapat halaman lama dan memicu render baru di latar; bila render itu gagal, halaman lama dipertahankan. `revalidatePath` sengaja tidak dipakai, karena langsung membuang cache, sehingga Supabase yang gagal tepat sesudahnya membuat pengunjung mendapat error 500. Perilaku ini diuji dengan `next start`, belum di Vercel.
-- Rencana pipeline (belum dibuat): setelah publikasi, panggil `POST /api/revalidate`, lalu cukup satu GET per halaman yang membaca Supabase (`/`, `/sumber`, setiap `/indikator/<id>`) untuk memicu render baru. Pemanasan itu harus menerima 404 untuk seri baru yang belum punya halaman sampai build web berikutnya.
+- Pipeline (`confore/revalidate.py`): setelah transaksi publikasi selesai, panggil `POST /api/revalidate`, lalu satu GET per alamat yang membaca Supabase (`/`, `/sumber`, setiap `/indikator/<id>` dan `/api/csv/<id>`) dengan jeda 1 detik untuk memicu render baru. Pemanasan menerima 404 untuk seri baru yang belum punya halaman sampai build web berikutnya, dan berhenti pada error lain, karena halaman sudah ditandai basi dan pengunjung berikutnya tetap memicu render baru. POST memakai permintaan tanpa pengalihan alamat (`KEYED_OPENER`) dan `SITE_URL` wajib `https`, supaya rahasia tidak terkirim ke alamat lain. Bila POST gagal setelah 3 percobaan, atau Secret-nya kosong di GitHub Actions, job berakhir merah supaya GitHub mengirim email, tetapi status run di database tidak berubah karena data sudah terbit. Di laptop tanpa kedua variabel, langkah ini dilewati. Perkiraan egress Supabase sekitar 1,3 MB per run.
 - Bila pembacaan Supabase gagal, halaman melempar error sehingga Vercel tetap menyajikan halaman terakhir yang baik. Situs memakai `fetch` biasa ke PostgREST (`web/lib/data.ts`), yang melempar error untuk jawaban selain 2xx. Hasil kosong dari tabel wajib juga dianggap error: `series_meta`, `latest_values`, `site_status`, `sources` (tanpanya atribusi hilang dari `/sumber` dan CSV), dan `chart_series` untuk beranda serta daftar id saat build. `targets` dan `release_calendar` boleh kosong. Jangan merender halaman kosong atau 404 untuk data yang gagal dibaca, karena itu ikut ter-cache.
 - Output render tidak bergantung waktu (`new Date()` atau angka acak); "terakhir diperbarui" diambil dari `public.site_status`.
 - Pembaruan data tidak lewat redeploy, karena setiap deployment mulai dengan cache kosong. Build ikut membaca Supabase, jadi Supabase yang dijeda harus dipulihkan dulu sebelum deploy.

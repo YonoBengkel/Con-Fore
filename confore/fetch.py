@@ -119,8 +119,9 @@ def json_complete(body):
     return body.rstrip().endswith(b"}")
 
 
-def get(url, headers, opener=OPENER, complete=csv_complete):
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **headers})
+def get(url, headers, opener=OPENER, complete=csv_complete, data=None):
+    # data yang terisi membuat urllib mengirim POST (dipakai revalidate.py).
+    request = urllib.request.Request(url, data=data, headers={"User-Agent": USER_AGENT, **headers})
     for attempt in range(ATTEMPTS):
         try:
             with opener.open(request, timeout=60) as response:

@@ -2,7 +2,7 @@
 
 Website publik berbahasa Indonesia yang menjelaskan kondisi dan arah ekonomi Indonesia lewat tiga angka (pertumbuhan, inflasi, pengangguran), diperbarui otomatis setiap hari.
 
-Status: fase 1 (pipeline data) jalan otomatis setiap hari. Fase 2 (situs tab Data v0.1 di `web/`) dan pengambil data BPS sudah di `main`; situs belum tayang.
+Status: fase 1 (pipeline data) jalan otomatis setiap hari. Fase 2 (situs tab Data v0.1 di `web/`) tayang di https://con-fore.vercel.app.
 
 ## Dokumen
 
