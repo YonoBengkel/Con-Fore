@@ -62,7 +62,7 @@ Ringkasan di kedua tab berupa **segitiga keseimbangan** (pertumbuhan, harga stab
 
 ### 4.3 Target resmi
 
-- Target diambil dari UU APBN (pertumbuhan dan TPT), PMK sasaran inflasi, dan Perpres RPJMN. Angka yang masih bersumber pemberitaan dicocokkan ke teks resminya sebelum rilis publik.
+- Target diambil dari UU APBN (pertumbuhan dan TPT), PMK sasaran inflasi, dan Perpres RPJMN. Angka yang masih bersumber pemberitaan dicocokkan ke teks resminya sebelum rilis publik. Pencocokan selesai 2026-11-06, kecuali pertumbuhan dan TPT 2027, karena naskah UU APBN 2027 belum ditemukan di JDIH.
 - Nilainya tidak ditulis di dokumen ini. Daftar kurasinya (nilai, dokumen sumber, status verifikasi `dokumen` atau `berita`) ada di `config/targets.csv`.
 - Diperiksa ulang setiap UU APBN baru disahkan (sekitar akhir September) dan setiap PMK sasaran inflasi baru terbit.
 
