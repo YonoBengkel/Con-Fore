@@ -94,7 +94,91 @@ def cmd_run(args):
     today = wib_date()
     with db.connect() as conn:
         code = write_and_publish(conn, args, cfg, items, results, today)
-    return refresh_site(cfg) or code
+    code = refresh_site(cfg) or code
+    return run_models(cfg, today) or code
+
+
+def run_models(cfg, today):
+    """Ramalan harian, paling akhir dan dengan koneksi sendiri. Data sudah terbit dan situs sudah
+    segar, jadi kegagalan di sini hanya membuat job merah."""
+    try:
+        from confore.models import forecast
+        from confore.models.data import MissingInput
+    except ImportError as error:
+        print(f"Model gagal dimuat: {describe(error)}", file=sys.stderr)
+        return 1
+    try:
+        with db.connect() as conn:
+            db.lock(conn)
+            counts = forecast.step(conn, cfg, today, os.environ.get("GITHUB_SHA"))
+    except MissingInput as error:
+        print(f"Model dilewati: seri {error} belum ada")
+        return 0
+    except (config.ConfigError, db.Stop) as error:  # pesannya aman dicetak
+        print(f"Model gagal: {error}", file=sys.stderr)
+        return 1
+    except Exception as error:
+        traceback.print_tb(error.__traceback__)
+        print(f"Model gagal: {describe(error)}", file=sys.stderr)
+        return 1
+    if counts is None:
+        print("Model tidak dijalankan ulang: data masukan, backtest, dan kode tidak berubah")
+    else:
+        report("Ramalan baru", ["Model", "Baris"], sorted(counts.items()))
+    return 0
+
+
+def cmd_backtest(args):
+    """Backtest penuh. --dry-run mengambil data langsung dari sumber dan tidak menulis ke database."""
+    from confore.models import backtest, forecast
+    from confore.models.data import MissingInput, build
+
+    cfg = config.load()
+    today = wib_date()
+    try:
+        if args.dry_run:
+            results = fetch_all([s for s in cfg["series"] if "derive" not in s])
+            data = {item["id"]: points for item, points, _, _ in results}
+            derive_all(cfg["series"], data)
+            inputs = build(data, config.load_holidays(), today)
+        else:
+            with db.connect() as conn:
+                inputs = forecast.latest_inputs(conn, cfg, today)
+    except MissingInput as error:
+        raise db.Stop(f"seri {error} belum ada") from None
+    started = time.monotonic()
+    frame, missed = backtest.run(inputs)
+    print(f"Backtest selesai dalam {time.monotonic() - started:.0f} detik, {len(frame)} baris")
+    for title, header, rows in backtest.tables(frame, missed):
+        report(title, header, rows)
+    offsets = backtest.error_offsets(frame)
+    chosen = backtest.main_models(frame)
+    rows = forecast.rows_for(inputs, offsets, today)
+    report_forecasts(rows, chosen)
+    if not args.dry_run:
+        with db.connect() as conn:
+            db.lock(conn)
+            written = db.replace_backtest(conn, backtest.db_rows(frame), os.environ.get("GITHUB_SHA"))
+        print(f"etl.backtest diganti: {written} baris")
+    return 0
+
+
+def report_forecasts(rows, chosen):
+    """Tabel ramalan terbaru per seri: titik dan rentang 80% dari model angka utama horizon itu."""
+    from confore.models.backtest import BASELINES, LABELS, number
+
+    values = {(r[0], r[1], r[2], r[3]): r[4] for r in rows}
+    out = []
+    for series_id, ref, model, stat, value, horizon in rows:
+        # Horizon yang belum pernah terjadi di backtest memakai baseline pertama.
+        main = chosen.get((series_id, horizon), BASELINES[0])
+        if stat != "point" or model != main:
+            continue
+        band = [values.get((series_id, ref, model, s)) for s in ("lo80", "hi80")]
+        text = f"{number(band[0], 2)} sampai {number(band[1], 2)}" if None not in band else "-"
+        out.append((series_id, ref, LABELS.get(model, model), number(value, 2), text))
+    report("Ramalan terbaru memakai angka utama per horizon",
+           ["Seri", "Periode", "Model", "Titik", "Rentang 80%"], out)
 
 
 def refresh_site(cfg):
@@ -191,6 +275,9 @@ def main(argv=None):
     run.add_argument("--full-refresh", action="store_true",
                      help="tulis ulang observasi walau hash data sama dengan run sebelumnya")
     run.set_defaults(func=cmd_run)
+    test = commands.add_parser("backtest", help="uji model pada data lama, lalu tulis etl.backtest")
+    test.add_argument("--dry-run", action="store_true", help="ambil data dari sumber, tanpa database")
+    test.set_defaults(func=cmd_backtest)
     args = parser.parse_args(argv)
     try:
         return args.func(args)

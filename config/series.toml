@@ -92,6 +92,19 @@ is_target = true
 name = "Inflasi (dibanding bulan yang sama tahun lalu)"
 citation = "International Monetary Fund, Consumer Price Index (CPI), https://data.imf.org/en/datasets/IMF.STA:CPI"
 
+# Bahan model inflasi: indeks memberi perubahan bulanan sejak 2000, yang tidak ada di tabel statis BPS
+# untuk riwayat panjang. Selisihnya dengan tabel 908 paling jauh 0,005 poin persen sejak 2024.
+[[series]]
+id = "idn_cpi_index_m"
+source = "imf"
+dataset = "CPI"
+query = "IMF.STA,CPI/IDN.CPI._T.IX.M?startPeriod=2000-01&detail=dataonly"
+frequency = "M"
+unit = "indeks"
+concept = "index"
+name = "Indeks harga konsumen"
+citation = "International Monetary Fund, Consumer Price Index (CPI), https://data.imf.org/en/datasets/IMF.STA:CPI"
+
 # --- Target, rilis pertama BPS (WebAPI, domain 0000 = nasional) ---
 
 [[series]]

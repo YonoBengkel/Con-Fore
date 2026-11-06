@@ -12,6 +12,7 @@ import urllib.request
 
 import psycopg
 from psycopg.conninfo import conninfo_to_dict
+from psycopg.types.json import Jsonb
 
 from confore.config import ROOT
 from confore.fetch import Point, data_hash
@@ -343,6 +344,49 @@ def stale_series(conn, series_ids):
                            order by series_id, id desc""", (series_ids,)).fetchall()
     healthy = {series_id for series_id, ok in rows if ok}
     return set(series_ids) - healthy
+
+
+def last_forecast_hash(conn):
+    """Sidik data masukan pada ramalan terakhir, None bila belum pernah ada ramalan."""
+    row = conn.execute("""select input_hash from etl.forecasts
+                          order by created_at desc limit 1""").fetchone()
+    return row[0] if row else None
+
+
+def write_forecasts(conn, rows, origin, cutoffs, input_hash, git_sha, versions):
+    """Tulis ramalan satu hari. Ramalan hari lain tidak pernah berubah. Run kedua di hari yang sama
+    (misalnya sesudah rilis BPS) mengganti seluruh ramalan hari itu, seperti koreksi vintage."""
+    params = [(series_id, ref, model, origin, stat, value, cutoffs[series_id], input_hash, git_sha,
+               Jsonb(versions)) for series_id, ref, model, stat, value in rows]
+    with conn.transaction(), conn.cursor() as cur:
+        cur.execute("delete from etl.forecasts where origin_date = %s", (origin,))
+        cur.executemany("""
+            insert into etl.forecasts (series_id, ref_period, model, origin_date, stat, value,
+              data_cutoff, input_hash, git_sha, pkg_versions)
+            values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, params)
+
+
+def backtest_errors(conn):
+    return conn.execute("""select series_id, model, origin_date, ref_period, horizon,
+                                  forecast::float8, actual::float8
+                           from etl.backtest""").fetchall()
+
+
+def backtest_stamp(conn):
+    """Waktu backtest terakhir, None bila belum pernah ada."""
+    return conn.execute("select max(computed_at) from etl.backtest").fetchone()[0]
+
+
+def replace_backtest(conn, rows, git_sha):
+    """Ganti seluruh hasil backtest dalam satu transaksi, jadi pembaca tidak pernah melihatnya kosong."""
+    with conn.transaction(), conn.cursor() as cur:
+        cur.execute("delete from etl.backtest")
+        with cur.copy("""copy etl.backtest (series_id, model, origin_date, ref_period, horizon,
+                         forecast, actual, git_sha) from stdin""") as copy:
+            for row in rows:
+                copy.write_row((*row, git_sha))
+    return len(rows)
 
 
 def latest_points(conn, series_ids):

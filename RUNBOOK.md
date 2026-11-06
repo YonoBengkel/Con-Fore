@@ -51,6 +51,23 @@ Bila koneksi gagal: periksa bahwa `SUPABASE_DB_URL` adalah string **Session pool
     - Bila BPS mengganti tahun dasar IHK (terakhir Januari 2024), rangkaian y-on-y kelompok melewati dua tahun dasar selama 11 bulan dan bisa menyimpang sekitar 0,3 poin persen dari rilis. Naikkan tahun `sejak` di keempat query tabel 908 ke tahun dasar baru, dengan akibat angka setahun per kelompok kosong selama 11 bulan.
     - `HTTP 429`: kuota WebAPI terlampaui. Tunggu run berikutnya dan jangan menjalankan banyak run manual berdekatan.
 
+## 4a. Menyalakan dan merawat model (fase 3)
+
+Tabel model harus ada lebih dulu, karena setiap run sesudah push langsung menulis ke sana. Kerjakan berurutan:
+
+1. Terapkan migrasi `0004`: `python -m confore migrate` dari laptop, atau **Actions > Pipeline data > Run workflow** dengan mode `migrate`. Hasil yang benar: satu migrasi baru dan "Uji Data API lulus".
+2. Push ke `main`. Perubahan `config/**` memicu satu run yang mengambil seri `idn_cpi_index_m` dan menulis ramalan pertama tanpa rentang. Tabel "Ramalan baru" muncul di ringkasan job.
+3. Isi `etl.backtest` sekali: **Run workflow** dengan mode `backtest`, atau `python -m confore backtest` dari laptop. Laporannya muncul di ringkasan job. Run berikutnya menulis ramalan dengan rentang.
+
+Sesudah itu backtest berjalan sendiri tanggal 9 setiap bulan. Baca laporannya sebulan sekali: tabel "masa normal" menunjukkan angka utama per horizon.
+
+- `Model gagal: <jenis error>` di job merah: data sudah terbit dan situs sudah disegarkan, jadi situs aman. Baris kode ada di log. Bila `UndefinedTable`, migrasi `0004` belum diterapkan (langkah 1). Bila menyebut `holidays.csv`, perbaiki baris yang disebut.
+- `Model dilewati: seri ... belum ada`: seri bahan belum pernah berhasil diambil. Lihat tabel run di ringkasan job yang sama.
+- "Asal tanpa hasil model" di laporan: jumlah asal saat model gagal, meledak, atau belum cukup data. Regresi TPT memang kosong di awal riwayat. Bila jumlah DFM melonjak, periksa versi paket di `etl.forecasts.pkg_versions`.
+- Bila BPS mengganti tahun dasar PDB, galat di sekitar pergantian bisa melonjak. Baca lagi laporan backtest sesudah seri baru masuk.
+
+`config/holidays.csv` diperbarui saat Keputusan Menteri Agama atau SKB tiga menteri terbit (September). Baris `perkiraan` diganti dengan tanggal resminya, dan tahun baru ditambahkan bila tanggalnya mendekati ujung tabel.
+
 ## 5. Menayangkan situs pertama kali (fase 2)
 
 Situs ada di folder `web/`. Vercel membangunnya dari branch `main`, jadi kerjakan berurutan.
@@ -115,3 +132,4 @@ Lakukan bila kredensial bocor atau terpapar (tertempel di chat, log, atau commit
 - [ ] (Fase 2) Pemakaian Vercel Hobby masih jauh dari batas.
 - [ ] (Fase 2) Rencana Terbit BPS (https://www.bps.go.id/id/arc) sudah memuat tahun berikutnya: ganti baris `bps-perkiraan` di `config/release_calendar.csv` dengan tanggal resminya, dan tambahkan rilis yang belum tercatat.
 - [ ] (Fase 2) Naskah UU APBN 2027 sudah ada di JDIH: cocokkan dua baris `berita` di `config/targets.csv`.
+- [ ] (Fase 3) Laporan backtest tanggal 9 lulus dan angka utamanya masih masuk akal (bagian 4a).

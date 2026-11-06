@@ -2,7 +2,7 @@
 
 Website publik berbahasa Indonesia yang menjelaskan kondisi dan arah ekonomi Indonesia lewat tiga angka (pertumbuhan, inflasi, pengangguran), diperbarui otomatis setiap hari.
 
-Status: fase 1 (pipeline data) jalan otomatis setiap hari. Fase 2 (situs tab Data v0.1 di `web/`) tayang di https://con-fore.vercel.app.
+Status: fase 1 (pipeline data) jalan otomatis setiap hari. Fase 2 (situs tab Data v0.1 di `web/`) tayang di https://con-fore.vercel.app. Fase 3 (model dan backtest) ada di `confore/models/`, dan hasilnya belum tampil di situs sampai tab Prediksi di fase 4.
 
 ## Dokumen
 
@@ -30,10 +30,12 @@ python -m unittest discover -s tests       # tes; tes database dilewati tanpa CO
 python -m confore.smoke                    # uji akses setiap sumber, tanpa paket tambahan
 python -m confore run --dry-run            # ambil dan hitung semua seri tanpa database
 python -m confore migrate                  # terapkan migrasi SQL ke Supabase, lalu uji akses
-python -m confore run                      # ambil data, simpan vintage baru, publikasi public.*
+python -m confore run                      # ambil data, simpan vintage baru, publikasi public.*, ramal
+python -m confore backtest --dry-run       # uji model dengan data langsung dari sumber, tanpa database
+python -m confore backtest                 # uji model dari database, lalu ganti isi etl.backtest
 ```
 
-Variabel environment dibaca dari environment atau `.env` (lihat `.env.example`). Tes database butuh Postgres lokal sekali pakai dengan peran `anon`, `authenticated`, dan `service_role`; arahkan `CONFORE_TEST_DB_URL` ke database berakhiran `_test` sebagai variabel environment (bukan lewat `.env`), misalnya `postgresql://postgres@localhost:55432/confore_test?sslmode=disable`. Tes itu menghapus skema `etl` dan tabel `public` di database tersebut. Seri yang ditarik diatur di `config/series.toml`; target resmi, sumber, dan kalender rilis di `config/*.csv`. Seri BPS butuh `BPS_API_KEY` di `.env`.
+Variabel environment dibaca dari environment atau `.env` (lihat `.env.example`). Tes database butuh Postgres lokal sekali pakai dengan peran `anon`, `authenticated`, dan `service_role`; arahkan `CONFORE_TEST_DB_URL` ke database berakhiran `_test` sebagai variabel environment (bukan lewat `.env`), misalnya `postgresql://postgres@localhost:55432/confore_test?sslmode=disable`. Tes itu menghapus skema `etl` dan tabel `public` di database tersebut. Seri yang ditarik diatur di `config/series.toml`; target resmi, sumber, kalender rilis, dan tanggal Lebaran di `config/*.csv`. Seri BPS butuh `BPS_API_KEY` di `.env`.
 
 ### Situs lokal
 

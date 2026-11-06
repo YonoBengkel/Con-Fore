@@ -1,0 +1,46 @@
+name: CI
+
+# Tes tanpa Secret, termasuk migrasi dan penulisan terhadap Postgres lokal sekali pakai.
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["web/**", "**.md"]
+  pull_request:
+    paths-ignore: ["web/**", "**.md"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: lokal
+          POSTGRES_DB: confore_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+      - name: Pasang dependensi dari lockfile berhash
+        run: python -m pip install --require-hashes -r requirements.txt
+      - name: Buat peran seperti Supabase
+        env:
+          PGPASSWORD: lokal
+        run: psql -h localhost -U postgres -d confore_test -c "create role anon nologin" -c "create role authenticated nologin" -c "create role service_role nologin"
+      - name: Tes
+        env:
+          CONFORE_TEST_DB_URL: postgresql://postgres:lokal@localhost:5432/confore_test?sslmode=disable
+        run: python -m unittest discover -s tests -v

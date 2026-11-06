@@ -1,4 +1,4 @@
-Status: sesuai migrasi `0001`-`0003` (2026-10-30). Tabel bertanda fase 3 dan 4 masih rencana.
+Status: sesuai migrasi `0001`-`0004` (2026-11-07). Tabel bertanda fase 4 masih rencana.
 
 # Skema Database Con-Fore
 
@@ -23,8 +23,8 @@ erDiagram
   SERIES ||--o{ OBSERVATIONS : "punya"
   SERIES ||--o{ TARGETS : "punya target"
   SERIES ||--o{ RELEASE_CALENDAR : "dijadwalkan"
-  SERIES ||--o{ FORECASTS : "diramal (fase 3)"
-  SERIES ||--o{ BACKTEST : "diuji (fase 3)"
+  SERIES ||--o{ FORECASTS : "diramal"
+  SERIES ||--o{ BACKTEST : "diuji"
   RUNS ||--o{ FETCH_LOG : "mencatat"
   SERIES ||--o{ FETCH_LOG : "diambil"
   SOURCES {
@@ -87,8 +87,10 @@ erDiagram
     text stat PK
     numeric value
     date data_cutoff
+    text input_hash
     text git_sha
     jsonb pkg_versions
+    timestamptz created_at
   }
   BACKTEST {
     text series_id PK, FK
@@ -98,6 +100,8 @@ erDiagram
     int horizon
     numeric forecast
     numeric actual
+    text git_sha
+    timestamptz computed_at
   }
   RUNS {
     bigint run_id PK
@@ -231,13 +235,13 @@ erDiagram
 | `observations` | (`series_id`, `period`, `vintage_date`) | `period` berformat `YYYY`, `YYYY-Qn`, `YYYY-MM`, atau `YYYY-MM-DD`; `period_start` (date, not null) untuk pengurutan. `vintage_date` = tanggal WIB saat nilai pertama kali terlihat. `value` NULL berarti periode itu ditarik sumber pada `vintage_date` (tidak tampil sampai sumber memuatnya lagi). `source_id` mencatat asal nilai (BPS, IMF, manual) agar rekam jejak hanya dinilai terhadap rilis pertama BPS. `release_date` belum diisi pipeline untuk sumber mana pun: IMF tidak mencantumkan tanggal rilis BPS, dan WebAPI BPS hanya memberi tanggal pembaruan per variabel, bukan per observasi. `source_status` = kode status observasi dari sumber, bila ada. |
 | `targets` | (`series_id`, `year`, `target_kind`) | `target_kind` in (`apbn`,`pmk`,`rpjmn`): lensa target memakai APBN (pertumbuhan, TPT) dan PMK (inflasi); panel jangka panjang memakai RPJMN. Isi `value`, atau `lower` dan `upper` untuk rentang (TPT hanya rentang). `document`, `url`, `last_verified` wajib diisi; `verification` in (`dokumen`,`berita`) menandai apakah angkanya sudah dicocokkan ke dokumen resmi. Diganti penuh dari `config/targets.csv` setiap run. |
 | `release_calendar` | (`series_id`, `ref_period`, `calendar_source`) | `calendar_source` misalnya `bps`, `oecd`, `bi-rdg`, atau `bps-perkiraan` selama jadwal resmi BPS tahun itu belum terbit. Diganti penuh dari `config/release_calendar.csv` setiap run. |
-| `forecasts` (fase 3) | (`series_id`, `ref_period`, `model`, `origin_date`, `stat`) | `stat` in (`point`,`lo80`,`hi80`,`lo95`,`hi95`). Hanya ditambah, tidak pernah ditimpa. `git_sha` dan `pkg_versions` mencatat kode dan versi paket yang menghasilkannya. |
-| `backtest` (fase 3) | (`series_id`, `model`, `origin_date`, `ref_period`) | `horizon` dalam satuan periode seri. Sumber lebar rentang ketidakpastian. |
+| `forecasts` | (`series_id`, `ref_period`, `model`, `origin_date`, `stat`) | Ramalan sungguhan untuk rekam jejak. `model` in (`sama_terakhir`,`ar1`,`dfm`,`musiman`,`arimax`,`regresi`,`regresi_pdb`) tanpa check, supaya model baru tidak butuh migrasi. `stat` in (`point`,`lo80`,`hi80`,`lo95`,`hi95`). Angka hari lain tidak pernah berubah, dan run kedua di hari yang sama mengganti seluruh ramalan hari itu. `data_cutoff` = awal periode angka resmi terakhir target. `input_hash` = sidik data masukan, kalender, backtest terakhir, dan versi kode, supaya model hanya dijalankan ulang bila salah satunya berubah. `git_sha` dan `pkg_versions` mencatat kode dan versi paket yang menghasilkannya. |
+| `backtest` | (`series_id`, `model`, `origin_date`, `ref_period`) | Hasil backtest terakhir, diganti penuh dalam satu transaksi. `origin_date` = tanggal 15 bulan asal. `horizon` dalam satuan periode seri (kuartal untuk PDB, bulan untuk inflasi dan TPT), dihitung dari angka resmi terakhir saat itu. Sumber lebar rentang ketidakpastian. |
 | `runs` | `run_id` (identity) | `trigger` in (`schedule`,`release`,`push`,`dispatch`,`laptop`); `status` in (`running`,`ok`,`partial`,`failed`). |
 | `fetch_log` | `id` (identity) | Satu baris per seri per run. FK `run_id` dan `series_id`. Tidak pernah menyimpan URL (key BPS ada di path URL) atau teks error bebas: `error` hanya kode tetap seperti `HTTP 503` atau nama jenis error. `data_hash` adalah SHA-256 data ternormalisasi (periode dan nilai); `changed` membandingkannya dengan hash terakhir seri itu. |
 | `schema_migrations` | `version` | Diisi oleh `python -m confore migrate`. |
 
-`config/holidays.csv` (fase 3) akan dibaca langsung oleh model dan tidak disimpan di database, karena berkasnya ada di repo.
+`config/holidays.csv` dibaca langsung oleh model dan tidak disimpan di database, karena berkasnya ada di repo.
 
 ### 2.2 Skema `public`
 
@@ -284,6 +288,8 @@ Koreksi di hari yang sama menimpa nilai hari itu. Bila koreksinya mengembalikan 
 **Satu penulis.** Run dan migrasi mengambil kunci advisory sesi (`pg_try_advisory_lock`); run kedua yang datang bersamaan berhenti tanpa menulis.
 
 **Publikasi** (`confore/publish.py`). Semua tabel `public` diisi ulang dalam **satu transaksi** dengan `DELETE` lalu `INSERT`. `chart_series` saat ini berisi satu grafik per seri (`chart_id` = `series_id`). Jangan pernah `DROP TABLE`, `CREATE TABLE AS`, atau `to_sql(if_exists='replace')`, karena cara itu membuat tabel baru tanpa GRANT, kebijakan, dan RLS.
+
+**Model.** Ramalan ditulis sesudah publikasi dalam satu transaksi, hanya bila `input_hash` berbeda dari ramalan terakhir: baris hari itu dihapus, lalu ditulis ulang. Backtest menulis `etl.backtest` dengan `DELETE` lalu `COPY` dalam satu transaksi, dan koneksinya dibuka sesudah perhitungan selesai.
 
 **Ganti tahun dasar.** Buat `series_id` baru dengan `base_year` sendiri; seri lama dibekukan (`active = false`).
 
@@ -368,7 +374,7 @@ Pada Postgres 17, `MAINTAIN` ditambahkan ke kedua daftar hak tabel (kode memilih
 
 - Letak: `supabase/migrations/NNNN_nama.sql`, berurutan dan tidak pernah diubah setelah diterapkan.
 - Diterapkan oleh `python -m confore migrate` (lokal atau workflow dengan mode `migrate`), yang mencatat versinya di `etl.schema_migrations`.
-- Yang ada: `0001_skema_dan_akses_dasar` (skema `etl`, `etl.schema_migrations`, penutupan akses bawaan), `0002_tabel_etl`, `0003_tabel_public` (beserta GRANT, RLS, dan kebijakan). Fase 3 dan 4 menambah tabel forecast dan backtest.
+- Yang ada: `0001_skema_dan_akses_dasar` (skema `etl`, `etl.schema_migrations`, penutupan akses bawaan), `0002_tabel_etl`, `0003_tabel_public` (beserta GRANT, RLS, dan kebijakan), dan `0004_tabel_model` (`etl.forecasts`, `etl.backtest`). Fase 4 menambah tabel publik untuk ramalan dan rekam jejak.
 - `migrate` lalu menjalankan pemeriksaan katalog (bagian 4) dan, bila `SUPABASE_URL` dan `SUPABASE_PUBLISHABLE_KEY` terisi, uji Data API dengan publishable key.
 - Uji lokal: `tests/test_db.py` memasang default privileges lama Supabase (tabel baru terbuka untuk `anon`, `authenticated`, `service_role`), menerapkan semua migrasi ke Postgres lokal sekali pakai (`CONFORE_TEST_DB_URL` sebagai variabel environment; hanya alamat mesin ini dan database berakhiran `_test`), lalu memeriksa bahwa tabel baru tidak lagi terbuka, katalog akses, vintage dan penarikan periode, status run, kunci, publikasi, dan hak `anon`.
 

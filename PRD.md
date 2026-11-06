@@ -1,6 +1,6 @@
 # PRD Con-Fore
 
-> Status: disetujui pengelola 2026-10-30. Tambahan 2026-11-03 (bagian 4.4 dan butir terkait di 4, 5, 7, dan 9) disetujui pengelola hari itu. Menggantikan `docs/RENCANA-MVP.md`. Detail teknis ada di [ARCHITECTURE.md](ARCHITECTURE.md) dan [SCHEMA.md](SCHEMA.md).
+> Status: disetujui pengelola 2026-10-30. Tambahan 2026-11-03 (bagian 4.4 dan butir terkait di 4, 5, 7, dan 9) disetujui pengelola hari itu. Tambahan 2026-11-07 (arti "lebih akurat" di bagian 6) diusulkan agent saat fase 3 dan menunggu persetujuan pengelola. Menggantikan `docs/RENCANA-MVP.md`. Detail teknis ada di [ARCHITECTURE.md](ARCHITECTURE.md) dan [SCHEMA.md](SCHEMA.md).
 
 ## 1. Masalah
 
@@ -97,7 +97,7 @@ Ringkasan di kedua tab berupa **segitiga keseimbangan** (pertumbuhan, harga stab
 | Ketersediaan | Data ter-update otomatis tujuh hari berturut-turut tanpa campur tangan manual; selama uji itu, run sukses terakhir tidak pernah lebih dari 36 jam lalu |
 | Kesegaran | Angka baru tampil paling lambat pagi setelah hari rilis BPS |
 | Kejujuran label | Setiap angka punya sumber, tanggal, dan label "data resmi", "perkiraan Con-Fore", atau "proyeksi IMF" |
-| Akurasi model | Galat (MAE) forecast Con-Fore dibandingkan dengan baseline per horizon dan diterbitkan di Rekam jejak. Angka utama adalah yang lebih akurat (model atau baseline); baseline dan proyeksi IMF selalu tampil sebagai pembanding, dan hasil yang kalah tetap dipublikasikan |
+| Akurasi model | Galat (MAE) forecast Con-Fore dibandingkan dengan baseline per horizon dan diterbitkan di Rekam jejak. Angka utama adalah yang lebih akurat (model atau baseline). Model dianggap lebih akurat hanya bila menang di masa normal dan di data sejak 2022. Baseline dan proyeksi IMF selalu tampil sebagai pembanding, dan hasil yang kalah tetap dipublikasikan |
 | Dipahami pembaca awam | Uji baca dengan lima orang awam: minimal empat bisa menjelaskan arti segitiga dan tiga kartu tanpa bantuan |
 | Tampilan | Kedua tab tampil benar di HP dan desktop, tema terang dan gelap, dan segitiga punya teks alternatif untuk pembaca layar |
 | Biaya | Rp0 untuk layanan (semua memakai paket gratis permanen); domain sendiri, bila dipilih, satu-satunya biaya |

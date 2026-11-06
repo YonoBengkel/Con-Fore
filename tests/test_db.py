@@ -53,7 +53,7 @@ class DatabaseTest(unittest.TestCase):
         for table in publish.TABLES + ("baru",):
             self.conn.execute(f"drop table if exists public.{table}")
         self.conn.execute(SUPABASE_DEFAULTS)
-        self.assertEqual(len(db.migrate(self.conn)), 3)
+        self.assertEqual(len(db.migrate(self.conn)), 4)
         self.cfg = config.load()
         db.sync_config(self.conn, self.cfg)
         self.run_id = db.start_run(self.conn, "laptop", None)
@@ -216,9 +216,40 @@ class DatabaseTest(unittest.TestCase):
             with self.assertRaises(psycopg.errors.InsufficientPrivilege):
                 with self.conn.transaction():
                     self.conn.execute("insert into public.sources values ('x','x','x','x','x','x')")
-            with self.assertRaises(psycopg.errors.InsufficientPrivilege):
-                with self.conn.transaction():
-                    self.conn.execute("select count(*) from etl.runs")
+            for table in ("etl.runs", "etl.forecasts", "etl.backtest"):
+                with self.assertRaises(psycopg.errors.InsufficientPrivilege):
+                    with self.conn.transaction():
+                        self.conn.execute(f"select count(*) from {table}")
+
+    def test_forecasts_keep_other_days_and_backtest_is_replaced(self):
+        series, today = "bps_cpi_yoy_m", date(2026, 11, 7)
+        self.assertIsNone(self.db.last_forecast_hash(self.conn))
+        rows = [(series, "2026-11", "musiman", "point", 3.3), (series, "2026-11", "musiman", "lo80", 2.9)]
+        cutoffs = {series: date(2026, 10, 1)}
+        versions = {"pandas": "3.0.3"}
+        self.db.write_forecasts(self.conn, rows, today, cutoffs, "sidik-1", "abc", versions)
+        self.assertEqual(self.db.last_forecast_hash(self.conn), "sidik-1")
+        # Hari yang sama mengganti seluruh ramalan hari itu, termasuk baris yang tidak muncul lagi.
+        # Hari berikutnya menambah baris baru tanpa mengubah angka lama.
+        changed = [(series, "2026-11", "musiman", "point", 9.9)]
+        self.db.write_forecasts(self.conn, changed, today, cutoffs, "sidik-2", "abc", versions)
+        self.db.write_forecasts(self.conn, [(series, "2026-11", "musiman", "point", 4.4)],
+                                date(2026, 11, 8), cutoffs, "sidik-3", "abc", versions)
+        stored = self.conn.execute("""select origin_date, stat, value, input_hash from etl.forecasts
+                                      order by origin_date""").fetchall()
+        self.assertEqual(stored, [(today, "point", Decimal("9.9"), "sidik-2"),
+                                  (date(2026, 11, 8), "point", Decimal("4.4"), "sidik-3")])
+        self.assertEqual(self.db.last_forecast_hash(self.conn), "sidik-3")
+
+        self.assertIsNone(self.db.backtest_stamp(self.conn))
+        first = [(series, "musiman", date(2024, 1, 15), "2024-02", 1, 2.5, 2.75)]
+        self.assertEqual(self.db.replace_backtest(self.conn, first, "abc"), 1)
+        self.assertIsNotNone(self.db.backtest_stamp(self.conn))
+        second = [(series, "ar1", date(2024, 1, 15), "2024-02", 1, 2.0, 2.75),
+                  (series, "ar1", date(2024, 2, 15), "2024-03", 1, 2.5, 3.05)]
+        self.assertEqual(self.db.replace_backtest(self.conn, second, "abc"), 2)
+        self.assertEqual(sorted(self.db.backtest_errors(self.conn)), sorted(second))
+        self.assertEqual(self.db.check_access(self.conn), [])
 
 
 if __name__ == "__main__":

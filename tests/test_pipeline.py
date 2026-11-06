@@ -199,19 +199,23 @@ class RevalidateTest(unittest.TestCase):
 
     def test_cmd_run_refreshes_after_connection_closes(self):
         args = mock.Mock(source=None, dry_run=False)
-        for written, refreshed, code in [(0, 0, 0), (1, 0, 1), (0, 1, 1)]:
+        for written, refreshed, models, code in [(0, 0, 0, 0), (1, 0, 0, 1), (0, 1, 0, 1), (0, 0, 1, 1)]:
             order = mock.MagicMock()
             order.write.return_value = written
             order.refresh.return_value = refreshed
-            with self.subTest(written=written, refreshed=refreshed), \
+            order.models.return_value = models
+            with self.subTest(written=written, refreshed=refreshed, models=models), \
                     mock.patch.object(config, "load", return_value={"series": []}), \
                     mock.patch.object(db, "connect", order.connect), \
                     mock.patch.object(cli, "write_and_publish", order.write), \
-                    mock.patch.object(cli, "refresh_site", order.refresh):
+                    mock.patch.object(cli, "refresh_site", order.refresh), \
+                    mock.patch.object(cli, "run_models", order.models):
                 self.assertEqual(cli.cmd_run(args), code)
             names = [call[0] for call in order.mock_calls]
-            self.assertLess(names.index("connect().__exit__"), names.index("refresh"))
             self.assertLess(names.index("write"), names.index("connect().__exit__"))
+            self.assertLess(names.index("connect().__exit__"), names.index("refresh"))
+            # Model paling akhir: model yang macet tidak boleh menahan penyegaran situs.
+            self.assertLess(names.index("refresh"), names.index("models"))
 
     def test_cmd_run_does_not_refresh_when_publish_raises(self):
         args = mock.Mock(source=None, dry_run=False)
