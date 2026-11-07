@@ -21,7 +21,7 @@ class Result(NamedTuple):
 
 
 def paths(series_ids):
-    return ["/", "/sumber",
+    return ["/", "/prediksi", "/sumber",
             *(f"/indikator/{series_id}" for series_id in series_ids),
             *(f"/api/csv/{series_id}" for series_id in series_ids)]
 

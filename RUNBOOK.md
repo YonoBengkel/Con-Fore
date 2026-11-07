@@ -68,6 +68,18 @@ Sesudah itu backtest berjalan sendiri tanggal 9 setiap bulan. Baca laporannya se
 
 `config/holidays.csv` diperbarui saat Keputusan Menteri Agama atau SKB tiga menteri terbit (September). Baris `perkiraan` diganti dengan tanggal resminya, dan tahun baru ditambahkan bila tanggalnya mendekati ujung tabel.
 
+## 4b. Menyalakan tab Prediksi (fase 4)
+
+Build Vercel membaca tabel `public.forecast_latest`, `public.backtest_scores`, dan `public.track_record`. Tabel yang belum ada membuat build gagal, jadi kerjakan berurutan:
+
+1. Terapkan migrasi `0005`: `python -m confore migrate`, atau **Run workflow** dengan mode `migrate`. Hasil yang benar: satu migrasi baru dan "Uji Data API lulus".
+2. Push ke `main`. Vercel membangun situs baru karena `web/` berubah, dan perubahan `config/**` memicu satu run pipeline. Build boleh selesai lebih dulu dari run itu: selama tabelnya kosong, `/prediksi` menulis "Perkiraan belum tersedia".
+3. Run itu menulis ramalan, mengisi ketiga tabel, lalu menyegarkan situs sekali lagi. Sesudah itu `/prediksi` menampilkan perkiraan.
+
+Halaman `/indikator/<id>` seri proyeksi IMF menjawab 404 sampai build web berikutnya, dan tidak ada tautan ke sana. Tab Prediksi membaca seri itu lewat `chart_series`, jadi tidak terpengaruh.
+
+Bila `/prediksi` berisi angka lama, lihat "Perkiraan terakhir dihitung" di halamannya, lalu cek bagian 4a: model yang gagal hanya membuat tabel ini tertinggal.
+
 ## 5. Menayangkan situs pertama kali (fase 2)
 
 Situs ada di folder `web/`. Vercel membangunnya dari branch `main`, jadi kerjakan berurutan.

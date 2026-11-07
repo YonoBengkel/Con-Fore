@@ -32,7 +32,11 @@ const LABEL: { kunci: keyof typeof SUDUT; teks: string; x: number; y: number; an
   { kunci: "harga", teks: "Harga stabil", x: 6, y: 254, anchor: "start" },
 ];
 
-export function Segitiga({ skor, labelId }: { skor: Skor; labelId: string }) {
+/**
+ * `pembanding` diisi skor tahun resmi di tab Prediksi. Saat itu `skor` adalah perkiraan, jadi garisnya
+ * putus-putus, dan garis tipis menunjukkan tahun resmi. Skor di sudut selalu milik `skor`.
+ */
+export function Segitiga({ skor, labelId, pembanding }: { skor: Skor; labelId: string; pembanding?: Skor }) {
   return (
     <svg className="segitiga" viewBox="0 0 320 290" role="img" aria-labelledby={labelId}>
       {[25, 50, 75, 100].map((s) => (
@@ -42,7 +46,8 @@ export function Segitiga({ skor, labelId }: { skor: Skor; labelId: string }) {
         const ujung = titik(SUDUT[k], R);
         return <line key={k} x1={C.x} y1={C.y} x2={ujung.x} y2={ujung.y} className="tri-kisi" />;
       })}
-      <polygon points={poligon(skor)} className="tri-isi" />
+      {pembanding && <polygon points={poligon(pembanding)} className="tri-pembanding" />}
+      <polygon points={poligon(skor)} className={pembanding ? "tri-isi tri-perkiraan" : "tri-isi"} />
       {(Object.keys(SUDUT) as (keyof typeof SUDUT)[]).map((k) => {
         const p = titik(SUDUT[k], (R * Math.max(0, Math.min(100, skor[k]))) / 100);
         return <circle key={k} cx={p.x} cy={p.y} r={4} className="tri-titik" />;

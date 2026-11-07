@@ -123,9 +123,9 @@ def run_models(cfg, today):
         return 1
     if counts is None:
         print("Model tidak dijalankan ulang: data masukan, backtest, dan kode tidak berubah")
-    else:
-        report("Ramalan baru", ["Model", "Baris"], sorted(counts.items()))
-    return 0
+        return 0
+    report("Ramalan baru", ["Model", "Baris"], sorted(counts.items()))
+    return refresh_site(cfg)  # supaya tab Prediksi langsung memakai ramalan baru
 
 
 def cmd_backtest(args):

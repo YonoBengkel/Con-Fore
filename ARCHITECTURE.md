@@ -1,4 +1,4 @@
-Status: pipeline data, situs tab Data, panggilan revalidasi, dan model (fase 3) sesuai kode di repo (2026-11-07). Situs tayang di Vercel, dan pipeline jalan dengan jadwal harian. Tab Prediksi, backup, dan pemantauan masih rencana yang disetujui pengelola 2026-10-30.
+Status: pipeline data, situs tab Data dan tab Prediksi, panggilan revalidasi, dan model sesuai kode di repo (2026-11-07). Situs tayang di Vercel, dan pipeline jalan dengan jadwal harian. Backup dan pemantauan masih rencana yang disetujui pengelola 2026-10-30.
 
 # Arsitektur Con-Fore
 
@@ -19,8 +19,8 @@ Tidak ada server backend yang menyala terus. Data berubah beberapa kali sebulan 
 Sumber API -> cek perubahan -> unduh -> validasi -> etl.observations (dengan vintage)
                                                  -> etl.fetch_log
 etl.observations -> turunan (di memori) -> publikasi satu transaksi -> public.* (hanya-baca)
-                 -> model, bila masukannya berubah -> etl.forecasts
-etl.observations -> backtest bulanan -> etl.backtest -> lebar rentang ramalan
+                 -> model, bila sidiknya berubah -> etl.forecasts -> public.forecast_latest, public.track_record
+etl.observations -> backtest bulanan -> etl.backtest -> lebar rentang ramalan, angka utama, public.backtest_scores
 public.* -> server Vercel (ISR, cache) -> pengunjung
 publikasi selesai -> POST /api/revalidate -> satu GET per alamat -> render baru di latar
 ```
@@ -54,8 +54,8 @@ Con-Fore/
       inflation.py       inflasi: baseline, model musiman, dan ARIMAX
       unemployment.py    TPT: baseline dan dua regresi
       backtest.py        backtest bergulir, nilai galat, angka utama, rentang, dan isi laporan
-      forecast.py        ramalan harian ke etl.forecasts
-  supabase/migrations/   0001-0004: skema, tabel, GRANT, RLS, tabel model   [ada]
+      forecast.py        ramalan harian ke etl.forecasts, dan isi tabel publik tab Prediksi
+  supabase/migrations/   0001-0005: skema, tabel, GRANT, RLS, tabel model, tabel tab Prediksi   [ada]
   config/
     series.toml          registri seri dan query API   [ada]
     sources.csv          nama, URL, syarat, lisensi, dan kalimat atribusi per sumber   [ada]
@@ -65,7 +65,7 @@ Con-Fore/
   web/                   situs Next.js (App Router), cara menjalankannya di web/README.md   [ada]
     app/                 halaman dan route API (csv, health, revalidate)   [ada]
     components/          segitiga (SVG), grafik, kartu, komponen browser   [ada]
-    lib/                 pembacaan Data API, aturan skor dan status, isi tetap (SERI_KARTU), kalimat pekerja formal, rincian inflasi, format   [ada]
+    lib/                 pembacaan Data API, aturan skor dan status, isi tetap (SERI_KARTU), kalimat pekerja formal, rincian inflasi, isi tab Prediksi, format   [ada]
     scripts/             salin-env.mjs: salin dua baris Supabase dari ../.env ke web/.env.local   [ada]
     vercel.json          region icn1 dan Ignored Build Step   [ada]
     .env.example         daftar variabel environment situs   [ada]
@@ -123,7 +123,7 @@ Di GitHub, nilai ini disimpan sebagai Secrets (`pipeline.yml` hanya membaca Secr
 ### 4.1 Front end
 
 - Next.js 16 App Router di runtime Node 24, di Vercel (kode di `web/`, tayang di `con-fore.vercel.app`).
-- Halaman: `/` (tab Data), `/indikator/[id]` (detail per seri), `/cara-kerja`, `/sumber`, dan `/prediksi` (penanda "segera" sampai v0.2).
+- Halaman: `/` (tab Data), `/prediksi` (tab Prediksi), `/indikator/[id]` (detail per seri), `/cara-kerja`, dan `/sumber`.
 - Data dibaca di server lalu dirender sebagai halaman statis yang di-cache (ISR, 6 jam). Browser hanya menerima HTML dan data grafik.
 - `/indikator/[id]` dan `/api/csv/[chart_id]` dibangun saat build untuk seri di `public.series_meta` ditambah `SERI_DITAUTKAN` (seri kartu dan panel penggerak), dengan `dynamicParams = false`: id lain langsung 404 tanpa render. Seri baru di luar daftar itu baru mendapat halaman setelah build web berikutnya.
 - Segitiga dua lensa digambar sebagai SVG dari seri IMF WEO tahunan (`SERI_SEGITIGA` di `web/lib/skor.ts`). Kedua panel lensa sudah dirender di server; skrip kecil di `<head>` memilih panel dari `?lensa=` sebelum halaman tampil, dan tombol lensa berpindah tanpa memuat ulang. Lensa tidak dibaca di server, karena itu membuat `/` dinamis dan mematikan ISR. Tanpa JavaScript, hanya lensa bawaan yang tampil.
@@ -133,7 +133,7 @@ Di GitHub, nilai ini disimpan sebagai Secrets (`pipeline.yml` hanya membaca Secr
 - Halaman `/sumber` menampilkan kalimat atribusi wajib per sumber dari `public.sources`.
 - Bahasa Indonesia, mengutamakan HP, tema terang dan gelap. Kalimat ringkasan menjadi teks alternatif segitiga. Arah tampilannya ada di [DESIGN.md](DESIGN.md), disetujui pengelola 2026-10-31.
 - Status tiga tingkat (`statusSkor` di `web/lib/skor.ts`, ambangnya di PRD 4.4) tampil di samping segitiga dan di kalimat ringkasan. Kalimat dan grafik pekerja formal ada di kartu dan halaman detail pengangguran (`web/lib/pekerja.ts`, `GrafikRonde`), dan hilang sendiri bila serinya belum terbit. Rincian inflasi ada di halaman detail inflasi (`web/lib/rincian.ts`, `GrafikKelompok`), juga hilang sendiri bila serinya belum terbit.
-- Rencana (PRD 4.4): rincian tiga kelompok di halaman detail inflasi.
+- Tab Prediksi (`web/app/prediksi/page.tsx`, `web/lib/prediksi.ts`) membaca `forecast_latest`, `backtest_scores`, `track_record`, dan seri proyeksi IMF. Tahun segitiga perkiraan adalah tahun dari kuartal IV PDB pertama yang belum terbit. Angka tahunannya memakai angka resmi yang sudah ada ditambah angka utama perkiraan: pertumbuhan dari rata-rata y-on-y empat kuartal, inflasi dari Desember, dan TPT dari ronde Agustus, atau angka utama terakhir bila ronde itu belum bisa diramal. Bagian "kenapa perkiraannya begini" hanya menyebut yang bisa dibuktikan: cara yang dipakai, galat ujinya, dan efek basis inflasi. Penggerak lain tidak dikarang, karena pada backtest tidak ada yang menurunkan galat. Bila `forecast_latest` kosong, halamannya menulis bahwa perkiraan belum tersedia.
 
 ### 4.2 API
 
@@ -151,7 +151,7 @@ Di GitHub, nilai ini disimpan sebagai Secrets (`pipeline.yml` hanya membaca Secr
 
 | Sumber | Data | Akses | Kapan data baru muncul | Cara mendeteksi data baru | Syarat | Fase |
 |---|---|---|---|---|---|---|
-| IMF WEO | PDB, inflasi akhir tahun (`PCPIEPCH`), pengangguran, proyeksi, vintage | `api.imf.org` SDMX, tanpa key | April dan Oktober | Kolom `PUBLICATION_DATE` | Wajib sitasi IMF; dilarang unduhan massal otomatis tanpa izin | MVP |
+| IMF WEO | PDB, inflasi akhir tahun (`PCPIEPCH`), dan pengangguran. Seri `idn_*_a` hanya tahun aktual, dan seri `idn_*_weo_a` ikut memuat tahun proyeksi, jadi setiap edisi WEO menjadi vintage baru | `api.imf.org` SDMX, tanpa key | April dan Oktober | Kolom `PUBLICATION_DATE` | Wajib sitasi IMF; dilarang unduhan massal otomatis tanpa izin | MVP |
 | IMF QNEA | PDB riil kuartalan, harga konstan (`IDN.B1GQ.Q.NSA.XDC.Q`) | sama | Menyusul BPS beberapa minggu | Periode terakhir + hash ternormalisasi (`UPDATE_DATE` tidak bisa dipercaya) | sama | MVP, lalu cadangan |
 | IMF CPI | Inflasi bulanan yoy (`IDN.CPI._T.YOY_PCH_PA_PT.M`), dan indeks harga konsumen (`IDN.CPI._T.IX.M`) untuk riwayat perubahan bulanan model inflasi | sama | Menyusul BPS sampai sekitar 3 minggu | sama | sama | MVP, lalu cadangan |
 | IMF PCPS | Batu bara, CPO, nikel, Brent | sama | Minggu pertama setiap bulan | `updatedAfter`; jawaban kosong berarti tidak ada perubahan | sama | MVP |
@@ -165,7 +165,7 @@ Di GitHub, nilai ini disimpan sebagai Secrets (`pipeline.yml` hanya membaca Secr
 
 Tidak dipakai: IMF DataMapper (menjawab 403) dan CSV grafik FRED (koneksi ditolak). Pipeline hanya menarik seri yang disebut di `config/series.toml`.
 
-**Yang sudah jalan:** sejak fase 1 (di `main`), IMF (WEO, QNEA, CPI, PCPS), BIS, OECD, dan ECB, 14 seri ditambah 2 turunan. Sejak v0.1, BPS menambah 3 seri rilis pertama, var 2335 menambah 3 seri dan 1 turunan, tabel statis 908 menambah 4 seri dan 3 turunan, dan indeks IMF CPI menambah 1 seri, jadi totalnya 25 seri ditambah 6 turunan. Setiap run mengambil seri penuh (sejak 2000 untuk sumber SDMX; jawaban kecil berkat `detail=dataonly`, kecuali WEO yang butuh kolom `LATEST_ACTUAL_ANNUAL_DATA`), lalu membandingkan hash data ternormalisasi dengan pengambilan terakhir. Kolom "Cara mendeteksi data baru" di atas (`updatedAfter`, 404 sebagai "tidak ada perubahan", rilis pers BPS) adalah optimasi yang belum dipakai. Frankfurter dan World Bank baru dipakai di uji akses.
+**Yang sudah jalan:** sejak fase 1 (di `main`), IMF (WEO, QNEA, CPI, PCPS), BIS, OECD, dan ECB, 14 seri ditambah 2 turunan. Sejak v0.1, BPS menambah 3 seri rilis pertama, var 2335 menambah 3 seri dan 1 turunan, tabel statis 908 menambah 4 seri dan 3 turunan, indeks IMF CPI menambah 1 seri, dan proyeksi IMF WEO untuk tab Prediksi menambah 3 seri, jadi totalnya 28 seri ditambah 6 turunan. Setiap run mengambil seri penuh (sejak 2000 untuk sumber SDMX; jawaban kecil berkat `detail=dataonly`, kecuali WEO yang butuh kolom `LATEST_ACTUAL_ANNUAL_DATA`), lalu membandingkan hash data ternormalisasi dengan pengambilan terakhir. Kolom "Cara mendeteksi data baru" di atas (`updatedAfter`, 404 sebagai "tidak ada perubahan", rilis pers BPS) adalah optimasi yang belum dipakai. Frankfurter dan World Bank baru dipakai di uji akses.
 
 **Cara pengambil BPS bekerja** (`fetch.py`, bagian BPS; semua aturan WebAPI di bawah sudah dicek ke jawaban sungguhan 2026-10-30):
 
@@ -277,12 +277,13 @@ Jadwal tabel manual: target diperiksa saat UU APBN baru disahkan (akhir Septembe
 - Vintage baru tersimpan sejak Oktober 2026, jadi backtest memakai nilai terbaru, bukan rilis pertama. Revisi tidak tertiru, dan hasilnya bisa sedikit optimistis. Rekam jejak di fase 4 menilai `etl.forecasts` terhadap rilis pertama.
 - Empat jendela penilaian, atas baris yang sama untuk semua model: masa normal (asal dan periode di luar Februari 2020 sampai Desember 2021), sebelum COVID, data uji (asal sejak 2022), dan semua periode. Sebelum COVID dan data uji tidak bertumpuk, dan keduanya bagian dari masa normal. Metriknya MAE dan RMSE per horizon, ditambah uji Diebold-Mariano dengan koreksi sampel kecil antara model terbaik dan baseline terbaik di masa normal. Baris dengan asal yang berdekatan saling tumpang tindih, jadi `n` bukan jumlah kejadian independen, dan nilai p pada horizon panjang tetap cenderung terlalu kecil.
 - **Angka utama per horizon** (`main_models`, PRD 6): model yang mengalahkan semua baseline di masa normal dan di data uji, dengan minimal 20 baris di keduanya. Tanpa itu, baseline dengan MAE terkecil di masa normal. Data uji yang menentukan, karena tidak dipakai saat memilih bentuk model. Jadi model bisa menang walau kalah di jendela sebelum COVID, misalnya `musiman` pada horizon 15 sampai 17 bulan, dan laporan menampilkan jendela itu.
-- **Rentang ketidakpastian** dari persentil galat per seri, model, dan horizon, minimal 20 galat. Rentang 80% dari masa normal, jadi lebarnya menggambarkan masa biasa. Rentang 95% dari semua periode termasuk masa COVID, jadi guncangan besar ikut tergambar. Laporan menampilkan cakupan rentang 80% yang dibuat dari asal sampai 2019 dan diuji pada asal sejak 2022.
-- Proyeksi IMF lama tidak bisa dibandingkan di backtest, karena API IMF hanya menyediakan vintage WEO Oktober 2025 dan April 2026. Pembanding IMF masuk lewat Rekam jejak di fase 4.
+- **Rentang ketidakpastian** dari persentil galat per seri, model, dan horizon, minimal 20 galat. Rentang 80% dari masa normal, jadi lebarnya menggambarkan masa biasa, dan inilah yang tampil di situs. Rentang 95% dari semua periode termasuk masa COVID, dan hanya disimpan di `etl.forecasts`, karena angkanya sulit dibaca awam (galat pandemi saat titik awalnya sendiri sudah sangat rendah). Laporan menampilkan cakupan rentang 80% yang dibuat dari asal sampai 2019 dan diuji pada asal sejak 2022.
+- Proyeksi IMF lama tidak bisa dibandingkan di backtest, karena API IMF hanya menyediakan vintage WEO Oktober 2025 dan April 2026. Tab Prediksi menampilkan proyeksi IMF terbaru berdampingan dengan perkiraan Con-Fore, dan seri `idn_*_weo_a` menyimpan vintage tiap edisi untuk penilaian kelak.
 
 **Ramalan harian** (`confore/models/forecast.py`)
 
-- Ketiga target dihitung dalam satu proses, paling akhir dalam run: sesudah publikasi dan penyegaran situs, dengan koneksi dan kunci sendiri. Jadi model yang gagal atau macet tidak menahan data maupun situs. Kegagalan model membuat job merah. Seri bahan yang belum ada membuat langkah ini dilewati. Bila fase 4 menerbitkan ramalan, urutan ini perlu ditinjau lagi.
+- Ketiga target dihitung dalam satu proses, paling akhir dalam run: sesudah publikasi dan penyegaran situs, dengan koneksi dan kunci sendiri. Jadi model yang gagal atau macet tidak menahan data maupun situs, dan tab Prediksi hanya tertinggal dengan tanggal ramalannya tetap tampil. Kegagalan model membuat job merah. Seri bahan yang belum ada membuat langkah ini dilewati.
+- Bila ramalan baru tertulis, `publish_tables` mengisi ulang `forecast_latest`, `backtest_scores`, dan `track_record` dalam satu transaksi, lalu situs disegarkan sekali lagi. Rekam jejak mengambil ramalan terakhir yang dibuat sebelum hari rilis pertama, per model, dan menilainya terhadap vintage pertama periode itu.
 - `config/holidays.csv` dimuat di langkah model, bukan bersama tabel manual lain, supaya baris keliru di sana tidak menghentikan pengambilan data.
 - Model hanya dijalankan ulang bila sidiknya berubah: target, fitur periode-lengkap, kalender Lebaran, waktu backtest terakhir, dan versi kode. Data harian (kurs) masuk sebagai rata-rata bulan yang sudah lengkap.
 - Horizon panjang di MVP memakai proyeksi IMF WEO, bukan model sendiri.

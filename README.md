@@ -2,7 +2,7 @@
 
 Website publik berbahasa Indonesia yang menjelaskan kondisi dan arah ekonomi Indonesia lewat tiga angka (pertumbuhan, inflasi, pengangguran), diperbarui otomatis setiap hari.
 
-Status: fase 1 (pipeline data) jalan otomatis setiap hari. Fase 2 (situs tab Data v0.1 di `web/`) tayang di https://con-fore.vercel.app. Fase 3 (model dan backtest) ada di `confore/models/`, dan hasilnya belum tampil di situs sampai tab Prediksi di fase 4.
+Status: fase 1 (pipeline data) jalan otomatis setiap hari. Fase 2 (situs tab Data v0.1 di `web/`) tayang di https://con-fore.vercel.app. Fase 3 (model dan backtest) ada di `confore/models/`, dan fase 4 (tab Prediksi v0.2) menampilkan hasilnya di situs.
 
 ## Dokumen
 

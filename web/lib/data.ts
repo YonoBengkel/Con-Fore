@@ -73,6 +73,41 @@ export type StatusSitus = {
   stale_sources: string[];
 };
 
+export type BarisRamalan = {
+  series_id: string;
+  ref_period: string;
+  model: string;
+  is_main: boolean;
+  horizon: number;
+  point: number;
+  lo80: number | null;
+  hi80: number | null;
+  origin_date: string;
+};
+
+export type SkorBacktest = {
+  series_id: string;
+  model: string;
+  horizon: number;
+  window_name: "normal" | "sebelum" | "uji" | "semua";
+  is_main: boolean;
+  mae: number;
+  rmse: number;
+  n: number;
+};
+
+export type BarisRekam = {
+  series_id: string;
+  ref_period: string;
+  model: string;
+  origin_date: string;
+  is_main: boolean;
+  forecast: number;
+  first_release_actual: number;
+  latest_actual: number;
+  abs_error: number;
+};
+
 /** Sama dengan `export const revalidate` di halaman: 6 jam. */
 export const REVALIDATE_DETIK = 21600;
 
@@ -131,6 +166,17 @@ export const bacaTarget = () =>
 
 export const bacaKalender = () =>
   baca<Rilis>("release_calendar", "select=*&order=release_date,series_id");
+
+// Tiga tabel tab Prediksi boleh kosong: halamannya menjelaskan bahwa perkiraan belum tersedia.
+export const bacaRamalan = () =>
+  baca<BarisRamalan>("forecast_latest", "select=*&order=series_id,ref_period,model");
+
+export const bacaSkorBacktest = () =>
+  baca<SkorBacktest>("backtest_scores", "select=*&window_name=in.(normal,uji)&order=series_id,horizon,model");
+
+/** Paling baru dulu, dan dibatasi supaya jawabannya tetap kecil saat rekam jejaknya bertambah. */
+export const bacaRekamJejak = () =>
+  baca<BarisRekam>("track_record", "select=*&is_main=eq.true&order=ref_period.desc,series_id&limit=60");
 
 export async function bacaStatus(revalidate?: number): Promise<StatusSitus> {
   const [status] = await baca<StatusSitus>("site_status", "select=*&id=eq.1", {

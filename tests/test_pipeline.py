@@ -155,18 +155,18 @@ class RevalidateTest(unittest.TestCase):
 
     def test_posts_without_redirect_then_warms_every_address(self):
         result, get = self.refresh(self.SITE)
-        self.assertEqual(result, revalidate.Result(4, 0, None))
+        self.assertEqual(result, revalidate.Result(5, 0, None))
         post, *warm = get.call_args_list
         self.assertEqual(post.args, ("https://situs.test/api/revalidate", {"x-revalidate-secret": "RAHASIA"}))
         self.assertIs(post.kwargs["opener"], fetch.KEYED_OPENER)
         self.assertEqual(post.kwargs["data"], b"")
         self.assertEqual([call.args for call in warm],
                          [(f"https://situs.test{path}", {})
-                          for path in ["/", "/sumber", "/indikator/a", "/api/csv/a"]])
+                          for path in ["/", "/prediksi", "/sumber", "/indikator/a", "/api/csv/a"]])
 
     def test_new_series_404_is_counted(self):
-        result, _ = self.refresh(self.SITE, [None, None, None, FetchError("HTTP 404", 404), None])
-        self.assertEqual(result, revalidate.Result(3, 1, None))
+        result, _ = self.refresh(self.SITE, [None, None, None, None, FetchError("HTTP 404", 404), None])
+        self.assertEqual(result, revalidate.Result(4, 1, None))
 
     def test_other_warm_error_stops_without_raising(self):
         result, get = self.refresh(self.SITE, [None, None, FetchError("HTTP 500", 500)])

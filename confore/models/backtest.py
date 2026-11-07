@@ -169,6 +169,21 @@ def main_models(frame):
     return out
 
 
+def score_rows(frame, chosen):
+    """Baris untuk public.backtest_scores: angka utama, MAE, RMSE, dan n per seri, model, horizon, dan jendela."""
+    rows = []
+    for series_id in MODULES:
+        wide = comparable(frame, series_id)
+        if wide.empty:
+            continue
+        models = model_columns(wide)
+        for window, mask in window_masks(wide).items():
+            for horizon, row in scores(wide[mask], models).items():
+                rows.extend((series_id, model, int(horizon), window, chosen.get((series_id, horizon)) == model,
+                             *row[model], row["n"]) for model in models)
+    return rows
+
+
 def number(value, digits=3):
     return f"{value:.{digits}f}".replace(".", ",")
 

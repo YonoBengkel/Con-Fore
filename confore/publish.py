@@ -11,6 +11,7 @@ from confore.derive import derive_all
 
 TABLES = ("sources", "series_meta", "latest_values", "chart_series", "targets",
           "release_calendar", "site_status")
+MODEL_TABLES = ("forecast_latest", "backtest_scores", "track_record")
 
 
 def next_releases(calendar, today):
@@ -20,6 +21,30 @@ def next_releases(calendar, today):
         if release_date >= today:
             nearest[series_id] = min(release_date, nearest.get(series_id, release_date))
     return nearest
+
+
+def publish_models(conn, forecasts, scores, records):
+    """Isi ulang tabel tab Prediksi dalam satu transaksi, terpisah dari publikasi data.
+
+    Model yang gagal hanya membuat tabel ini tertinggal, dengan tanggal ramalannya tetap tampil.
+    """
+    with conn.transaction(), conn.cursor() as cur:
+        for table in MODEL_TABLES:
+            cur.execute(f"delete from public.{table}")
+        cur.executemany("""
+            insert into public.forecast_latest (series_id, ref_period, model, is_main, horizon, point,
+              lo80, hi80, origin_date)
+            values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, forecasts)
+        cur.executemany("""
+            insert into public.backtest_scores (series_id, model, horizon, window_name, is_main, mae, rmse, n)
+            values (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, scores)
+        cur.executemany("""
+            insert into public.track_record (series_id, ref_period, model, origin_date, is_main, forecast,
+              first_release_actual, latest_actual, abs_error)
+            values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, records)
 
 
 def previous_value(points, concept):

@@ -1,4 +1,4 @@
-Status: sesuai migrasi `0001`-`0004` (2026-11-07). Tabel bertanda fase 4 masih rencana.
+Status: sesuai migrasi `0001`-`0005` (2026-11-07).
 
 # Skema Database Con-Fore
 
@@ -139,8 +139,9 @@ erDiagram
   SERIES_META }o--o{ CHART_SERIES : "ditampilkan di"
   SERIES_META ||--o{ TARGETS : "target resmi"
   SERIES_META ||--o{ RELEASE_CALENDAR : "rilis berikutnya"
-  SERIES_META ||--o{ FORECAST_LATEST : "perkiraan (fase 4)"
-  SERIES_META ||--o{ TRACK_RECORD : "rekam jejak (fase 4)"
+  SERIES_META ||--o{ FORECAST_LATEST : "perkiraan"
+  SERIES_META ||--o{ BACKTEST_SCORES : "skor uji"
+  SERIES_META ||--o{ TRACK_RECORD : "rekam jejak"
   SOURCES {
     text source_id PK
     text name
@@ -199,18 +200,30 @@ erDiagram
   FORECAST_LATEST {
     text series_id PK
     text ref_period PK
-    text kind PK
-    text model_label
+    text model PK
+    boolean is_main
+    int horizon
     numeric point
     numeric lo80
     numeric hi80
     date origin_date
+  }
+  BACKTEST_SCORES {
+    text series_id PK
+    text model PK
+    int horizon PK
+    text window_name PK
+    boolean is_main
+    numeric mae
+    numeric rmse
+    int n
   }
   TRACK_RECORD {
     text series_id PK
     text ref_period PK
     text model PK
     date origin_date PK
+    boolean is_main
     numeric forecast
     numeric first_release_actual
     numeric latest_actual
@@ -254,8 +267,9 @@ erDiagram
 | `targets` | (`series_id`, `year`, `target_kind`) | Salinan target resmi beserta status `verification`; sebelum rilis publik, baris `berita` dicocokkan dulu ke dokumen resmi |
 | `release_calendar` | (`series_id`, `ref_period`) | Hanya rilis yang belum lewat (tanggal WIB). Bila beberapa kalender mencatat periode yang sama, yang dipakai tanggal paling awal. `calendar_source` ikut tampil, karena selama data berasal dari salinan IMF, tanggal BPS adalah tanggal rilis BPS, bukan tanggal angka itu muncul di situs |
 | `site_status` | `id` (check `id = 1`) | Satu baris: `last_success_at` (waktu publikasi terakhir dari run yang tidak gagal; run gagal tidak memajukannya), `last_run_status` (`ok`, `partial`, atau `failed`; run yang berhenti karena error juga menandai `failed`), dan kode sumber yang terlambat. Hanya kode tetap, bukan teks bebas |
-| `forecast_latest` (fase 4) | (`series_id`, `ref_period`, `kind`) | `kind` in (`con-fore`,`baseline`,`imf-weo`); yang tampil sebagai angka utama ditandai dari hasil backtest |
-| `track_record` (fase 4) | (`series_id`, `ref_period`, `model`, `origin_date`) | Perkiraan dibanding rilis pertama dan angka terbaru |
+| `forecast_latest` | (`series_id`, `ref_period`, `model`) | Ramalan asal terakhir, semua model. `is_main` menandai angka utama per seri dan periode, dari hasil backtest, dan selalu tepat satu per periode. `lo80` dan `hi80` kosong bila backtest belum cukup. Proyeksi IMF tidak di sini, tetapi di `chart_series` (seri `idn_*_weo_a`) |
+| `backtest_scores` | (`series_id`, `model`, `horizon`, `window_name`) | Ringkasan `etl.backtest`: MAE, RMSE, dan jumlah baris. `window_name` in (`normal`,`sebelum`,`uji`,`semua`). `is_main` menandai angka utama horizon itu. Untuk bagian Rekam jejak |
+| `track_record` | (`series_id`, `ref_period`, `model`, `origin_date`) | Ramalan sungguhan yang periodenya sudah terbit: satu baris per model, yaitu ramalan terakhir sebelum hari rilis pertama, dibanding rilis pertama (vintage pertama) dan angka terbaru |
 
 ## 3. Penulisan dan idempotensi
 
@@ -289,7 +303,7 @@ Koreksi di hari yang sama menimpa nilai hari itu. Bila koreksinya mengembalikan 
 
 **Publikasi** (`confore/publish.py`). Semua tabel `public` diisi ulang dalam **satu transaksi** dengan `DELETE` lalu `INSERT`. `chart_series` saat ini berisi satu grafik per seri (`chart_id` = `series_id`). Jangan pernah `DROP TABLE`, `CREATE TABLE AS`, atau `to_sql(if_exists='replace')`, karena cara itu membuat tabel baru tanpa GRANT, kebijakan, dan RLS.
 
-**Model.** Ramalan ditulis sesudah publikasi dalam satu transaksi, hanya bila `input_hash` berbeda dari ramalan terakhir: baris hari itu dihapus, lalu ditulis ulang. Backtest menulis `etl.backtest` dengan `DELETE` lalu `COPY` dalam satu transaksi, dan koneksinya dibuka sesudah perhitungan selesai.
+**Model.** Ramalan ditulis sesudah publikasi dalam satu transaksi, hanya bila `input_hash` berbeda dari ramalan terakhir: baris hari itu dihapus, lalu ditulis ulang. Sesudah itu tiga tabel tab Prediksi diisi ulang dalam satu transaksi tersendiri (`publish_models`), terpisah dari publikasi data. Backtest menulis `etl.backtest` dengan `DELETE` lalu `COPY` dalam satu transaksi, dan koneksinya dibuka sesudah perhitungan selesai.
 
 **Ganti tahun dasar.** Buat `series_id` baru dengan `base_year` sendiri; seri lama dibekukan (`active = false`).
 
@@ -374,7 +388,7 @@ Pada Postgres 17, `MAINTAIN` ditambahkan ke kedua daftar hak tabel (kode memilih
 
 - Letak: `supabase/migrations/NNNN_nama.sql`, berurutan dan tidak pernah diubah setelah diterapkan.
 - Diterapkan oleh `python -m confore migrate` (lokal atau workflow dengan mode `migrate`), yang mencatat versinya di `etl.schema_migrations`.
-- Yang ada: `0001_skema_dan_akses_dasar` (skema `etl`, `etl.schema_migrations`, penutupan akses bawaan), `0002_tabel_etl`, `0003_tabel_public` (beserta GRANT, RLS, dan kebijakan), dan `0004_tabel_model` (`etl.forecasts`, `etl.backtest`). Fase 4 menambah tabel publik untuk ramalan dan rekam jejak.
+- Yang ada: `0001_skema_dan_akses_dasar` (skema `etl`, `etl.schema_migrations`, penutupan akses bawaan), `0002_tabel_etl`, `0003_tabel_public` (beserta GRANT, RLS, dan kebijakan), `0004_tabel_model` (`etl.forecasts`, `etl.backtest`), dan `0005_tabel_prediksi` (`public.forecast_latest`, `public.backtest_scores`, `public.track_record`, beserta GRANT, RLS, dan kebijakan). Migrasi yang menambah tabel `public` yang dibaca situs harus diterapkan sebelum push, karena build Vercel ikut membacanya.
 - `migrate` lalu menjalankan pemeriksaan katalog (bagian 4) dan, bila `SUPABASE_URL` dan `SUPABASE_PUBLISHABLE_KEY` terisi, uji Data API dengan publishable key.
 - Uji lokal: `tests/test_db.py` memasang default privileges lama Supabase (tabel baru terbuka untuk `anon`, `authenticated`, `service_role`), menerapkan semua migrasi ke Postgres lokal sekali pakai (`CONFORE_TEST_DB_URL` sebagai variabel environment; hanya alamat mesin ini dan database berakhiran `_test`), lalu memeriksa bahwa tabel baru tidak lagi terbuka, katalog akses, vintage dan penarikan periode, status run, kunci, publikasi, dan hak `anon`.
 
