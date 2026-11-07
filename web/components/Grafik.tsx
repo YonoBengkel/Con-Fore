@@ -147,6 +147,156 @@ export function GrafikKelompok({ kelompok }: { kelompok: { nama: string; titik: 
   );
 }
 
+/** Waktu sebagai jumlah bulan, supaya jarak antarronde TPT yang tidak rata tetap benar di sumbu. */
+function bulanKe(p: string): number {
+  const q = /^(\d{4})-Q([1-4])$/.exec(p);
+  if (q) return Number(q[1]) * 12 + Number(q[2]) * 3 - 1;
+  const m = /^(\d{4})-(\d{2})$/.exec(p);
+  if (m) return Number(m[1]) * 12 + Number(m[2]) - 1;
+  return Number(p) * 12 + 11;
+}
+
+export type TitikPerkiraan = { periode: string; titik: number; bawah: number | null; atas: number | null };
+
+/**
+ * Riwayat resmi (garis utuh), perkiraan (putus-putus), dan pita rentang 80%. Lebar gambarnya 360 supaya
+ * teksnya tetap terbaca di HP dan di kartu tiga kolom.
+ */
+export function GrafikPerkiraan({
+  riwayat,
+  ramalan,
+  nama,
+  desimal,
+}: {
+  riwayat: Titik[];
+  ramalan: TitikPerkiraan[];
+  nama: string;
+  desimal: number;
+}) {
+  if (riwayat.length < 2 || !ramalan.length) return <p>Riwayat belum cukup untuk digambar.</p>;
+  const W = 360;
+  const H = 230;
+  const kiri = 44;
+  const kanan = 54;
+  const atas = 26;
+  const bawah = 26;
+  const lebar = W - kiri - kanan;
+  const tinggi = H - atas - bawah;
+  const terakhir = riwayat[riwayat.length - 1];
+  const nilai = [
+    ...riwayat.map((t) => t[1]),
+    ...ramalan.flatMap((r) => [r.titik, r.bawah, r.atas].filter((v): v is number => v != null)),
+  ];
+  const min = Math.min(...nilai);
+  const max = Math.max(...nilai);
+  const rentang = max - min || 1;
+  const t0 = bulanKe(riwayat[0][0]);
+  const t1 = bulanKe(ramalan[ramalan.length - 1].periode);
+  const x = (p: string) => kiri + ((bulanKe(p) - t0) / (t1 - t0 || 1)) * lebar;
+  const y = (v: number) => atas + tinggi - ((v - min) / rentang) * tinggi;
+  const garis = (titik: [string, number][]) =>
+    titik.map(([p, v], i) => `${i ? "L" : "M"}${x(p).toFixed(1)} ${y(v).toFixed(1)}`).join("");
+  const berpita = ramalan.filter((r) => r.bawah != null && r.atas != null);
+  const pita = berpita.length
+    ? `M${x(terakhir[0]).toFixed(1)} ${y(terakhir[1]).toFixed(1)}` +
+      berpita.map((r) => `L${x(r.periode).toFixed(1)} ${y(r.atas!).toFixed(1)}`).join("") +
+      [...berpita].reverse().map((r) => `L${x(r.periode).toFixed(1)} ${y(r.bawah!).toFixed(1)}`).join("") +
+      "Z"
+    : null;
+  const akhir = ramalan[ramalan.length - 1];
+  const teks = (v: number) => `${angka(v, desimal)}%`;
+  const alt =
+    `Grafik ${nama}. Angka resmi sampai ${periode(terakhir[0])} sebesar ${teks(terakhir[1])}. ` +
+    `Perkiraan sampai ${periode(akhir.periode)} sebesar ${teks(akhir.titik)}` +
+    (akhir.bawah != null && akhir.atas != null
+      ? `, dengan rentang 80% dari ${teks(akhir.bawah)} sampai ${teks(akhir.atas)}.`
+      : ".");
+  const xBatas = x(terakhir[0]);
+  return (
+    <svg className="grafik-riwayat" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={alt}>
+      <line x1={kiri} x2={kiri + lebar} y1={atas} y2={atas} className="kisi" />
+      <line x1={kiri} x2={kiri + lebar} y1={atas + tinggi} y2={atas + tinggi} className="kisi" />
+      <text x={kiri - 6} y={atas + 4} textAnchor="end" className="sumbu">{angka(max, 1)}%</text>
+      <text x={kiri - 6} y={atas + tinggi + 4} textAnchor="end" className="sumbu">{angka(min, 1)}%</text>
+      <line x1={xBatas} x2={xBatas} y1={atas} y2={atas + tinggi} className="batas-resmi" />
+      <text x={xBatas - 5} y={atas - 9} textAnchor="end" className="sumbu">Resmi</text>
+      <text x={xBatas + 5} y={atas - 9} className="sumbu">Perkiraan</text>
+      {pita && <path d={pita} className="pita-rentang" />}
+      <path d={garis(riwayat)} className="garis" />
+      <path
+        d={garis([terakhir, ...ramalan.map((r): [string, number] => [r.periode, r.titik])])}
+        className="garis garis-putus"
+      />
+      <circle cx={x(akhir.periode)} cy={y(akhir.titik)} r={4} className="titik-akhir" />
+      <text x={x(akhir.periode) + 8} y={y(akhir.titik) + 4} className="sumbu-nilai">{teks(akhir.titik)}</text>
+      <text x={kiri} y={H - 6} className="sumbu">{periode(riwayat[0][0])}</text>
+      <text x={kiri + lebar} y={H - 6} textAnchor="end" className="sumbu">{periode(akhir.periode)}</text>
+    </svg>
+  );
+}
+
+/** Pertumbuhan tahunan resmi, proyeksi IMF (putus-putus), dan target RPJMN sebagai titik berongga. */
+export function GrafikJangkaPanjang({
+  resmi,
+  imf,
+  target,
+}: {
+  resmi: Titik[];
+  imf: Titik[];
+  target: Titik[];
+}) {
+  if (resmi.length < 2 || !imf.length) return <p>Riwayat belum cukup untuk digambar.</p>;
+  const W = 420;
+  const H = 240;
+  const kiri = 44;
+  const kanan = 96;
+  const atas = 14;
+  const bawah = 26;
+  const lebar = W - kiri - kanan;
+  const tinggi = H - atas - bawah;
+  const semua = [...resmi, ...imf, ...target];
+  const nilai = semua.map((t) => t[1]);
+  const min = Math.min(0, ...nilai);
+  const max = Math.max(...nilai);
+  const t0 = Number(resmi[0][0]);
+  const t1 = Number(imf[imf.length - 1][0]);
+  const x = (p: string) => kiri + ((Number(p) - t0) / (t1 - t0 || 1)) * lebar;
+  const y = (v: number) => atas + tinggi - ((v - min) / (max - min || 1)) * tinggi;
+  const garis = (titik: Titik[]) =>
+    titik.map(([p, v], i) => `${i ? "L" : "M"}${x(p).toFixed(1)} ${y(v).toFixed(1)}`).join("");
+  const akhirResmi = resmi[resmi.length - 1];
+  const akhirImf = imf[imf.length - 1];
+  const akhirTarget = target[target.length - 1];
+  const teks = (v: number) => `${angka(v, 1)}%`;
+  const alt =
+    `Grafik pertumbuhan ekonomi tahunan. Angka resmi sampai ${akhirResmi[0]} sebesar ${teks(akhirResmi[1])}. ` +
+    `Proyeksi IMF sampai ${akhirImf[0]} sebesar ${teks(akhirImf[1])}.` +
+    (akhirTarget ? ` Target RPJMN ${akhirTarget[0]} sebesar ${teks(akhirTarget[1])}.` : "");
+  return (
+    <svg className="grafik-riwayat grafik-sedang" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={alt}>
+      <line x1={kiri} x2={kiri + lebar} y1={atas} y2={atas} className="kisi" />
+      <line x1={kiri} x2={kiri + lebar} y1={y(min)} y2={y(min)} className="kisi" />
+      <line x1={kiri} x2={kiri + lebar} y1={y(0)} y2={y(0)} className="kisi-nol" />
+      <text x={kiri - 6} y={atas + 4} textAnchor="end" className="sumbu">{angka(max, 1)}%</text>
+      {min < 0 && <text x={kiri - 6} y={y(min) + 4} textAnchor="end" className="sumbu">{angka(min, 1)}%</text>}
+      <text x={kiri - 6} y={y(0) + 4} textAnchor="end" className="sumbu">0</text>
+      <path d={garis(resmi)} className="garis" />
+      <path d={garis([akhirResmi, ...imf])} className="garis garis-putus" />
+      {target.map(([p, v]) => (
+        <circle key={p} cx={x(p)} cy={y(v)} r={4.5} className="target-titik" />
+      ))}
+      <text x={x(akhirImf[0]) + 8} y={y(akhirImf[1]) + 4} className="sumbu-nilai">IMF {teks(akhirImf[1])}</text>
+      {akhirTarget && (
+        <text x={x(akhirTarget[0]) + 9} y={y(akhirTarget[1]) + 4} className="sumbu-nilai">
+          RPJMN {teks(akhirTarget[1])}
+        </text>
+      )}
+      <text x={kiri} y={H - 6} className="sumbu">{resmi[0][0]}</text>
+      <text x={kiri + lebar} y={H - 6} textAnchor="end" className="sumbu">{akhirImf[0]}</text>
+    </svg>
+  );
+}
+
 /** Satu garis per bulan survei, karena ronde yang berbeda bulan tidak sepadan (PRD 4.4). */
 export function GrafikRonde({ titik, nama }: { titik: Titik[]; nama: string }) {
   if (titik.length < 2) return <p>Riwayat belum cukup untuk digambar.</p>;

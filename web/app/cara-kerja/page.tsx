@@ -59,7 +59,16 @@ export default function CaraKerja() {
           <strong>data IMF, BIS, OECD, ECB</strong>: data lembaga itu apa adanya.
         </li>
       </ul>
-      <p>Tab Data tidak memuat ramalan. Perkiraan akan tampil di tab Prediksi, dengan label sendiri.</p>
+      <ul>
+        <li>
+          <strong>perkiraan Con-Fore</strong>: hasil perhitungan Con-Fore untuk periode yang belum terbit, ada di
+          tab Prediksi.
+        </li>
+        <li>
+          <strong>proyeksi IMF</strong>: proyeksi IMF World Economic Outlook apa adanya.
+        </li>
+      </ul>
+      <p>Tab Data tidak memuat ramalan. Perkiraan hanya ada di tab Prediksi, dengan label sendiri.</p>
 
       <h2 id="skor">Skor segitiga</h2>
       <p>
@@ -174,6 +183,64 @@ export default function CaraKerja() {
         <li>
           Barang atau jasa penyumbang terbesar tiap bulan belum ditampilkan, karena datanya tidak tersedia
           lewat API BPS.
+        </li>
+      </ul>
+
+      <h2 id="perkiraan">Perkiraan</h2>
+      <p>
+        Tab Prediksi membandingkan beberapa cara meramal, lalu memakai yang paling akurat pada uji dengan data lama.
+        Cara yang sederhana boleh menang, dan hasil yang kalah tetap ditampilkan.
+      </p>
+      <h3>Cara yang dibandingkan</h3>
+      <ul>
+        <li>
+          <strong>Pertumbuhan ekonomi:</strong> sama dengan kuartal terakhir, kembali ke rata-rata (AR), dan model
+          faktor (DFM) dari harga komoditas, kurs, BI-Rate, dan inflasi.
+        </li>
+        <li>
+          <strong>Inflasi:</strong> sama dengan bulan terakhir, kembali ke rata-rata (AR), pola musiman dan Lebaran, dan
+          ARIMAX yang menambah kurs, harga minyak, dan BI-Rate. Pola musiman meramal perubahan harga bulanan dari lima
+          tahun terakhir, lalu merangkainya menjadi inflasi setahun, jadi efek basis tahun lalu ikut terhitung. Bulan
+          yang jauh dari polanya, misalnya saat harga BBM naik, dipangkas supaya tidak dianggap pola.
+        </li>
+        <li>
+          <strong>Pengangguran:</strong> sama dengan rilis terakhir, dan regresi dari rilis terakhir, dengan atau tanpa
+          pertumbuhan PDB. Perkiraannya hanya dua rilis ke depan dan eksperimental, karena datanya sedikit.
+        </li>
+      </ul>
+      <h3>Cara mengujinya</h3>
+      <ul>
+        <li>
+          Setiap bulan sejak 2012, ramalan dibuat hanya dari data yang sudah terbit saat itu menurut jadwal rilisnya, lalu
+          dibandingkan dengan angka yang kemudian terbit.
+        </li>
+        <li>
+          Sebuah model menjadi angka utama hanya bila rata-rata melesetnya lebih kecil dari semua cara sederhana, baik di
+          luar masa COVID maupun pada data sejak 2022. Bila tidak, angka utamanya cara sederhana yang paling akurat.
+          Penilaian ini per jarak ramalan, jadi cara yang dipakai bisa berbeda antarperiode.
+        </li>
+        <li>
+          Riwayat revisi baru tersimpan sejak Oktober 2026, jadi uji ini memakai angka terbaru, bukan rilis pertama.
+          Hasilnya bisa sedikit lebih baik daripada kenyataan. Rekam jejak perkiraan sungguhan dinilai terhadap rilis
+          pertama.
+        </li>
+      </ul>
+      <h3>Arti rentang</h3>
+      <ul>
+        <li>
+          Rentang 80% berasal dari seberapa jauh ramalan meleset di luar masa COVID: sekitar 8 dari 10 angka jatuh di
+          dalamnya. Jadi rentang ini menggambarkan masa biasa, dan guncangan besar seperti COVID bisa membuat angkanya
+          jauh di luar rentang.
+        </li>
+        <li>Rentang tidak dibuat bila hasil ujinya kurang dari 20.</li>
+      </ul>
+      <h3>Yang tidak ada di perkiraan</h3>
+      <ul>
+        <li>Kebijakan baru dan guncangan yang belum terjadi.</li>
+        <li>Nasihat keuangan: angkanya menjelaskan arah, bukan menyarankan apa yang perlu dilakukan.</li>
+        <li>
+          Jangka panjang: di luar dua tahun ke depan, Con-Fore memakai proyeksi IMF, dan target RPJMN hanya dibahas di
+          panel jangka panjang.
         </li>
       </ul>
 

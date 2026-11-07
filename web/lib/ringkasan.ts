@@ -1,8 +1,8 @@
 // Ringkasan segitiga untuk dua lensa: skor dan kalimat yang sekaligus menjadi teks alternatif.
 
 import type { Grafik, Target } from "./data";
-import { titikSeri } from "./data";
-import { angka } from "./format";
+import { titikSeri } from "./data.ts";
+import { angka } from "./format.ts";
 import {
   NAMA_STATUS,
   SERI_SEGITIGA,
@@ -19,7 +19,7 @@ import {
   type Skor,
   type Status,
   type ZonaTarget,
-} from "./skor";
+} from "./skor.ts";
 
 export type Lensa = {
   skor: Skor;
@@ -37,15 +37,33 @@ export type Ringkasan = {
 const bulat = (n: number) => Math.round(n);
 const persen = (n: number, d = 1) => `${angka(n, d)}%`;
 
-export function buatRingkasan(grafik: Map<string, Grafik>, target: Target[]): Ringkasan | null {
-  const data = gabungTahunan(
+/** Tiga seri tahunan segitiga, hanya tahun yang ketiganya ada. */
+export function dataTahunan(grafik: Map<string, Grafik>): Map<number, NilaiTahun> {
+  return gabungTahunan(
     titikSeri(grafik, SERI_SEGITIGA.pertumbuhan),
     titikSeri(grafik, SERI_SEGITIGA.inflasi),
     titikSeri(grafik, SERI_SEGITIGA.pengangguran),
   );
+}
+
+export function buatRingkasan(grafik: Map<string, Grafik>, target: Target[]): Ringkasan | null {
+  const data = dataTahunan(grafik);
   const tahun = tahunLengkap(data);
-  if (tahun == null) return null;
-  const nilai = data.get(tahun)!;
+  return tahun == null ? null : ringkasanTahun(tahun, data, target);
+}
+
+/**
+ * Skor dan kalimat satu tahun yang ada di `data`. `awalan` membuka kalimatnya, supaya tab Prediksi bisa
+ * menulis "Perkiraan tahun 2026", bukan "Tahun 2026".
+ */
+export function ringkasanTahun(
+  tahun: number,
+  data: Map<number, NilaiTahun>,
+  target: Target[],
+  awalan = `Tahun ${tahun}`,
+): Ringkasan | null {
+  const nilai = data.get(tahun);
+  if (!nilai) return null;
   const lalu = skorMasaLalu(tahun, data);
   if (!lalu) return null;
 
@@ -58,7 +76,7 @@ export function buatRingkasan(grafik: Map<string, Grafik>, target: Target[]): Ri
     skor: lalu,
     status: statusLalu,
     kalimat:
-      `Tahun ${tahun} dibanding ${TAHUN_AWAL}-${TAHUN_AKHIR}: pertumbuhan ekonomi ${g} ` +
+      `${awalan} dibanding ${TAHUN_AWAL}-${TAHUN_AKHIR}: pertumbuhan ekonomi ${g} ` +
       `(skor ${bulat(lalu.pertumbuhan)}, ${NAMA_STATUS[statusLalu.pertumbuhan]}), harga stabil dengan ` +
       `inflasi akhir tahun ${i} (skor ${bulat(lalu.harga)}, ${NAMA_STATUS[statusLalu.harga]}), dan ` +
       `lapangan kerja dengan pengangguran ${u} (skor ${bulat(lalu.kerja)}, ${NAMA_STATUS[statusLalu.kerja]}). ` +
@@ -80,7 +98,7 @@ export function buatRingkasan(grafik: Map<string, Grafik>, target: Target[]): Ri
       skor: s,
       status: statusTarget,
       kalimat:
-        `Tahun ${tahun} dibanding target resmi: pertumbuhan ekonomi ${g} ` +
+        `${awalan} dibanding target resmi: pertumbuhan ekonomi ${g} ` +
         `${nilai.pertumbuhan >= z.pertumbuhanMin ? "mencapai" : "di bawah"} target APBN ` +
         `${persen(z.pertumbuhanMin)} (skor ${bulat(s.pertumbuhan)}, ${NAMA_STATUS[statusTarget.pertumbuhan]}), ` +
         `inflasi akhir tahun ${i} ${masukHarga ? "di dalam" : "di luar"} sasaran ${bawah} sampai ${atas} ` +

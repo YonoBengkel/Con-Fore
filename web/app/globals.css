@@ -192,16 +192,6 @@ main.wadah {
   border-bottom-color: var(--aksen);
 }
 
-.segera {
-  font-size: 0.75rem;
-  color: var(--redup);
-  border: 1px solid var(--garis);
-  border-radius: 999px;
-  padding: 0 0.4rem;
-  vertical-align: 0.1em;
-  margin-left: 0.35rem;
-}
-
 /* Bagian halaman */
 
 .pembuka {
@@ -270,6 +260,16 @@ main.wadah {
 
 .tri-titik {
   fill: var(--aksen);
+}
+
+.tri-perkiraan {
+  stroke-dasharray: 7 5;
+}
+
+.tri-pembanding {
+  fill: none;
+  stroke: var(--redup);
+  stroke-width: 1.5;
 }
 
 .tri-label {
@@ -664,6 +664,65 @@ td.angka {
   stroke-width: 2;
 }
 
+.grafik-riwayat .pita-rentang {
+  fill: var(--isi-segitiga);
+}
+
+.grafik-riwayat .batas-resmi {
+  stroke: var(--garis);
+  stroke-width: 1;
+}
+
+.grafik-riwayat .target-titik {
+  fill: var(--permukaan);
+  stroke: var(--tinta);
+  stroke-width: 1.5;
+}
+
+.grafik-sedang {
+  max-width: 34rem;
+  margin: 0;
+}
+
+/* Tab Prediksi */
+
+.prediksi-rentang {
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+
+.prediksi-lanjut {
+  color: var(--redup);
+  font-size: 0.9rem;
+}
+
+.lencana-perkiraan {
+  border: 1px dashed var(--aksen);
+  background: transparent;
+}
+
+.rincian-lipat {
+  margin: 0.5rem 0 0.75rem;
+  font-size: 0.9rem;
+}
+
+.rincian-lipat summary {
+  cursor: pointer;
+  color: var(--aksen);
+}
+
+.rincian-lipat .gulir-tabel {
+  margin-top: 0.5rem;
+}
+
+.rincian-lipat thead th {
+  min-width: 5.5rem;
+}
+
+.angka-utama {
+  font-weight: 700;
+}
+
 .kisi-kelompok {
   display: grid;
   gap: 1rem 1.5rem;
@@ -683,6 +742,10 @@ td.angka {
 .dua-kolom {
   display: grid;
   gap: 1.5rem;
+}
+
+.dua-kolom > * {
+  min-width: 0;
 }
 
 .daftar-sumber {

@@ -367,6 +367,42 @@ def write_forecasts(conn, rows, origin, cutoffs, input_hash, git_sha, versions):
         """, params)
 
 
+def latest_forecasts(conn):
+    """Semua baris ramalan dari asal terakhir."""
+    return conn.execute("""
+        select series_id, ref_period, model, stat, value::float8, origin_date, data_cutoff
+        from etl.forecasts where origin_date = (select max(origin_date) from etl.forecasts)
+    """).fetchall()
+
+
+def finished_forecasts(conn):
+    """Ramalan yang periodenya sudah terbit, per model: yang terakhir dibuat sebelum rilis pertama.
+
+    Tanggal rilis pertama adalah vintage pertama periode itu. Ramalan di hari yang sama tidak dihitung,
+    karena bisa saja dibuat sesudah angkanya terlihat.
+    """
+    return conn.execute("""
+        with first_seen as (
+          select distinct on (series_id, period) series_id, period, value, vintage_date
+          from etl.observations where value is not null
+          order by series_id, period, vintage_date
+        ), latest_seen as (
+          select distinct on (series_id, period) series_id, period, value
+          from etl.observations where value is not null
+          order by series_id, period, vintage_date desc
+        )
+        select distinct on (f.series_id, f.ref_period, f.model)
+               f.series_id, f.ref_period, f.model, f.origin_date, f.data_cutoff, f.value::float8,
+               a.value::float8, l.value::float8
+        from etl.forecasts f
+        join first_seen a on a.series_id = f.series_id and a.period = f.ref_period
+                         and f.origin_date < a.vintage_date
+        join latest_seen l on l.series_id = f.series_id and l.period = f.ref_period
+        where f.stat = 'point'
+        order by f.series_id, f.ref_period, f.model, f.origin_date desc
+    """).fetchall()
+
+
 def backtest_errors(conn):
     return conn.execute("""select series_id, model, origin_date, ref_period, horizon,
                                   forecast::float8, actual::float8

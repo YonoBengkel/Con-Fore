@@ -94,7 +94,8 @@ export default async function Beranda() {
         <p>
           Tiga angka yang paling terasa dalam hidup sehari-hari: seberapa cepat ekonomi tumbuh,
           seberapa cepat harga naik, dan seberapa banyak orang yang belum mendapat kerja. Tab ini hanya
-          berisi data yang sudah terbit, tanpa ramalan.
+          berisi data yang sudah terbit, tanpa ramalan. Perkiraan ke depan ada di{" "}
+          <Link href="/prediksi">tab Prediksi</Link>.
         </p>
         <p className="catatan">
           Pembaruan otomatis terakhir: {waktuWIB(status.last_success_at)}

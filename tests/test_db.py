@@ -50,10 +50,10 @@ class DatabaseTest(unittest.TestCase):
             self.conn.close()
             self.skipTest("koneksi uji bukan database *_test di mesin ini")
         self.conn.execute("drop schema if exists etl cascade")
-        for table in publish.TABLES + ("baru",):
+        for table in publish.TABLES + publish.MODEL_TABLES + ("baru",):
             self.conn.execute(f"drop table if exists public.{table}")
         self.conn.execute(SUPABASE_DEFAULTS)
-        self.assertEqual(len(db.migrate(self.conn)), 4)
+        self.assertEqual(len(db.migrate(self.conn)), 5)
         self.cfg = config.load()
         db.sync_config(self.conn, self.cfg)
         self.run_id = db.start_run(self.conn, "laptop", None)
@@ -220,6 +220,40 @@ class DatabaseTest(unittest.TestCase):
                 with self.assertRaises(psycopg.errors.InsufficientPrivilege):
                     with self.conn.transaction():
                         self.conn.execute(f"select count(*) from {table}")
+
+    def test_published_forecasts_and_track_record_are_readable_by_anon(self):
+        from confore.models import forecast
+
+        series, versions = "bps_cpi_yoy_m", {"pandas": "3.0.3"}
+        cutoffs = {series: date(2026, 10, 1)}
+        item = next(s for s in self.cfg["series"] if s["id"] == series)
+        rows = [(series, "2026-11", "musiman", "point", 3.3), (series, "2026-11", "musiman", "lo80", 2.9),
+                (series, "2026-11", "sama_terakhir", "point", 3.2)]
+        self.db.write_forecasts(self.conn, rows, date(2026, 11, 7), cutoffs, "sidik-1", "abc", versions)
+        # Ramalan di hari rilis tidak ikut dinilai, karena bisa dibuat sesudah angkanya terlihat.
+        self.db.write_forecasts(self.conn, [(series, "2026-11", "musiman", "point", 9.9)],
+                                date(2026, 12, 1), cutoffs, "sidik-2", "abc", versions)
+        point = Point(*fetch.period_of("2026-11", "M"), Decimal("3.1"))
+        self.db.save_fetch(self.conn, self.run_id, item, [point], None, 200, date(2026, 12, 1))
+        revised = Point(*fetch.period_of("2026-11", "M"), Decimal("3.15"))
+        self.db.save_fetch(self.conn, self.run_id, item, [revised], None, 200, date(2026, 12, 2))
+
+        finished = self.db.finished_forecasts(self.conn)
+        self.assertEqual(sorted((r[2], r[3], r[5], r[6], r[7]) for r in finished), [
+            ("musiman", date(2026, 11, 7), 3.3, 3.1, 3.15),
+            ("sama_terakhir", date(2026, 11, 7), 3.2, 3.1, 3.15),
+        ])
+        forecast.publish_tables(self.conn)
+        latest = self.conn.execute("""select model, is_main, point from public.forecast_latest""").fetchall()
+        self.assertEqual(latest, [("musiman", True, Decimal("9.9"))])  # asal terakhir saja
+        self.assertEqual(self.db.check_access(self.conn), [])
+        with self.conn.transaction():
+            self.conn.execute("set local role anon")
+            for table in self.publish.MODEL_TABLES:
+                self.conn.execute(f"select count(*) from public.{table}")
+            records = self.conn.execute("""select model, abs_error from public.track_record
+                                           where is_main""").fetchall()
+            self.assertEqual(records, [("sama_terakhir", Decimal("0.1"))])
 
     def test_forecasts_keep_other_days_and_backtest_is_replaced(self):
         series, today = "bps_cpi_yoy_m", date(2026, 11, 7)

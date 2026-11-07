@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 
 const MENU = [
   { href: "/", teks: "Data" },
-  { href: "/prediksi", teks: "Prediksi", segera: true },
+  { href: "/prediksi", teks: "Prediksi" },
   { href: "/cara-kerja", teks: "Cara kerja" },
   { href: "/sumber", teks: "Sumber data" },
 ];
@@ -23,7 +23,6 @@ export function NavUtama() {
         return (
           <Link key={m.href} href={m.href} aria-current={aktif ? "page" : undefined}>
             {m.teks}
-            {m.segera && <span className="segera">segera</span>}
           </Link>
         );
       })}

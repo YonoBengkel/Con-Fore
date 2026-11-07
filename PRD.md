@@ -47,6 +47,7 @@ Ringkasan di kedua tab berupa **segitiga keseimbangan** (pertumbuhan, harga stab
 - Forecast ketiga target beserta rentangnya, dan penjelasan "kenapa perkiraannya begini" berupa penggerak terbesar dalam bahasa awam.
 - Panel jangka panjang (proyeksi IMF dibanding target RPJMN) dan bagian Rekam jejak.
 - Selalu berangkat dari angka resmi terakhir.
+- "Kenapa perkiraannya begini" hanya menyebut yang terbukti pada backtest. Bila tidak ada penggerak yang terbukti membantu, halamannya mengatakan itu, tidak mengarang penggerak.
 
 **Halaman pendukung**
 

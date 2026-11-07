@@ -508,19 +508,22 @@ class StepTest(unittest.TestCase):
                 mock.patch.object(db, "backtest_stamp", return_value="waktu"), \
                 mock.patch.object(db, "last_forecast_hash", return_value=last_hash), \
                 mock.patch.object(db, "backtest_errors", return_value=list(stored)), \
+                mock.patch.object(forecast, "publish_tables") as self.publish_tables, \
                 mock.patch.object(db, "write_forecasts") as write:
             counts = forecast.step(None, {}, date(2026, 11, 7), "abc")
         return inputs, counts, write
 
-    def test_same_hash_writes_nothing(self):
+    def test_same_hash_writes_and_publishes_nothing(self):
         current = forecast.input_hash(synthetic(), "waktu", "abc")
         _, counts, write = self.run_step(current)
         self.assertIsNone(counts)
         write.assert_not_called()
+        self.publish_tables.assert_not_called()
 
-    def test_new_hash_writes_plain_rows_with_the_digest(self):
+    def test_new_hash_writes_plain_rows_with_the_digest_and_publishes(self):
         inputs, counts, write = self.run_step("lama")
         self.assertEqual(counts["musiman"], 14)
+        self.publish_tables.assert_called_once()
         rows, origin, cutoffs, digest = write.call_args.args[1:5]
         self.assertEqual(origin, date(2026, 11, 7))
         self.assertEqual(digest, forecast.input_hash(inputs, "waktu", "abc"))
@@ -538,7 +541,72 @@ class StepTest(unittest.TestCase):
         self.assertTrue({"lo80", "hi80", "lo95", "hi95"} <= {r[3] for r in rows if r[:3] == (CPI, "2026-11", "musiman")})
 
 
+class PublishRowsTest(unittest.TestCase):
+    ORIGIN, CUTOFF = date(2026, 11, 7), date(2026, 10, 1)
+
+    def stored(self, *rows):
+        return [(CPI, ref, model, stat, value, self.ORIGIN, self.CUTOFF) for ref, model, stat, value in rows]
+
+    def test_horizon_counts_periods_from_the_last_official_number(self):
+        self.assertEqual(forecast.horizon_of("2026-Q4", date(2026, 7, 1)), 1)
+        self.assertEqual(forecast.horizon_of("2027-Q4", date(2026, 7, 1)), 5)
+        self.assertEqual(forecast.horizon_of("2026-11", self.CUTOFF), 1)
+        self.assertEqual(forecast.horizon_of("2027-02", date(2026, 8, 1)), 6)
+
+    def test_rows_mark_the_main_model_and_carry_bands(self):
+        rows = forecast.forecast_rows(self.stored(
+            ("2026-11", "musiman", "point", 3.3), ("2026-11", "musiman", "lo80", 2.9),
+            ("2026-11", "musiman", "hi80", 3.7), ("2026-11", "sama_terakhir", "point", 3.2),
+        ), {(CPI, 1): "musiman"})
+        by_model = {row[2]: row for row in rows}
+        self.assertEqual(by_model["musiman"], (CPI, "2026-11", "musiman", True, 1, 3.3, 2.9, 3.7, self.ORIGIN))
+        self.assertEqual(by_model["sama_terakhir"], (CPI, "2026-11", "sama_terakhir", False, 1, 3.2, None, None,
+                                                     self.ORIGIN))
+
+    def test_absent_main_model_falls_back_to_a_baseline(self):
+        rows = forecast.forecast_rows(self.stored(
+            ("2026-11", "ar1", "point", 3.1), ("2026-11", "sama_terakhir", "point", 3.2),
+        ), {(CPI, 1): "dfm"})
+        self.assertEqual([row[2] for row in rows if row[3]], ["sama_terakhir"])
+
+    def test_every_period_has_exactly_one_main_number(self):
+        inputs = synthetic()
+        offsets = {}
+        rows = forecast.rows_for(inputs, offsets, date(2026, 11, 7))
+        stored = [(s, r, m, stat, v, self.ORIGIN, forecast.data_cutoffs(inputs)[s]) for s, r, m, stat, v, _ in rows]
+        published = forecast.forecast_rows(stored, {})
+        mains = {}
+        for row in published:
+            mains[row[0], row[1]] = mains.get((row[0], row[1]), 0) + row[3]
+        self.assertEqual(set(mains.values()), {1})
+        self.assertEqual({row[4] for row in published if row[0] == UNEMP}, {3, 6})
+
+    def test_record_rows_measure_against_the_first_release(self):
+        finished = [(CPI, "2026-11", "musiman", self.ORIGIN, self.CUTOFF, 3.3, 3.1, 3.15),
+                    (CPI, "2026-11", "sama_terakhir", self.ORIGIN, self.CUTOFF, 3.2, 3.1, 3.15)]
+        rows = forecast.record_rows(finished, {(CPI, 1): "musiman"})
+        by_model = {row[2]: row for row in rows}
+        self.assertTrue(by_model["musiman"][4])
+        self.assertFalse(by_model["sama_terakhir"][4])
+        self.assertAlmostEqual(by_model["musiman"][8], 0.2)
+
+    def test_score_rows_cover_every_window_and_model(self):
+        rows = backtest.score_rows(CompareTest().frame(), {(CPI, 1): "musiman"})
+        self.assertEqual({row[3] for row in rows}, {"normal", "sebelum", "uji", "semua"})
+        self.assertEqual({row[1] for row in rows}, {"sama_terakhir", "ar1", "musiman"})
+        row = next(r for r in rows if r[1] == "musiman" and r[3] == "semua")
+        self.assertIs(row[4], True)
+        self.assertAlmostEqual(row[5], 0.1)
+        self.assertEqual(row[7], 168)
+        self.assertFalse(any(r[4] for r in rows if r[1] != "musiman"))
+
+
 class CliModelStepTest(unittest.TestCase):
+    def test_new_forecast_refreshes_the_site_so_the_tab_is_current(self):
+        with mock.patch.object(cli, "report"), mock.patch.object(cli, "refresh_site", return_value=1) as refresh:
+            self.assertEqual(self.call(return_value={"musiman": 14}), 1)
+        refresh.assert_called_once()
+
     def call(self, **step):
         today = date(2026, 11, 7)
         with mock.patch.object(db, "connect", mock.MagicMock()), mock.patch.object(db, "lock"), \

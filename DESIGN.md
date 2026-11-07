@@ -45,6 +45,9 @@ Warna tidak pernah menjadi satu-satunya pembawa arti: status selalu juga tertuli
 - **Banner:** kuning lembut, hanya untuk data yang mungkin basi atau sumber yang gagal.
 - **Grafik per ronde:** satu garis per bulan survei, garis kedua putus-putus, dan label langsung di ujung garis. Dipakai untuk porsi pekerja formal, karena ronde yang berbeda bulan tidak sepadan.
 - **Grafik per kelompok:** satu panel kecil per kelompok dengan skala yang sama dan garis nol, warna `--aksen`, titik dan label angka di ujung garis, tanpa legenda karena judul panel sudah menyebut kelompoknya. Dipakai untuk rincian inflasi, karena ketiga garisnya sering bersilangan. Satu kolom di HP, tiga kolom mulai 960 px. Teks panel tetap terbaca di HP karena lebar gambarnya 320, bukan 640.
+- **Segitiga perkiraan:** segitiga yang sama, dengan garis putus-putus untuk tahun perkiraan dan garis tipis `--redup` tanpa isi untuk tahun resmi terakhir. Skor di sudut milik tahun perkiraan. Dipakai di tab Prediksi.
+- **Grafik perkiraan:** garis utuh `--aksen` untuk angka resmi, garis putus-putus untuk perkiraan, dan pita `--isi-segitiga` untuk rentang 80%. Pita mulai dari titik resmi terakhir, tanpa lebar, dan tidak digambar untuk horizon yang belum punya rentang. Garis tegak memisahkan label "Resmi" dan "Perkiraan". Satu warna, tanpa legenda, karena satu kalimat di atas grafik menjelaskan ketiganya. Sumbu waktu mengikuti jarak bulan sebenarnya, supaya ronde TPT yang tidak rata tetap benar. Lebar gambarnya 360, supaya teksnya terbaca di HP dan di kartu tiga kolom.
+- **Grafik jangka panjang:** garis utuh untuk angka resmi, putus-putus untuk proyeksi IMF, dan titik berongga `--tinta` untuk target RPJMN, dengan label langsung di ujungnya. Pembedanya bentuk, bukan warna.
 - **Status tiga tingkat** (PRD 4.4): daftar tiga baris di samping segitiga, berisi nama dimensi, skor, ikon, dan kata, tanpa latar berwarna. Normal memakai `--redup` dengan lingkaran kosong. Perlu waspada memakai `--tinta` tebal dengan lingkaran setengah isi. Tekanan berat memakai `--status-berat` tebal dengan lingkaran penuh. Jadi warna hanya muncul di tingkat terberat. Ikonnya SVG kecil, bukan emoji, dan disembunyikan dari pembaca layar karena katanya sudah tertulis. Tidak memakai kuning `--peringatan-*` (data basi), hijau `--ok-tinta` (sumber dicocokkan ke dokumen), atau jingga `--fokus` (fokus keyboard), dan tidak pernah menjadi banner atau judul.
 
 ## Aksesibilitas
@@ -56,4 +59,4 @@ Warna tidak pernah menjadi satu-satunya pembawa arti: status selalu juga tertuli
 ## Belum diputuskan
 
 - Logo atau tanda merek (sekarang hanya teks "Con-Fore").
-- Gaya tab Prediksi: garis putus-putus untuk perkiraan dan pita rentang ketidakpastian.
+- Arah visual Atlas lawan panduan ini. Sampai diputuskan, tab Prediksi juga mengikuti panduan ini.

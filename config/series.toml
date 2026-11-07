@@ -55,6 +55,42 @@ is_target = true
 name = "Tingkat pengangguran terbuka, tahunan"
 citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
 
+# --- Proyeksi IMF untuk tab Prediksi: tahun yang belum terjadi ikut disimpan, jadi setiap edisi WEO ---
+# --- menjadi vintage baru dan kelak bisa dibandingkan dengan angka resminya. ---
+
+[[series]]
+id = "idn_gdp_growth_weo_a"
+source = "imf"
+dataset = "WEO"
+query = "IMF.RES,WEO/IDN.NGDP_RPCH.A?startPeriod=2024&detail=dataonly"
+frequency = "A"
+unit = "%"
+concept = "yoy"
+name = "Proyeksi IMF: pertumbuhan ekonomi, tahunan"
+citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
+
+[[series]]
+id = "idn_cpi_eop_weo_a"
+source = "imf"
+dataset = "WEO"
+query = "IMF.RES,WEO/IDN.PCPIEPCH.A?startPeriod=2024&detail=dataonly"
+frequency = "A"
+unit = "%"
+concept = "eop_yoy"
+name = "Proyeksi IMF: inflasi akhir tahun"
+citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
+
+[[series]]
+id = "idn_unemp_weo_a"
+source = "imf"
+dataset = "WEO"
+query = "IMF.RES,WEO/IDN.LUR.A?startPeriod=2024&detail=dataonly"
+frequency = "A"
+unit = "% angkatan kerja"
+concept = "rate"
+name = "Proyeksi IMF: tingkat pengangguran terbuka, tahunan"
+citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
+
 # --- Target, kuartalan dan bulanan (salinan IMF dari data BPS) ---
 
 [[series]]
