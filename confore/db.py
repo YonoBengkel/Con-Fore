@@ -233,6 +233,17 @@ def mark_site_failed(conn):
     conn.execute("update public.site_status set last_run_status = 'failed' where id = 1")
 
 
+def all_runs(conn):
+    """Riwayat run untuk uji tujuh hari: (trigger, status, mulai, selesai)."""
+    return conn.execute("""select trigger, status, started_at, finished_at
+                           from etl.runs order by started_at""").fetchall()
+
+
+def site_status(conn):
+    return conn.execute("""select last_success_at, last_run_status, stale_sources
+                           from public.site_status where id = 1""").fetchone()
+
+
 def withdraw_limit(live):
     """Berapa periode boleh hilang dari sumber dalam satu pengambilan tanpa dianggap error."""
     return max(5, live // 10)
@@ -351,6 +362,10 @@ def last_forecast_hash(conn):
     row = conn.execute("""select input_hash from etl.forecasts
                           order by created_at desc limit 1""").fetchone()
     return row[0] if row else None
+
+
+def forecasts_published(conn):
+    return conn.execute("select exists (select 1 from public.forecast_latest)").fetchone()[0]
 
 
 def write_forecasts(conn, rows, origin, cutoffs, input_hash, git_sha, versions):

@@ -1,6 +1,6 @@
 # PRD Con-Fore
 
-> Status: disetujui pengelola 2026-10-30. Tambahan 2026-11-03 (bagian 4.4 dan butir terkait di 4, 5, 7, dan 9) disetujui pengelola hari itu. Tambahan 2026-11-07 (arti "lebih akurat" di bagian 6) diusulkan agent saat fase 3 dan menunggu persetujuan pengelola. Menggantikan `docs/RENCANA-MVP.md`. Detail teknis ada di [ARCHITECTURE.md](ARCHITECTURE.md) dan [SCHEMA.md](SCHEMA.md).
+> Status: disetujui pengelola 2026-10-30. Tambahan 2026-11-03 (bagian 4.4 dan butir terkait di 4, 5, 7, dan 9) disetujui pengelola hari itu. Tambahan 2026-11-07 (arti "lebih akurat" di bagian 6, dan penggerak yang tidak dikarang di 4.1) diusulkan agent saat fase 3 dan 4, dan menunggu persetujuan pengelola. Menggantikan `docs/RENCANA-MVP.md`. Detail teknis ada di [ARCHITECTURE.md](ARCHITECTURE.md) dan [SCHEMA.md](SCHEMA.md).
 
 ## 1. Masalah
 

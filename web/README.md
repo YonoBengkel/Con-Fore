@@ -26,6 +26,7 @@ npm start              # sajikan hasil build
 | `/sumber` | Sumber data, kalimat atribusi wajib, syarat penggunaan, dan semua target resmi dengan status pemeriksaannya |
 | `/cara-kerja` | Asal data, arti label, dan aturan skor dalam bahasa sehari-hari |
 | `/prediksi` | Tab Prediksi: segitiga perkiraan, tiga perkiraan dengan rentang dan penjelasan, pembanding proyeksi IMF, panel jangka panjang, dan rekam jejak. Bila `public.forecast_latest` kosong, halamannya menjelaskan bahwa perkiraan belum tersedia |
+| `/sitemap.xml`, `/robots.txt` | Daftar halaman untuk mesin pencari, dari daftar tetap tanpa membaca Supabase. `/api/` ditutup untuk perayap |
 | `GET /api/csv/[chart_id]` | CSV dari `public.chart_series`, dengan sumber dan syarat di baris `#` awal |
 | `POST /api/revalidate` | Menandai semua halaman yang membaca Supabase sebagai basi (`revalidateTag("supabase", "max")`): permintaan berikutnya masih mendapat halaman lama sambil halaman baru dirender di latar, dan bila Supabase gagal, halaman lama dipertahankan; wajib header `x-revalidate-secret` |
 | `GET /api/health` | 200 bila run sukses terakhir paling lama 36 jam lalu, 503 bila lebih atau Supabase tidak terbaca; wajib header `x-health-token`; `Cache-Control: private, no-store` |
@@ -43,6 +44,7 @@ lib/rincian.ts  kalimat dan tabel rincian inflasi PRD 4.4 (fungsi murni, dites d
 lib/prediksi.ts angka utama, angka tahunan, dan kalimat tab Prediksi (fungsi murni, dites di prediksi.test.ts)
 lib/ringkasan.ts skor dan kalimat segitiga satu tahun, dipakai tab Data dan tab Prediksi
 lib/format.ts   format angka, periode, dan tanggal Indonesia
+lib/situs.ts    alamat produksi untuk sitemap dan robots
 scripts/        salin-env.mjs
 vercel.json     region icn1 (Seoul, dekat Supabase) dan build hanya bila web/ berubah sejak deploy terakhir (VERCEL_GIT_PREVIOUS_SHA)
 ```

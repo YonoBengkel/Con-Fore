@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { MetaSeri } from "./data";
-import { keteranganJadwal } from "./konten.ts";
+import { keteranganJadwal, labelSeri } from "./konten.ts";
 
 const seri = (source_id: string, country = "IDN") => ({ source_id, country }) as MetaSeri;
 const PERKIRAAN = "perkiraan dari pola rilis BPS, jadwal resminya belum terbit";
@@ -21,4 +21,10 @@ test("salinan dan data lain tetap diberi catatan menyusul", () => {
     keteranganJadwal(seri("bis"), "bi-rdg"),
     "jadwal Rapat Dewan Gubernur BI; angka di sini menyusul lewat data BIS",
   );
+});
+
+test("seri proyeksi IMF berlabel proyeksi, bukan salinan data BPS", () => {
+  const meta = { series_id: "idn_gdp_growth_weo_a", source_id: "imf", country: "IDN", citation: "International Monetary Fund" } as MetaSeri;
+  assert.equal(labelSeri(meta), "proyeksi IMF");
+  assert.equal(labelSeri({ ...meta, series_id: "idn_gdp_growth_a" }), "salinan IMF dari data BPS");
 });

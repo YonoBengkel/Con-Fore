@@ -250,7 +250,7 @@ erDiagram
 | `release_calendar` | (`series_id`, `ref_period`, `calendar_source`) | `calendar_source` misalnya `bps`, `oecd`, `bi-rdg`, atau `bps-perkiraan` selama jadwal resmi BPS tahun itu belum terbit. Diganti penuh dari `config/release_calendar.csv` setiap run. |
 | `forecasts` | (`series_id`, `ref_period`, `model`, `origin_date`, `stat`) | Ramalan sungguhan untuk rekam jejak. `model` in (`sama_terakhir`,`ar1`,`dfm`,`musiman`,`arimax`,`regresi`,`regresi_pdb`) tanpa check, supaya model baru tidak butuh migrasi. `stat` in (`point`,`lo80`,`hi80`,`lo95`,`hi95`). Angka hari lain tidak pernah berubah, dan run kedua di hari yang sama mengganti seluruh ramalan hari itu. `data_cutoff` = awal periode angka resmi terakhir target. `input_hash` = sidik data masukan, kalender, backtest terakhir, dan versi kode, supaya model hanya dijalankan ulang bila salah satunya berubah. `git_sha` dan `pkg_versions` mencatat kode dan versi paket yang menghasilkannya. |
 | `backtest` | (`series_id`, `model`, `origin_date`, `ref_period`) | Hasil backtest terakhir, diganti penuh dalam satu transaksi. `origin_date` = tanggal 15 bulan asal. `horizon` dalam satuan periode seri (kuartal untuk PDB, bulan untuk inflasi dan TPT), dihitung dari angka resmi terakhir saat itu. Sumber lebar rentang ketidakpastian. |
-| `runs` | `run_id` (identity) | `trigger` in (`schedule`,`release`,`push`,`dispatch`,`laptop`); `status` in (`running`,`ok`,`partial`,`failed`). |
+| `runs` | `run_id` (identity) | `trigger` in (`schedule`,`release`,`push`,`dispatch`,`laptop`). Run ulang dari tab Actions dicatat `dispatch`, karena itu campur tangan manual. `status` in (`running`,`ok`,`partial`,`failed`). |
 | `fetch_log` | `id` (identity) | Satu baris per seri per run. FK `run_id` dan `series_id`. Tidak pernah menyimpan URL (key BPS ada di path URL) atau teks error bebas: `error` hanya kode tetap seperti `HTTP 503` atau nama jenis error. `data_hash` adalah SHA-256 data ternormalisasi (periode dan nilai); `changed` membandingkannya dengan hash terakhir seri itu. |
 | `schema_migrations` | `version` | Diisi oleh `python -m confore migrate`. |
 
@@ -307,7 +307,7 @@ Koreksi di hari yang sama menimpa nilai hari itu. Bila koreksinya mengembalikan 
 
 **Ganti tahun dasar.** Buat `series_id` baru dengan `base_year` sendiri; seri lama dibekukan (`active = false`).
 
-**Backup.** Ekspor mingguan dibaca dalam satu transaksi `REPEATABLE READ` (atau `pg_dump`), supaya semua tabel berasal dari snapshot yang sama.
+**Backup.** Ekspor mingguan (`confore/backup.py`) membaca `sources`, `series`, `observations`, `targets`, `forecasts`, dan `backtest` di skema `etl` dengan `COPY` dalam satu transaksi `REPEATABLE READ, READ ONLY`, supaya semua tabel berasal dari snapshot yang sama. `COPY` dipilih supaya tidak bergantung pada versi `pg_dump` di runner. Sumber dan seri ikut, karena seri yang sudah dihapus dari registri tetap dirujuk observasi lamanya. Pemulihan mengisi tabel kosong dengan urutan foreign key dalam satu transaksi, dan menolak tabel yang sudah berisi.
 
 ## 4. Kebijakan akses
 

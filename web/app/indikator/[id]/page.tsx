@@ -25,6 +25,7 @@ import {
   SERI_INFLASI_BULANAN,
   SERI_KARTU,
   SERI_TPT_RONDE,
+  adalahProyeksi,
   artinyaBuatmu,
   labelSeri,
 } from "@/lib/konten";
@@ -42,14 +43,16 @@ export const revalidate = 21600;
 
 // Hanya id yang dibangun saat build: id lain langsung 404 tanpa render, supaya alamat karangan
 // tidak menulis cache ISR satu per satu (batas paket Hobby, ARCHITECTURE 4.5). Seri baru di luar
-// SERI_DITAUTKAN mendapat halaman setelah build web berikutnya.
+// SERI_DITAUTKAN mendapat halaman setelah build web berikutnya. Seri proyeksi IMF tidak punya halaman,
+// karena "angka terakhir"-nya tahun yang belum terjadi, dan tab Data tidak memuat ramalan.
 export const dynamicParams = false;
 
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateStaticParams() {
   const meta = await bacaMeta();
-  return [...new Set([...meta.map((m) => m.series_id), ...SERI_DITAUTKAN])].map((id) => ({ id }));
+  const seri = meta.map((m) => m.series_id).filter((id) => !adalahProyeksi(id));
+  return [...new Set([...seri, ...SERI_DITAUTKAN])].map((id) => ({ id }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

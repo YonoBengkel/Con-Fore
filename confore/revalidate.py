@@ -21,8 +21,9 @@ class Result(NamedTuple):
 
 
 def paths(series_ids):
+    # Seri proyeksi IMF hanya tampil di tab Prediksi dan tidak punya halaman detail.
     return ["/", "/prediksi", "/sumber",
-            *(f"/indikator/{series_id}" for series_id in series_ids),
+            *(f"/indikator/{series_id}" for series_id in series_ids if not series_id.endswith("_weo_a")),
             *(f"/api/csv/{series_id}" for series_id in series_ids)]
 
 

@@ -27,19 +27,31 @@ export default function CaraKerja() {
       <h2>Dari mana angkanya</h2>
       <ul>
         <li>
-          Setiap pagi sebuah program otomatis mengambil data publik dari lembaga sumber (IMF, BIS,
-          OECD, ECB, dan BPS bila sudah tersedia), lalu menyimpannya. Situs ini hanya membaca hasil
-          olahan itu. Daftar lengkapnya ada di <Link href="/sumber">Sumber data</Link>.
+          Setiap hari sebuah program otomatis mengambil data publik dari lembaga sumber (BPS, IMF, BIS,
+          OECD, dan ECB), lalu menyimpannya. Situs ini hanya membaca hasil olahan itu. Daftar lengkapnya
+          ada di <Link href="/sumber">Sumber data</Link>.
         </li>
         <li>
-          Angka Indonesia diambil langsung dari BPS bila sudah tersedia. Bila belum, dipakai salinan IMF
+          Angka Indonesia diambil langsung dari BPS. Bila angka BPS belum tersedia, dipakai salinan IMF
           dari data BPS, yang biasanya terbit beberapa minggu setelah rilis BPS. Label di setiap angka
           menyebut mana yang dipakai.
         </li>
+        <li>Setiap angka mencantumkan sumber, periode, dan tanggal Con-Fore melihatnya.</li>
+      </ul>
+
+      <h2 id="pembaruan">Kapan diperbarui</h2>
+      <ul>
         <li>
-          Setiap angka mencantumkan sumber, periode, dan tanggal Con-Fore melihatnya. Bila pembaruan
-          gagal lebih dari 36 jam, halaman menampilkan peringatan.
+          Setiap pagi program memeriksa semua sumber. Jadwalnya pukul 06.17 WIB, tetapi bisa mulai beberapa
+          jam lebih lambat karena antrean di layanan yang menjalankannya.
         </li>
+        <li>
+          Pada tanggal 1 sampai 8 setiap bulan, saat BPS biasanya merilis angka, ada pemeriksaan tambahan
+          khusus data BPS yang dijadwalkan sore hari dan juga bisa terlambat. Angka baru biasanya tampil
+          paling lambat pagi setelah hari rilis.
+        </li>
+        <li>Perkiraan dihitung ulang bila data masukannya berubah. Uji dengan data lama diulang setiap tanggal 9.</li>
+        <li>Bila pembaruan gagal lebih dari 36 jam, halaman menampilkan peringatan.</li>
       </ul>
 
       <h2>Arti label</h2>

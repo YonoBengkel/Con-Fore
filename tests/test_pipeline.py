@@ -197,6 +197,12 @@ class RevalidateTest(unittest.TestCase):
                     mock.patch.object(cli, "report"), mock.patch("builtins.print"):
                 self.assertEqual(cli.refresh_site(cfg), code)
 
+    def test_projection_series_have_a_csv_but_no_detail_page(self):
+        paths = revalidate.paths(["bps_cpi_yoy_m", "idn_gdp_growth_weo_a"])
+        self.assertIn("/indikator/bps_cpi_yoy_m", paths)
+        self.assertNotIn("/indikator/idn_gdp_growth_weo_a", paths)
+        self.assertIn("/api/csv/idn_gdp_growth_weo_a", paths)
+
     def test_cmd_run_refreshes_after_connection_closes(self):
         args = mock.Mock(source=None, dry_run=False)
         for written, refreshed, models, code in [(0, 0, 0, 0), (1, 0, 0, 1), (0, 1, 0, 1), (0, 0, 1, 1)]:

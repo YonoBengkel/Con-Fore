@@ -285,6 +285,134 @@ class DatabaseTest(unittest.TestCase):
         self.assertEqual(sorted(self.db.backtest_errors(self.conn)), sorted(second))
         self.assertEqual(self.db.check_access(self.conn), [])
 
+    def backup_contents(self):
+        from confore import backup
+
+        return {table: sorted(self.conn.execute(f"select * from etl.{table}").fetchall(), key=repr)
+                for table in backup.TABLES}
+
+    def fill_for_backup(self):
+        series = "bps_cpi_yoy_m"
+        self.db.save_fetch(self.conn, self.run_id, self.item, quarterly(("2026-Q1", "5.1")), None, 200,
+                           date(2026, 11, 1))
+        self.db.save_fetch(self.conn, self.run_id, self.item, quarterly(("2026-Q1", "5.2")), None, 200,
+                           date(2026, 11, 2))
+        self.db.write_forecasts(self.conn, [(series, "2026-11", "musiman", "point", 3.3)], date(2026, 11, 7),
+                                {series: date(2026, 10, 1)}, "sidik", "abc", {"pandas": "3.0.3"})
+        self.db.replace_backtest(self.conn, [(series, "ar1", date(2024, 1, 15), "2024-02", 1, 2.0, 2.75)], "abc")
+
+    def test_backup_restores_every_table_exactly_into_an_empty_database(self):
+        import tarfile
+        import tempfile
+        from pathlib import Path
+
+        from confore import backup
+
+        self.fill_for_backup()
+        before = self.backup_contents()
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "arsip.tar.gz"
+            counts = backup.export(self.conn, path, "abc")
+            self.assertEqual((counts["observations"], counts["forecasts"], counts["backtest"]), (2, 1, 1))
+            with tarfile.open(path, "r:gz") as tar:
+                names = set(tar.getnames())
+            self.assertEqual(names, {f"{t}.csv" for t in backup.TABLES} | {backup.MANIFEST, backup.README})
+
+            self.conn.execute("truncate etl.sources, etl.series cascade")
+            self.assertEqual(backup.restore(self.conn, path), counts)
+            self.assertEqual(self.backup_contents(), before)
+            self.db.sync_config(self.conn, self.cfg)  # run berikutnya berjalan di atasnya
+            self.assertEqual(self.db.check_access(self.conn), [])
+
+            # Tabel yang sudah berisi tidak pernah ditimpa, dan tidak ada yang berubah.
+            with self.assertRaisesRegex(self.db.Stop, "sudah berisi"):
+                backup.restore(self.conn, path)
+            self.assertEqual(self.conn.execute("select count(*) from etl.observations").fetchone()[0], 2)
+
+    def test_backup_reads_every_table_from_one_snapshot(self):
+        import tempfile
+        from pathlib import Path
+
+        import psycopg
+
+        from confore import backup
+
+        self.fill_for_backup()
+        real, calls = backup.digest, []
+
+        def delete_after_first_table(data):
+            # Run lain mengubah data sesudah tabel pertama terbaca: arsip tidak boleh ikut berubah.
+            if not calls:
+                with psycopg.connect(URL, autocommit=True) as other:
+                    other.execute("delete from etl.forecasts")
+            calls.append(1)
+            return real(data)
+
+        with tempfile.TemporaryDirectory() as folder, mock.patch.object(backup, "digest", delete_after_first_table):
+            counts = backup.export(self.conn, Path(folder) / "arsip.tar.gz")
+        self.assertEqual(counts["forecasts"], 1)
+        self.assertEqual(self.conn.execute("select count(*) from etl.forecasts").fetchone()[0], 0)
+
+    def test_backup_of_an_empty_database_writes_nothing(self):
+        import tempfile
+        from pathlib import Path
+
+        from confore import backup
+
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "arsip.tar.gz"
+            with self.assertRaisesRegex(self.db.Stop, "kosong"):
+                backup.export(self.conn, path)
+            self.assertFalse(path.exists())
+
+    def test_restore_is_all_or_nothing_and_checks_the_schema(self):
+        import tempfile
+        from pathlib import Path
+
+        import psycopg
+
+        from confore import backup
+
+        self.fill_for_backup()
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "arsip.tar.gz"
+            backup.export(self.conn, path)
+            self.conn.execute("truncate etl.sources, etl.series cascade")
+            # Jumlah baris tidak sama dengan manifest: semuanya batal.
+            tables, files = backup.read_archive(path)
+            tables["forecasts"]["rows"] += 1
+            with mock.patch.object(backup, "read_archive", return_value=(tables, files)), \
+                    self.assertRaisesRegex(self.db.Stop, "jumlah baris forecasts"):
+                backup.restore(self.conn, path)
+            self.assertEqual(self.conn.execute("select count(*) from etl.sources").fetchone()[0], 0)
+            # Skema berbeda dari arsip: tabel terakhir gagal, jadi tabel sebelumnya ikut batal.
+            self.conn.execute("alter table etl.backtest add column baru int")
+            with self.assertRaises(psycopg.errors.BadCopyFileFormat):
+                backup.restore(self.conn, path)
+            self.assertEqual(self.conn.execute("select count(*) from etl.sources").fetchone()[0], 0)
+            self.conn.execute("drop schema etl cascade")
+            with self.assertRaisesRegex(self.db.Stop, "migrate"):
+                backup.restore(self.conn, path)
+
+    def test_commands_run_backup_and_status_against_the_database(self):
+        import contextlib
+        import io
+        import tempfile
+        from pathlib import Path
+
+        from confore import cli
+
+        self.fill_for_backup()
+        self.db.finish_run(self.conn, self.run_id, "ok")
+        with tempfile.TemporaryDirectory() as folder, mock.patch.dict(os.environ, {"SUPABASE_DB_URL": URL}), \
+                contextlib.redirect_stdout(io.StringIO()) as out, contextlib.redirect_stderr(io.StringIO()):
+            path = Path(folder) / "arsip.tar.gz"
+            self.assertEqual(cli.main(["backup", str(path)]), 0)
+            self.assertEqual(cli.main(["restore", str(path)]), 1)  # database ini sudah berisi
+            # Run dari laptop tidak dihitung, jadi hari lampau tanpa run terjadwal gagal.
+            self.assertEqual(cli.main(["status", "--since", "2026-10-01", "--days", "2"]), 1)
+        self.assertIn("Hasil: gagal, 0 dari 2 hari lulus", out.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()

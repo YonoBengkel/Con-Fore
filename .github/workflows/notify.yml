@@ -1,0 +1,44 @@
+name: Alarm kegagalan
+
+# Membuka satu issue pipeline-failure bila pipeline atau backup gagal, atau mengomentari issue yang masih
+# terbuka. Tanpa checkout dan tanpa Secret: isinya hanya nama, pemicu, hasil, dan tautan run dari GitHub
+# sendiri, jadi tidak ada teks bebas yang bisa memuat rahasia. Jadwal yang mati diam-diam tidak memicu
+# workflow ini; itu tugas pemeriksaan kesehatan di cron-job.org (RUNBOOK 5a).
+on:
+  workflow_run:
+    workflows: ["Pipeline data", "Backup mingguan"]
+    types: [completed]
+
+permissions: {}
+
+concurrency:
+  group: con-fore-notify
+  queue: max
+
+jobs:
+  notify:
+    # Pull request dari fork bisa memakai nama workflow yang sama, jadi tidak boleh membunyikan alarm.
+    if: github.event.workflow_run.event != 'pull_request' && contains(fromJSON('["failure","timed_out","startup_failure","cancelled"]'), github.event.workflow_run.conclusion)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Buka atau komentari issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PEMILIK: ${{ github.repository_owner }}
+          NAMA: ${{ github.event.workflow_run.name }}
+          PEMICU: ${{ github.event.workflow_run.event }}
+          HASIL: ${{ github.event.workflow_run.conclusion }}
+          TAUTAN: ${{ github.event.workflow_run.html_url }}
+        run: |
+          pesan="@$PEMILIK workflow $NAMA berakhir $HASIL (pemicu: $PEMICU). Rincian ada di ringkasan run: $TAUTAN. Cara membacanya ada di RUNBOOK.md bagian 6a."
+          gh label create pipeline-failure --color B60205 --description "Pipeline atau backup gagal" --force
+          nomor=$(gh issue list --label pipeline-failure --state open --limit 1 --json number --jq '.[0].number // empty')
+          if [ -n "$nomor" ]; then
+            gh issue comment "$nomor" --body "$pesan"
+          else
+            gh issue create --title "Pipeline atau backup gagal" --label pipeline-failure --body "$pesan"
+          fi

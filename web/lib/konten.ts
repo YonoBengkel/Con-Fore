@@ -157,7 +157,11 @@ export function namaPendek(sumber: string): string {
  * Label kejujuran per seri. "data resmi" hanya untuk seri yang diambil langsung dari BPS; angka
  * Indonesia dari IMF ditandai sebagai salinan, dan olahan Con-Fore selalu disebut.
  */
+/** Seri proyeksi IMF untuk tab Prediksi: memuat tahun yang belum terjadi, jadi tidak punya halaman detail. */
+export const adalahProyeksi = (seri: string) => seri.endsWith("_weo_a");
+
 export function labelSeri(m: MetaSeri): string {
+  if (adalahProyeksi(m.series_id)) return "proyeksi IMF";
   const olahan = /^(dihitung|kurs silang dihitung)/i.test(m.citation);
   if (m.source_id === "bps") return olahan ? "dihitung Con-Fore dari data resmi BPS" : "data resmi BPS";
   if (m.source_id === "imf" && m.country === "IDN") {

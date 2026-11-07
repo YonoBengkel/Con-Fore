@@ -502,11 +502,12 @@ class BuildTest(unittest.TestCase):
 class StepTest(unittest.TestCase):
     """Langkah harian: sidik yang sama tidak menulis apa pun, sidik baru menulis dengan rentang."""
 
-    def run_step(self, last_hash, stored=()):
+    def run_step(self, last_hash, stored=(), published=True):
         inputs = synthetic()
         with mock.patch.object(forecast, "latest_inputs", return_value=inputs), \
                 mock.patch.object(db, "backtest_stamp", return_value="waktu"), \
                 mock.patch.object(db, "last_forecast_hash", return_value=last_hash), \
+                mock.patch.object(db, "forecasts_published", return_value=published), \
                 mock.patch.object(db, "backtest_errors", return_value=list(stored)), \
                 mock.patch.object(forecast, "publish_tables") as self.publish_tables, \
                 mock.patch.object(db, "write_forecasts") as write:
@@ -519,6 +520,14 @@ class StepTest(unittest.TestCase):
         self.assertIsNone(counts)
         write.assert_not_called()
         self.publish_tables.assert_not_called()
+
+    def test_same_hash_republishes_when_the_public_tables_are_empty(self):
+        # Database yang baru dipulihkan dari backup: ramalannya ada, tabel publiknya kosong.
+        current = forecast.input_hash(synthetic(), "waktu", "abc")
+        _, counts, write = self.run_step(current, published=False)
+        self.assertEqual(counts, {})
+        write.assert_not_called()
+        self.publish_tables.assert_called_once()
 
     def test_new_hash_writes_plain_rows_with_the_digest_and_publishes(self):
         inputs, counts, write = self.run_step("lama")

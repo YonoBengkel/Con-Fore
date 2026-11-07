@@ -1,4 +1,4 @@
-Status: langkah fase 0, fase 1, dan penayangan situs (bagian 5) sudah dijalankan. Pemeriksaan kesehatan cron-job.org belum dipasang. Langkah untuk komponen yang belum ada dicek ulang saat komponennya jadi.
+Status: langkah fase 0, fase 1, dan penayangan situs (bagian 5) sudah dijalankan. Pemeriksaan kesehatan cron-job.org belum dipasang (bagian 5a), dan uji tujuh hari belum selesai (bagian 9a). Langkah untuk komponen yang belum ada dicek ulang saat komponennya jadi.
 
 # Runbook Con-Fore
 
@@ -76,7 +76,7 @@ Build Vercel membaca tabel `public.forecast_latest`, `public.backtest_scores`, d
 2. Push ke `main`. Vercel membangun situs baru karena `web/` berubah, dan perubahan `config/**` memicu satu run pipeline. Build boleh selesai lebih dulu dari run itu: selama tabelnya kosong, `/prediksi` menulis "Perkiraan belum tersedia".
 3. Run itu menulis ramalan, mengisi ketiga tabel, lalu menyegarkan situs sekali lagi. Sesudah itu `/prediksi` menampilkan perkiraan.
 
-Halaman `/indikator/<id>` seri proyeksi IMF menjawab 404 sampai build web berikutnya, dan tidak ada tautan ke sana. Tab Prediksi membaca seri itu lewat `chart_series`, jadi tidak terpengaruh.
+Seri proyeksi IMF sengaja tidak punya halaman `/indikator/<id>` (jawabannya 404, dan tidak ada tautan ke sana), karena angka terakhirnya tahun yang belum terjadi. Tab Prediksi membaca seri itu lewat `chart_series`.
 
 Bila `/prediksi` berisi angka lama, lihat "Perkiraan terakhir dihitung" di halamannya, lalu cek bagian 4a: model yang gagal hanya membuat tabel ini tertinggal.
 
@@ -97,9 +97,44 @@ Bila build gagal dengan `PYTHON_ENTRYPOINT_NOT_FOUND`, Vercel membangun dari aka
 
 Perubahan variabel environment baru berlaku di deployment baru. Untuk Redeploy: **Deployments**, ⋯ di deployment teratas, **Redeploy**, matikan centang **Use project's Ignore Build Step**, lalu konfirmasi. Centang itu harus mati, karena commit yang sama tidak mengubah `web/`. Tanda berhasil: `GET /api/health` tanpa token menjawab 401, bukan 503.
 
-7. Tambahkan dua Secret di GitHub (bagian 2): `REVALIDATE_SECRET` dengan nilai yang sama seperti di Vercel, dan `SITE_URL` berisi alamat situs yang diawali `https://`. Setiap run lalu menyegarkan situs, dan hasilnya muncul sebagai tabel "Revalidasi situs" di ringkasan job. `HEALTH_TOKEN` masuk cron-job.org saat pemeriksaan kesehatan dipasang.
+7. Tambahkan dua Secret di GitHub (bagian 2): `REVALIDATE_SECRET` dengan nilai yang sama seperti di Vercel, dan `SITE_URL` berisi alamat situs yang diawali `https://`. Setiap run lalu menyegarkan situs, dan hasilnya muncul sebagai tabel "Revalidasi situs" di ringkasan job. `HEALTH_TOKEN` masuk cron-job.org saat pemeriksaan kesehatan dipasang (bagian 5a).
 
 Bila run berakhir merah dengan `Revalidasi situs gagal`, datanya tetap sudah terbit. Artinya: `HTTP 401` berarti nilai di GitHub dan Vercel berbeda, `HTTP 503` berarti Vercel belum memuat rahasia itu (Redeploy), dan `Secret ... belum diisi` berarti Secret-nya belum ada di GitHub.
+
+## 5a. Memasang pemeriksaan cron-job.org (fase 5)
+
+Tanpa bagian ini tidak ada yang memberi tahu bila jadwal GitHub mati diam-diam. GitHub mematikan workflow terjadwal di repo publik setelah 60 hari tanpa aktivitas, dan pipeline sendiri tidak membuat commit. Kerjakan sesudah `backup.yml` ada di `main`, karena sebelum itu job ketiga menjawab 404. Semua langkah dikerjakan pengelola, dan nilai rahasia tidak pernah lewat chat atau commit. Isi tabel di bawah dicek dari dokumentasi API cron-job.org, bukan dari layarnya, jadi nama menunya bisa sedikit berbeda.
+
+**Siapkan dua nilai**
+
+1. `HEALTH_TOKEN`: harus sama dengan yang ada di Vercel. Bila nilainya tidak tersimpan, buat yang baru (bagian 2), ganti di Vercel, lalu Redeploy (bagian 5).
+2. Token GitHub. Di github.com, klik foto profil, lalu **Settings** (pengaturan akun, bukan pengaturan repo) **> Developer settings > Personal access tokens > Fine-grained tokens > Generate new token**.
+   - **Expiration**: 1 tahun. Catat tanggalnya di bagian 9.
+   - **Repository access**: **Only select repositories**, lalu pilih `YonoBengkel/Con-Fore`.
+   - **Permissions**: **Actions**, **Read and write**. Tidak perlu izin lain.
+
+**Buat tiga job**
+
+Daftar di cron-job.org, lalu buka **Console > Cronjobs > Create cronjob**. Di ketiga job, pilih zona waktu `Asia/Jakarta`, dan nyalakan notifikasi untuk job gagal, job pulih, dan job dimatikan otomatis. Metode dan header ada di tab lanjutan (**Advanced**).
+
+| Job | Alamat | Metode | Jadwal | Header | Hasil uji yang benar |
+|---|---|---|---|---|---|
+| Kesehatan | `https://con-fore.vercel.app/api/health` | GET | Setiap hari 09.17 | `x-health-token`: nilai `HEALTH_TOKEN` | 200 |
+| Nyalakan pipeline | `https://api.github.com/repos/YonoBengkel/Con-Fore/actions/workflows/pipeline.yml/enable` | PUT | Setiap hari 05.17 | Tiga header di bawah | 204 |
+| Nyalakan backup | Sama, dengan `backup.yml` menggantikan `pipeline.yml` | PUT | Setiap hari 05.27 | Tiga header di bawah | 204 |
+
+Tiga header untuk dua job penyalaan:
+
+- `Authorization`: `Bearer ` diikuti token GitHub
+- `Accept`: `application/vnd.github+json`
+- `X-GitHub-Api-Version`: `2026-03-10`
+
+Jalankan uji (**Test run**) di setiap job sebelum menyimpan. Bila hasilnya lain:
+
+- Kesehatan 401: token berbeda dengan di Vercel. Kesehatan 503 `belum_dikonfigurasi`: Vercel belum memuat token (Redeploy). Kesehatan 503 `basi`: run sukses terakhir lebih dari 36 jam lalu, jadi lanjut ke bagian 6. Kesehatan 503 `supabase_gagal`: Supabase tidak terbaca, jadi lanjut ke bagian 7.
+- Penyalaan 401, 403, atau 404: token salah, kedaluwarsa, atau tidak punya izin **Actions** di repo ini.
+
+Sesudah itu, satu email dari cron-job.org berarti ada yang perlu dicek (bagian 6). Job yang gagal lebih dari 25 kali berturut-turut dimatikan otomatis oleh cron-job.org, jadi jangan abaikan emailnya.
 
 ## 6. Workflow terjadwal berhenti (mulai jadwal harian aktif)
 
@@ -109,6 +144,23 @@ Tanda: issue `pipeline-failure`, email cron-job.org, atau banner "data mungkin b
 2. Jalankan workflow secara manual (**Run workflow**). Run otomatis mengejar data yang terlewat.
 3. Cek job cron-job.org yang memanggil endpoint `enable` setiap hari: masih aktif dan token-nya belum kedaluwarsa.
 
+## 6a. Membaca issue `pipeline-failure` (fase 5)
+
+Workflow **Alarm kegagalan** membuka satu issue berlabel `pipeline-failure` bila **Pipeline data** atau **Backup mingguan** gagal, dan menyebut pemilik repo supaya GitHub mengirim email. Selama issue itu terbuka, kegagalan berikutnya menjadi komentar di issue yang sama. Issue tidak tertutup sendiri.
+
+1. Buka tautan run di issue, lalu baca ringkasan job dan log langkah yang merah.
+2. Cocokkan pesannya:
+   - `Revalidasi situs gagal`: data sudah terbit, hanya situsnya belum segar (bagian 5).
+   - `Model gagal`: data sudah terbit, hanya tab Prediksi yang tertinggal (bagian 4a).
+   - Tabel run dengan kode per seri: bagian 4 langkah 8 dan 10.
+   - Run sebagai `failed` tanpa tabel, atau `Gagal: <jenis error>`: database tidak terjangkau, jadi cek bagian 7.
+   - Di **Backup mingguan**: bagian 7a.
+3. Tutup issue sesudah run berikutnya hijau.
+
+**Uji alarm:** **Actions > Pipeline data > Run workflow**, mode `uji_alarm`. Run itu gagal dengan sengaja tanpa menyentuh data, dan beberapa menit kemudian issue muncul. Tutup issue-nya. Pastikan email dari GitHub benar-benar masuk, karena itu tergantung pengaturan notifikasi akun ("Participating and @mentions"). Ulangi sesudah mengubah `notify.yml`. Workflow ini hanya berjalan dari `main`.
+
+Alarm ini tidak berbunyi bila jadwal GitHub mati, karena tidak ada run yang gagal. Itu tugas pemeriksaan kesehatan di bagian 5a.
+
 ## 7. Supabase dijeda (mulai fase 1)
 
 Supabase Free dijeda setelah satu minggu tanpa aktivitas.
@@ -116,6 +168,25 @@ Supabase Free dijeda setelah satu minggu tanpa aktivitas.
 1. Buka dashboard Supabase dan pulihkan proyek.
 2. Jalankan pipeline secara manual.
 3. Baru setelah itu deploy ulang situs, karena build Vercel ikut membaca Supabase.
+
+## 7a. Backup dan pemulihan (fase 5)
+
+**Backup mingguan** berjalan setiap Senin 06.47 WIB dan menerbitkan satu rilis `backup-YYYY-MM-DD` berisi `confore-backup-YYYY-MM-DD.tar.gz`, sekitar 400 KB per November 2026. Isinya tabel yang tidak bisa dibangun ulang, kalimat atribusi tiap sumber, dan manifest. Bisa juga dijalankan kapan saja: **Run workflow**, atau `python -m confore backup <berkas>` dari laptop, yang hanya membaca database. Repo ini publik, jadi asetnya ikut publik. Isinya data sumber publik dan ramalan Con-Fore, tanpa rahasia.
+
+Bila database hilang atau rusak:
+
+1. Siapkan proyek Supabase baru, lalu perbarui `SUPABASE_DB_URL`, `SUPABASE_URL`, dan `SUPABASE_PUBLISHABLE_KEY` di `.env`, GitHub Secrets, dan Vercel (bagian 2 dan 5). Bila proyek lama masih ada tetapi tabelnya rusak, kosongkan dulu lewat SQL Editor Supabase dengan `truncate etl.sources, etl.series cascade;`, karena pemulihan menolak tabel yang sudah berisi.
+2. Unduh arsip terbaru dari halaman **Releases** repo.
+3. `python -m confore migrate`
+4. `python -m confore restore confore-backup-YYYY-MM-DD.tar.gz`. Semua tabel masuk dalam satu transaksi, jadi gagal berarti tidak ada yang berubah.
+5. `python -m confore run`. Run ini mengambil data yang tertinggal, mengisi semua tabel `public`, dan menerbitkan ramalan.
+6. Redeploy situs (bagian 5), lalu cek `/` dan `/prediksi`.
+
+- `arsip rusak` atau `arsip tidak bisa dibaca`: unduh ulang, atau pakai arsip minggu sebelumnya.
+- `BadCopyFileFormat`: kolom tabel berbeda dengan saat arsip dibuat. Lihat daftar `migrations` di `manifest.json` dalam arsip, pulihkan memakai commit dengan migrasi yang sama, lalu kembali ke `main` dan jalankan `migrate`.
+- Yang tidak ikut: `etl.release_calendar` dibangun ulang oleh run berikutnya, sedangkan `etl.runs` dan `etl.fetch_log` hanya riwayat operasional dan mulai dari kosong.
+
+Diuji 2026-11-07 dengan data asli ke Postgres lokal: keenam tabel kembali sama persis, run berikutnya tidak menambah baris ganda, dan tab Prediksi terisi kembali.
 
 ## 8. Rotasi kredensial
 
@@ -140,8 +211,26 @@ Lakukan bila kredensial bocor atau terpapar (tertempel di chat, log, atau commit
 - [ ] Perbarui lockfile Python bila ada rilis keamanan: `uv pip compile requirements.in --universal --python-version 3.12 --generate-hashes -o requirements.txt`, lalu jalankan tes.
 - [ ] (Fase 1) Job cron-job.org masih aktif dan notifikasi email kegagalan menyala.
 - [ ] (Fase 1) Tanggal kedaluwarsa token GitHub untuk cron-job.org: `____-__-__`. Perbarui sebelum lewat.
-- [ ] (Fase 1) Ukuran database Supabase di bawah 300 MB; ada aset backup baru di GitHub Releases.
+- [ ] (Fase 1) Ukuran database Supabase di bawah 300 MB.
+- [ ] (Fase 5) Ada rilis `backup-*` baru setiap minggu, dan tidak ada issue `pipeline-failure` yang masih terbuka tanpa alasan.
 - [ ] (Fase 2) Pemakaian Vercel Hobby masih jauh dari batas.
+- [ ] (Fase 2) `npm audit --omit=dev` di folder `web/` bersih, atau rilis keamanannya sudah dipasang.
 - [ ] (Fase 2) Rencana Terbit BPS (https://www.bps.go.id/id/arc) sudah memuat tahun berikutnya: ganti baris `bps-perkiraan` di `config/release_calendar.csv` dengan tanggal resminya, dan tambahkan rilis yang belum tercatat.
 - [ ] (Fase 2) Naskah UU APBN 2027 sudah ada di JDIH: cocokkan dua baris `berita` di `config/targets.csv`.
 - [ ] (Fase 3) Laporan backtest tanggal 9 lulus dan angka utamanya masih masuk akal (bagian 4a).
+
+## 9a. Uji tujuh hari (fase 5)
+
+Syarat selesai MVP (PRD 6 dan 8). Hari pertamanya adalah tanggal run harian pertama sesudah fase 5 digabung, karena riwayat sebelumnya belum menguji sistem yang sama.
+
+```
+python -m confore status --since YYYY-MM-DD
+```
+
+Perintah ini hanya membaca database, dan menulis satu baris per hari:
+
+- Sebuah hari lulus bila ada run harian terjadwal berstatus `ok` atau `partial`. Run dari push, run manual, dan run ulang dari tab **Actions** tampil, tetapi tidak dihitung. Hari ini tertulis `belum` sampai run hariannya datang.
+- Selang antar-run otomatis yang sukses tidak boleh lebih dari 36 jam, termasuk selang sampai saat perintah dijalankan.
+- `Hasil: lulus` berarti ketujuh hari lulus. `berjalan` berarti belum selesai. `gagal` memberi kode keluar 1. Sesudah penyebabnya dibetulkan, mulai lagi dari hari sesudah run otomatis pertama yang hijau, karena selang dihitung dari sukses terakhir sebelum jendela.
+
+Situs yang gagal disegarkan tidak terlihat di tabel ini, karena statusnya ada di job GitHub. Saat uji selesai, cek juga di tab **Actions** bahwa run terjadwal di jendela itu hijau, dan bahwa "Pembaruan otomatis terakhir" di beranda sama dengan baris terakhir tabel.

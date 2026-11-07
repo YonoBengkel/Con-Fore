@@ -50,6 +50,8 @@ Warna tidak pernah menjadi satu-satunya pembawa arti: status selalu juga tertuli
 - **Grafik jangka panjang:** garis utuh untuk angka resmi, putus-putus untuk proyeksi IMF, dan titik berongga `--tinta` untuk target RPJMN, dengan label langsung di ujungnya. Pembedanya bentuk, bukan warna.
 - **Status tiga tingkat** (PRD 4.4): daftar tiga baris di samping segitiga, berisi nama dimensi, skor, ikon, dan kata, tanpa latar berwarna. Normal memakai `--redup` dengan lingkaran kosong. Perlu waspada memakai `--tinta` tebal dengan lingkaran setengah isi. Tekanan berat memakai `--status-berat` tebal dengan lingkaran penuh. Jadi warna hanya muncul di tingkat terberat. Ikonnya SVG kecil, bukan emoji, dan disembunyikan dari pembaca layar karena katanya sudah tertulis. Tidak memakai kuning `--peringatan-*` (data basi), hijau `--ok-tinta` (sumber dicocokkan ke dokumen), atau jingga `--fokus` (fokus keyboard), dan tidak pernah menjadi banner atau judul.
 
+Ikon situs (`web/app/icon.svg`): satu segitiga warna aksen, mengikuti tema terang dan gelap.
+
 ## Aksesibilitas
 
 - HTML semantik (`header`, `nav`, `main`, `section` berjudul, `table` dengan `caption` dan `scope`), tautan "Langsung ke isi".
