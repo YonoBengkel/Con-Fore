@@ -12,9 +12,30 @@ export const metadata: Metadata = {
   description: "Dari mana angka Con-Fore berasal, kapan diperbarui, dan bagaimana skor segitiga dihitung.",
 };
 
+const BAGIAN = [
+  ["asal", "Dari mana angkanya"],
+  ["pembaruan", "Kapan diperbarui"],
+  ["label", "Arti label"],
+  ["skor", "Skor segitiga"],
+  ["pekerja-formal", "Pekerja formal dan informal"],
+  ["rincian-inflasi", "Rincian inflasi"],
+  ["perkiraan", "Perkiraan"],
+  ["unduhan", "Unduhan"],
+];
+
 export default function CaraKerja() {
   return (
-    <article className="prosa">
+    <div className="halaman-bacaan">
+      <nav aria-label="Isi halaman" className="daftar-isi">
+        <ul>
+          {BAGIAN.map(([id, nama]) => (
+            <li key={id}>
+              <a href={`#${id}`}>{nama}</a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <article className="prosa">
       <section className="pembuka">
         <h1>Cara kerja</h1>
         <p>
@@ -24,48 +45,57 @@ export default function CaraKerja() {
         </p>
       </section>
 
-      <h2>Dari mana angkanya</h2>
+      <h2 id="asal">Dari mana angkanya</h2>
       <ul>
         <li>
-          Setiap pagi sebuah program otomatis mengambil data publik dari lembaga sumber (IMF, BIS,
-          OECD, ECB, dan BPS bila sudah tersedia), lalu menyimpannya. Situs ini hanya membaca hasil
-          olahan itu. Daftar lengkapnya ada di <Link href="/sumber">Sumber data</Link>.
+          Setiap hari sebuah program otomatis mengambil data publik dari lembaga sumber (BPS, IMF, BIS,
+          OECD, dan ECB), lalu menyimpannya. Situs ini hanya membaca hasil olahan itu. Daftar lengkapnya
+          ada di <Link href="/sumber">Sumber data</Link>.
         </li>
         <li>
-          Angka Indonesia diambil langsung dari BPS bila sudah tersedia. Bila belum, dipakai salinan IMF
+          Angka Indonesia diambil langsung dari BPS. Bila angka BPS belum tersedia, dipakai salinan IMF
           dari data BPS, yang biasanya terbit beberapa minggu setelah rilis BPS. Label di setiap angka
           menyebut mana yang dipakai.
         </li>
-        <li>
-          Setiap angka mencantumkan sumber, periode, dan tanggal Con-Fore melihatnya. Bila pembaruan
-          gagal lebih dari 36 jam, halaman menampilkan peringatan.
-        </li>
+        <li>Setiap angka mencantumkan sumber, periode, dan tanggal Con-Fore melihatnya.</li>
       </ul>
 
-      <h2>Arti label</h2>
+      <h2 id="pembaruan">Kapan diperbarui</h2>
       <ul>
         <li>
-          <strong>data resmi BPS</strong>: diambil langsung dari BPS.
+          Setiap pagi program memeriksa semua sumber. Jadwalnya pukul 06.17 WIB, tetapi bisa mulai beberapa
+          jam lebih lambat karena antrean di layanan yang menjalankannya.
         </li>
         <li>
-          <strong>salinan IMF dari data BPS</strong>: angka BPS yang diterbitkan ulang oleh IMF.
+          Pada tanggal 1 sampai 8 setiap bulan, saat BPS biasanya merilis angka, ada pemeriksaan tambahan
+          khusus data BPS yang dijadwalkan sore hari dan juga bisa terlambat. Angka baru biasanya tampil
+          paling lambat pagi setelah hari rilis.
         </li>
-        <li>
-          <strong>dihitung Con-Fore</strong>: olahan Con-Fore dari data sumber, misalnya pertumbuhan
-          dibanding tahun lalu yang dihitung dari PDB riil, atau kurs rupiah per dolar dari dua kurs
-          acuan ECB.
-        </li>
-        <li>
-          <strong>data IMF, BIS, OECD, ECB</strong>: data lembaga itu apa adanya.
-        </li>
+        <li>Perkiraan dihitung ulang bila data masukannya berubah. Uji dengan data lama diulang setiap tanggal 9.</li>
+        <li>Bila pembaruan gagal lebih dari 36 jam, halaman menampilkan peringatan.</li>
       </ul>
-      <ul>
+
+      <h2 id="label">Arti label</h2>
+      <ul className="daftar-label">
         <li>
-          <strong>perkiraan Con-Fore</strong>: hasil perhitungan Con-Fore untuk periode yang belum terbit, ada di
-          tab Prediksi.
+          <span className="lencana">data resmi BPS</span> Diambil langsung dari BPS.
         </li>
         <li>
-          <strong>proyeksi IMF</strong>: proyeksi IMF World Economic Outlook apa adanya.
+          <span className="lencana">salinan IMF dari data BPS</span> Angka BPS yang diterbitkan ulang oleh IMF.
+        </li>
+        <li>
+          <span className="lencana">dihitung Con-Fore</span> Olahan Con-Fore dari data sumber, misalnya pertumbuhan
+          dibanding tahun lalu yang dihitung dari PDB riil, atau kurs rupiah per dolar dari dua kurs acuan ECB.
+        </li>
+        <li>
+          <span className="lencana">data IMF, BIS, OECD, ECB</span> Data lembaga itu apa adanya.
+        </li>
+        <li>
+          <span className="lencana lencana-perkiraan">perkiraan Con-Fore</span> Hasil perhitungan Con-Fore untuk periode
+          yang belum terbit, ada di tab Prediksi.
+        </li>
+        <li>
+          <span className="lencana">proyeksi IMF</span> Proyeksi IMF World Economic Outlook apa adanya.
         </li>
       </ul>
       <p>Tab Data tidak memuat ramalan. Perkiraan hanya ada di tab Prediksi, dengan label sendiri.</p>
@@ -244,11 +274,12 @@ export default function CaraKerja() {
         </li>
       </ul>
 
-      <h2>Unduhan</h2>
+      <h2 id="unduhan">Unduhan</h2>
       <p>
         Setiap angka punya tombol unduh CSV berisi seluruh riwayatnya. Baris-baris awal file berisi
         sumber dan syarat penggunaan yang wajib diikuti bila datanya kamu sebarkan ulang.
       </p>
-    </article>
+      </article>
+    </div>
   );
 }

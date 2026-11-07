@@ -3,9 +3,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { GrafikKelompok, GrafikRiwayat, GrafikRonde } from "@/components/Grafik";
+import { GrafikKelompok, GrafikRonde } from "@/components/Grafik";
 import { Lencana, Sitasi, TabelTarget } from "@/components/Kartu";
 import { BannerBasi } from "@/components/Klien";
+import { RiwayatInteraktif } from "@/components/RiwayatInteraktif";
 import {
   POLA_ID,
   bacaGrafik,
@@ -16,20 +17,25 @@ import {
   bacaTarget,
   titikSeri,
 } from "@/lib/data";
-import { angka, nilaiSeri, perubahan, periode, tanggal, waktuWIB } from "@/lib/format";
+import { angka, nilaiPendek, nilaiSeri, perubahan, periode, tanggal, waktuWIB } from "@/lib/format";
 import {
   KELOMPOK_INFLASI,
+  NAMA_FREKUENSI,
   NAMA_KALENDER,
   SERI_DITAUTKAN,
   SERI_FORMAL,
   SERI_INFLASI_BULANAN,
   SERI_KARTU,
   SERI_TPT_RONDE,
+  adalahProyeksi,
   artinyaBuatmu,
+  kelompokHalaman,
   labelSeri,
 } from "@/lib/konten";
 import { kalimatPekerja } from "@/lib/pekerja";
+import { penjelasSeri } from "@/lib/penjelas";
 import { rincianInflasi } from "@/lib/rincian";
+import { barisRiwayat, kalimatRiwayat } from "@/lib/riwayat";
 
 const SERI_RINCIAN = [
   SERI_KARTU.inflasi[0],
@@ -42,14 +48,16 @@ export const revalidate = 21600;
 
 // Hanya id yang dibangun saat build: id lain langsung 404 tanpa render, supaya alamat karangan
 // tidak menulis cache ISR satu per satu (batas paket Hobby, ARCHITECTURE 4.5). Seri baru di luar
-// SERI_DITAUTKAN mendapat halaman setelah build web berikutnya.
+// SERI_DITAUTKAN mendapat halaman setelah build web berikutnya. Seri proyeksi IMF tidak punya halaman,
+// karena "angka terakhir"-nya tahun yang belum terjadi, dan tab Data tidak memuat ramalan.
 export const dynamicParams = false;
 
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateStaticParams() {
   const meta = await bacaMeta();
-  return [...new Set([...meta.map((m) => m.series_id), ...SERI_DITAUTKAN])].map((id) => ({ id }));
+  const seri = meta.map((m) => m.series_id).filter((id) => !adalahProyeksi(id));
+  return [...new Set([...seri, ...SERI_DITAUTKAN])].map((id) => ({ id }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -88,48 +96,137 @@ export default async function Indikator({ params }: Props) {
   const pekerja = kalimatPekerja(formal, halamanTpt ? titikSeri(grafik, SERI_TPT_RONDE) : []);
   const rincian = halamanInflasi ? rincianInflasi((s) => titikSeri(grafik, s)) : null;
 
+  const kelompok = kelompokHalaman(id);
+  const saudara = kelompok?.seri.filter(([s]) => meta.some((x) => x.series_id === s)) ?? [];
+  const penjelas = penjelasSeri(id);
+  const simpulan = kalimatRiwayat(titik, m.unit, m.concept, m.frequency);
+  const satuanPanjang = m.unit.startsWith("%") ? m.unit.replace(/^%\s*/, "") : m.unit;
+  const rentang = titik.length ? `${periode(titik[0][0])} sampai ${periode(titik[titik.length - 1][0])}` : null;
+
   return (
     <>
-      <p className="pembuka">
-        <Link href="/">Kembali ke Data</Link>
-      </p>
+      <nav aria-label="Letak halaman" className="remah">
+        <ol>
+          <li>
+            <Link href="/">Data</Link>
+          </li>
+          {kelompok && <li>{kelompok.judul}</li>}
+        </ol>
+      </nav>
       <h1>{m.name_id}</h1>
+      <p className="meta-seri">
+        {[NAMA_FREKUENSI[m.concept === "round_rate" ? "ronde" : m.frequency], rentang, labelSeri(m)].filter(Boolean).join(" · ")}
+      </p>
+      {penjelas && (
+        <details className="penjelas">
+          <summary>Memahami angka ini</summary>
+          <div className="penjelas-isi">
+            <div>
+              <h2>Apa yang diukur</h2>
+              <p>{penjelas.ukur}</p>
+            </div>
+            <div>
+              <h2>Cara dan sumber</h2>
+              <p>{penjelas.cara}</p>
+            </div>
+            <div>
+              <h2>Cara membacanya</h2>
+              <p>{penjelas.baca}</p>
+            </div>
+            {simpulan && (
+              <div>
+                <h2>Yang bisa diambil</h2>
+                <p>{simpulan}</p>
+              </div>
+            )}
+          </div>
+        </details>
+      )}
+      {saudara.length > 1 && (
+        <nav aria-label={kelompok?.judul} className="pil-baris">
+          {saudara.map(([s, nama]) => (
+            <Link key={s} href={`/indikator/${s}`} aria-current={s === id ? "page" : undefined}>
+              {nama}
+            </Link>
+          ))}
+        </nav>
+      )}
       <BannerBasi terakhir={status.last_success_at} />
 
-      {n ? (
-        <section className="panel" aria-labelledby="judul-terakhir">
-          <h2 id="judul-terakhir" className="sr-only">
-            Angka terakhir
-          </h2>
-          <p className="kartu-angka">{nilaiSeri(n.value, m.unit, m.concept)}</p>
-          <p className="kartu-periode">
-            {periode(n.period)}
-            {(() => {
-              const u = perubahan(n.value, n.previous_value, m.unit, m.concept, m.frequency);
-              return u ? <span className="kartu-ubah">, {u}</span> : null;
-            })()}
-          </p>
-          <Lencana meta={m} basi={n.is_stale} />
-          {artinya && (
-            <p className="artinya">
-              <strong>Artinya buatmu:</strong> {artinya}
+      <div className="kisi-detail">
+        {n ? (
+          <section className="panel detail-angka" aria-labelledby="judul-terakhir">
+            <h2 id="judul-terakhir" className="alis">
+              Angka terakhir
+            </h2>
+            <p className="kartu-angka">
+              <data value={n.value}>{nilaiPendek(n.value, m.unit, m.concept)}</data>
+              {satuanPanjang && <span className="kartu-satuan"> {satuanPanjang}</span>}
             </p>
-          )}
-        </section>
-      ) : (
-        <p>Angka terakhir belum tersedia.</p>
-      )}
+            <p className="kartu-periode">
+              {periode(n.period)}
+              {(() => {
+                const u = perubahan(n.value, n.previous_value, m.unit, m.concept, m.frequency);
+                return u ? <span className="kartu-ubah">, {u}</span> : null;
+              })()}
+            </p>
+            <Lencana meta={m} basi={n.is_stale} />
+            {artinya && (
+              <p className="artinya">
+                <strong>Artinya buatmu:</strong> {artinya}
+              </p>
+            )}
+          </section>
+        ) : (
+          <p className="detail-angka">Angka terakhir belum tersedia.</p>
+        )}
 
-      <section aria-labelledby="judul-riwayat">
-        <h2 id="judul-riwayat">Riwayat</h2>
-        <div className="panel">
+        <section className="panel detail-grafik" aria-labelledby="judul-riwayat">
+          <div className="panel-kepala">
+            <h2 id="judul-riwayat" className="alis">
+              Riwayat
+            </h2>
+            <a href={`/api/csv/${m.series_id}`} download>
+              Unduh seluruh riwayat (CSV)
+            </a>
+          </div>
           {id === SERI_FORMAL ? (
             <GrafikRonde titik={titik} nama={m.name_id} />
+          ) : titik.length < 2 ? (
+            <p>Riwayat belum cukup untuk digambar.</p>
           ) : (
-            <GrafikRiwayat titik={titik} nama={m.name_id} konsep={m.concept} />
+            <RiwayatInteraktif
+              baris={barisRiwayat(titik, m.concept)}
+              nama={m.name_id}
+              satuan={m.unit}
+              konsep={m.concept}
+              frekuensi={m.frequency}
+            />
           )}
-        </div>
-      </section>
+        </section>
+
+        <section className="detail-tabel" aria-labelledby="judul-tabel">
+          <div className="gulir-tabel" role="region" aria-labelledby="judul-tabel" tabIndex={0}>
+            <table>
+              <caption id="judul-tabel">Angka terbaru</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Periode</th>
+                  <th scope="col">Nilai</th>
+                </tr>
+              </thead>
+              <tbody>
+                {terbaru.map(([p, v]) => (
+                  <tr key={p}>
+                    <th scope="row">{periode(p)}</th>
+                    <td className="angka">{nilaiPendek(v, m.unit, m.concept)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
 
       {pekerja && (
         <section aria-labelledby="judul-pekerja">
@@ -224,28 +321,6 @@ export default async function Indikator({ params }: Props) {
       )}
 
       <div className="dua-kolom">
-        <section aria-labelledby="judul-tabel">
-          <h2 id="judul-tabel">Angka terbaru</h2>
-          <div className="gulir-tabel" role="region" aria-labelledby="judul-tabel" tabIndex={0}>
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">Periode</th>
-                  <th scope="col">Nilai</th>
-                </tr>
-              </thead>
-              <tbody>
-                {terbaru.map(([p, v]) => (
-                  <tr key={p}>
-                    <th scope="row">{periode(p)}</th>
-                    <td className="angka">{nilaiSeri(v, m.unit, m.concept)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
         <section aria-labelledby="judul-tentang">
           <h2 id="judul-tentang">Tentang angka ini</h2>
           <dl className="rincian">
@@ -278,7 +353,10 @@ export default async function Indikator({ params }: Props) {
               <dd>{waktuWIB(status.last_success_at)}</dd>
             </div>
           </dl>
-          <h3>Jadwal rilis berikutnya</h3>
+        </section>
+
+        <section aria-labelledby="judul-jadwal">
+          <h2 id="judul-jadwal">Jadwal rilis berikutnya</h2>
           {rilis.length ? (
             <ul>
               {rilis.map((r) => (
@@ -297,11 +375,6 @@ export default async function Indikator({ params }: Props) {
               sini bisa tertinggal dari berita hari rilis.
             </p>
           )}
-          <p>
-            <a href={`/api/csv/${m.series_id}`} download>
-              Unduh seluruh riwayat (CSV)
-            </a>
-          </p>
         </section>
       </div>
 

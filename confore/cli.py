@@ -1,4 +1,4 @@
-"""Perintah pipeline: `python -m confore migrate` dan `python -m confore run`.
+"""Perintah pipeline: `python -m confore <migrate, run, backtest, backup, restore, status>`.
 
 Hasil dicetak sebagai tabel markdown ke layar dan ke ringkasan job GitHub. Error tak terduga
 dicetak tanpa isi pesannya (bisa memuat host atau user database): hanya baris kode dan jenis error.
@@ -10,13 +10,13 @@ import os
 import sys
 import time
 import traceback
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
-from confore import config, db, fetch, publish, revalidate
+from confore import availability, backup, config, db, fetch, publish, revalidate
 from confore.derive import derive_all
 from confore.smoke import load_dotenv
 
-WIB = timezone(timedelta(hours=7), "WIB")
+WIB = availability.WIB
 PAUSE = 1.0  # jeda antarpermintaan, supaya sopan ke API sumber
 TRIGGERS = {"schedule": "schedule", "workflow_dispatch": "dispatch", "push": "push"}
 
@@ -181,6 +181,51 @@ def report_forecasts(rows, chosen):
            ["Seri", "Periode", "Model", "Titik", "Rentang 80%"], out)
 
 
+def cmd_backup(args):
+    """Tulis arsip dari satu snapshot. Hanya membaca database."""
+    with db.connect() as conn:
+        tables = backup.export(conn, args.path, os.environ.get("GITHUB_SHA"))
+    report("Backup", ["Tabel", "Baris"], tables.items())
+    print(f"Arsip ditulis: {os.path.basename(args.path)}, {os.path.getsize(args.path) / 1024:.0f} KB")
+    return 0
+
+
+def cmd_restore(args):
+    """Isi database baru dari arsip. Menolak tabel yang sudah berisi."""
+    with db.connect() as conn:
+        db.lock(conn)
+        tables = backup.restore(conn, args.path)
+    report("Pemulihan", ["Tabel", "Baris"], tables.items())
+    print("Lanjutkan dengan: python -m confore run")
+    return 0
+
+
+def cmd_status(args):
+    """Hasil per hari untuk uji tujuh hari, dan keadaan situs sekarang. Hanya membaca database."""
+    if args.days < 1:
+        raise db.Stop("--days minimal 1")
+    now = datetime.now(timezone.utc)
+    start = args.since or wib_date(now) - timedelta(days=args.days - 1)
+    with db.connect() as conn:
+        runs = db.all_runs(conn)
+        site = db.site_status(conn)
+    result = availability.evaluate(runs, start, args.days, now)
+    names = {True: "lulus", False: "gagal", None: "belum"}
+    report(f"Uji {args.days} hari sejak {start}",
+           ["Tanggal", "Run harian", "Run hari rilis", "Run lain, tidak dihitung", "Hasil"],
+           [(d.day, d.daily, d.release, d.other, names[d.passed]) for d in result.days])
+    if result.largest_gap is not None:
+        print(f"Selang terbesar antar-run otomatis yang sukses: {result.largest_gap:.1f} jam "
+              f"(batas {availability.MAX_GAP_HOURS})")
+    if site:
+        print(f"Pembaruan terakhir: {site[0].astimezone(WIB):%Y-%m-%d %H.%M} WIB, "
+              f"{(now - site[0]).total_seconds() / 3600:.1f} jam lalu, status {site[1]}, "
+              f"sumber terlambat: {', '.join(site[2]) or '-'}")
+    done = sum(1 for d in result.days if d.passed)
+    print(f"Hasil: {result.verdict}, {done} dari {args.days} hari lulus")
+    return 1 if result.verdict == "gagal" else 0
+
+
 def refresh_site(cfg):
     """Segarkan situs sesudah data terbit. Data sudah aman, jadi kegagalan di sini hanya membuat
     job merah (GitHub mengirim email), tanpa mengubah status run di database."""
@@ -201,6 +246,14 @@ def refresh_site(cfg):
     return 0
 
 
+def run_trigger(explicit):
+    """Pemicu yang dicatat di etl.runs. Run ulang dari tab Actions memakai nama pemicu aslinya, tetapi
+    itu campur tangan manual, jadi tidak boleh dihitung otomatis di uji tujuh hari."""
+    if os.environ.get("GITHUB_RUN_ATTEMPT", "1") != "1":
+        return "dispatch"
+    return explicit or TRIGGERS.get(os.environ.get("GITHUB_EVENT_NAME", ""), "laptop")
+
+
 def write_and_publish(conn, args, cfg, items, results, today):
     db.lock(conn)
     problems = db.check_access(conn)
@@ -208,7 +261,7 @@ def write_and_publish(conn, args, cfg, items, results, today):
         raise db.Stop("akses public tidak aman: " + ", ".join(problems))
     if db.size(conn) > db.SIZE_WARNING:
         print("Peringatan: ukuran database melewati 300 MB dari batas 500 MB")
-    trigger = args.trigger or TRIGGERS.get(os.environ.get("GITHUB_EVENT_NAME", ""), "laptop")
+    trigger = run_trigger(args.trigger)
     run_id = db.start_run(conn, trigger, os.environ.get("GITHUB_SHA"))
     try:
         db.sync_config(conn, cfg)
@@ -278,6 +331,16 @@ def main(argv=None):
     test = commands.add_parser("backtest", help="uji model pada data lama, lalu tulis etl.backtest")
     test.add_argument("--dry-run", action="store_true", help="ambil data dari sumber, tanpa database")
     test.set_defaults(func=cmd_backtest)
+    save = commands.add_parser("backup", help="tulis arsip tabel yang tidak bisa dibangun ulang")
+    save.add_argument("path", help="berkas tujuan, misalnya confore-backup-2026-11-09.tar.gz")
+    save.set_defaults(func=cmd_backup)
+    load = commands.add_parser("restore", help="isi database baru dari arsip backup")
+    load.add_argument("path", help="berkas arsip")
+    load.set_defaults(func=cmd_restore)
+    status = commands.add_parser("status", help="hasil per hari untuk uji tujuh hari")
+    status.add_argument("--since", type=date.fromisoformat, help="tanggal WIB hari pertama, YYYY-MM-DD")
+    status.add_argument("--days", type=int, default=7, help="panjang jendela, bawaan 7 hari")
+    status.set_defaults(func=cmd_status)
     args = parser.parse_args(argv)
     try:
         return args.func(args)

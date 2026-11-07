@@ -4,8 +4,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { GrafikJangkaPanjang, GrafikPerkiraan } from "@/components/Grafik";
-import { Sitasi } from "@/components/Kartu";
+import { BarisInstrumen, Sitasi } from "@/components/Kartu";
 import { BannerBasi, PilihLensa } from "@/components/Klien";
+import { Langit } from "@/components/Langit";
 import { DaftarStatus, Segitiga } from "@/components/Segitiga";
 import {
   bacaGrafik,
@@ -106,7 +107,7 @@ function KartuPerkiraan({
   const caraSama = new Set(jalur.map((b) => b.model)).size === 1;
   const pembanding = caraSama ? [...new Set(semua.map((b) => b.model))].filter((m) => m !== awal.model) : [];
   return (
-    <article className="kartu kartu-utama">
+    <article className="kartu kartu-utama" id={`perkiraan-${target.kunci}`}>
       <h3 className="kartu-judul">{target.judul}</h3>
       <p className="kartu-nama">Berangkat dari angka resmi {terakhir ? periode(terakhir[0]) : ""}</p>
       <p className="kartu-angka">
@@ -134,49 +135,55 @@ function KartuPerkiraan({
       <p className="artinya">
         <strong>Artinya buatmu:</strong> {artinyaPerkiraan(target.kunci, awal.point)}
       </p>
-      <h4>Kenapa perkiraannya begini</h4>
-      {kalimatCara(target, jalur, skor).map((k) => (
-        <p key={k} className="catatan">
-          {k}
-        </p>
-      ))}
-      {efekBasis && <p className="catatan">{efekBasis}</p>}
-      {target.kunci === "pertumbuhan" && (
-        <p className="catatan">
-          Ekspor, impor, produksi industri, wisatawan, uang beredar, dan harga komoditas sudah diuji, dan tidak
-          ada yang membuat perkiraan lebih akurat. Angka PDB memang sangat stabil di luar masa COVID.
-        </p>
-      )}
-      {target.kunci === "inflasi" && (
-        <p className="catatan">
-          Kurs, harga minyak, dan BI-Rate sudah diuji dan tidak menurunkan galat, jadi tidak dipakai. Kebijakan
-          baru, misalnya perubahan harga BBM atau tarif listrik, belum masuk perkiraan ini.
-        </p>
-      )}
-      {target.kunci === "pengangguran" && (
-        <p className="catatan">
-          Pertumbuhan PDB sudah diuji dan tidak membuat perkiraan lebih akurat. Sampelnya masih kecil, jadi
-          perkiraan ini eksperimental.
-        </p>
-      )}
-      <p className="catatan">
-        Rentangnya menggambarkan masa biasa. Guncangan besar seperti COVID bisa membuat angkanya jauh di luar
-        rentang ini.
-      </p>
-      <dl className="rincian">
-        {sitasi && (
-          <div>
-            <dt>Angka resmi</dt>
-            <dd>
-              <Sitasi teks={sitasi} />
-            </dd>
-          </div>
-        )}
-        <div>
-          <dt>Perkiraan dihitung Con-Fore</dt>
-          <dd>{tanggal(awal.origin_date)}</dd>
+      <details className="rincian-kartu">
+        <summary>
+          Kenapa perkiraannya begini<span className="sr-only"> {target.judul}</span>
+        </summary>
+        <div className="lipat-isi">
+          {kalimatCara(target, jalur, skor).map((k) => (
+            <p key={k} className="catatan">
+              {k}
+            </p>
+          ))}
+          {efekBasis && <p className="catatan">{efekBasis}</p>}
+          {target.kunci === "pertumbuhan" && (
+            <p className="catatan">
+              Ekspor, impor, produksi industri, wisatawan, uang beredar, dan harga komoditas sudah diuji, dan tidak
+              ada yang membuat perkiraan lebih akurat. Angka PDB memang sangat stabil di luar masa COVID.
+            </p>
+          )}
+          {target.kunci === "inflasi" && (
+            <p className="catatan">
+              Kurs, harga minyak, dan BI-Rate sudah diuji dan tidak menurunkan galat, jadi tidak dipakai. Kebijakan
+              baru, misalnya perubahan harga BBM atau tarif listrik, belum masuk perkiraan ini.
+            </p>
+          )}
+          {target.kunci === "pengangguran" && (
+            <p className="catatan">
+              Pertumbuhan PDB sudah diuji dan tidak membuat perkiraan lebih akurat. Sampelnya masih kecil, jadi
+              perkiraan ini eksperimental.
+            </p>
+          )}
+          <p className="catatan">
+            Rentangnya menggambarkan masa biasa. Guncangan besar seperti COVID bisa membuat angkanya jauh di luar
+            rentang ini.
+          </p>
+          <dl className="rincian">
+            {sitasi && (
+              <div>
+                <dt>Angka resmi</dt>
+                <dd>
+                  <Sitasi teks={sitasi} />
+                </dd>
+              </div>
+            )}
+            <div>
+              <dt>Perkiraan dihitung Con-Fore</dt>
+              <dd>{tanggal(awal.origin_date)}</dd>
+            </div>
+          </dl>
         </div>
-      </dl>
+      </details>
       <details className="rincian-lipat">
         <summary>
           Rincian per periode<span className="sr-only"> {target.judul}</span>
@@ -393,21 +400,66 @@ export default async function Prediksi() {
 
   return (
     <>
-      <section className="pembuka" aria-labelledby="judul-halaman">
-        <h1 id="judul-halaman">Perkiraan ekonomi Indonesia</h1>
-        <p>
-          Semua angka di tab ini perkiraan, bukan angka resmi dan bukan janji. Setiap perkiraan berangkat dari
-          angka resmi terakhir, disertai rentang dan catatan seberapa sering perkiraan itu meleset. Isinya
-          penjelasan angka, bukan nasihat keuangan.
-        </p>
-        <p className="catatan">Perkiraan terakhir dihitung {tanggal(dibuat)}.</p>
+      <Langit />
+      <section className="sampul" aria-labelledby="judul-halaman">
+        <div className="sampul-atas">
+          <h1 id="judul-halaman" className="sampul-judul">
+            Ke mana arahnya, <em>dan seberapa yakin.</em>
+          </h1>
+          <p className="sampul-isi">
+            Perkiraan pertumbuhan, inflasi, dan pengangguran Indonesia. Semua angka di tab ini perkiraan, bukan angka
+            resmi dan bukan janji. Setiap perkiraan berangkat dari angka resmi terakhir, disertai rentang dan catatan
+            seberapa sering perkiraan itu meleset.
+          </p>
+        </div>
+        <div className="instrumen">
+          <div className="instrumen-kepala">
+            <p className="alis">Perkiraan Con-Fore</p>
+            <p className="alis">Bukan angka resmi</p>
+          </div>
+          {TARGET_PREDIKSI.map((t, i) => {
+            const [awal] = jalurPer.get(t.kunci)!;
+            const rentang = teksRentang(awal.lo80, awal.hi80, t.desimal);
+            return (
+              <BarisInstrumen
+                key={t.kunci}
+                judul={t.judul}
+                nilai={persen(awal.point, t.desimal)}
+                keterangan={`${periode(awal.ref_period)}, ${rentang ? `rentang 80%: ${rentang}` : "rentang belum tersedia"}`}
+                titik={[gPdb, gInflasi, gTpt][i]}
+                frekuensi={t.kunci === "pertumbuhan" ? "Q" : "M"}
+                href={`#perkiraan-${t.kunci}`}
+              />
+            );
+          })}
+        </div>
+        <div className="sampul-bawah">
+          <ul className="sampul-angka">
+            <li>
+              <strong>{new Set(ramalan.map((b) => b.model)).size}</strong> cara dibandingkan
+            </li>
+            <li>
+              <strong>sejak 2012</strong> diuji dengan data lama
+            </li>
+          </ul>
+          <p className="sampul-aksi">
+            <a href="#judul-rekam" className="tombol tombol-utama">
+              Lihat rekam jejak <span aria-hidden="true">&darr;</span>
+            </a>
+            <Link href="/cara-kerja#perkiraan" className="tombol">
+              Cara mengujinya
+            </Link>
+          </p>
+          <p className="catatan">Isinya penjelasan angka, bukan nasihat keuangan. Perkiraan terakhir dihitung {tanggal(dibuat)}.</p>
+        </div>
       </section>
 
       <BannerBasi terakhir={status.last_success_at} />
 
       {ringkasan && (
         <section aria-labelledby="judul-ringkasan">
-          <h2 id="judul-ringkasan">Ringkasan perkiraan tahun {tahun}: segitiga keseimbangan</h2>
+          <p className="alis">Ringkasan perkiraan tahun {tahun}</p>
+          <h2 id="judul-ringkasan">Segitiga keseimbangan</h2>
           <div className="panel">
             <p className="catatan">
               Garis putus-putus adalah perkiraan {tahun}. Garis tipis adalah angka resmi {tahunResmi}. Makin besar
@@ -442,6 +494,7 @@ export default async function Prediksi() {
       )}
 
       <section aria-labelledby="judul-perkiraan">
+        <p className="alis">Pertumbuhan, inflasi, pengangguran</p>
         <h2 id="judul-perkiraan">Tiga perkiraan</h2>
         <p className="catatan">
           Pada grafik, garis utuh adalah angka resmi, garis putus-putus adalah perkiraan, dan pita adalah rentang
@@ -464,6 +517,7 @@ export default async function Prediksi() {
       </section>
 
       <section aria-labelledby="judul-imf">
+        <p className="alis">Pembanding</p>
         <h2 id="judul-imf">Dibanding proyeksi IMF</h2>
         <p className="catatan">
           IMF memperbarui proyeksinya dua kali setahun, April dan Oktober, jadi angkanya bisa tertinggal dari data
@@ -480,60 +534,66 @@ export default async function Prediksi() {
 
       {barisPanjang.length > 0 && (
         <section aria-labelledby="judul-panjang">
-          <h2 id="judul-panjang">Jangka panjang: proyeksi IMF dan target RPJMN</h2>
+          <p className="alis">Jangka panjang</p>
+          <h2 id="judul-panjang">Proyeksi IMF dan target RPJMN</h2>
           <p className="catatan">
             Di luar jangka pendek, Con-Fore tidak membuat model sendiri. Panel ini memakai proyeksi IMF, dan
             membandingkannya dengan target pertumbuhan dalam RPJMN 2025-2029 (Perpres 12/2025).
           </p>
           {kalimatPanjang && <p>{kalimatPanjang}</p>}
-          <GrafikJangkaPanjang
-            resmi={resmiTahunan}
-            imf={barisPanjang.map((b): Titik => [String(b.tahun), b.imf])}
-            target={barisPanjang.filter((b) => b.rpjmn != null).map((b): Titik => [String(b.tahun), b.rpjmn!])}
-          />
-          <p className="catatan">
-            Garis utuh: angka resmi. Garis putus-putus: proyeksi IMF. Titik berongga: target RPJMN.
-            {dokumenRpjmn && (
-              <>
-                {" "}
-                Sumber target: <a href={dokumenRpjmn.url}>{dokumenRpjmn.document}</a>.
-              </>
-            )}
-          </p>
-          <div className="gulir-tabel" role="region" aria-label="Proyeksi IMF jangka panjang" tabIndex={0}>
-            <table className="kepala-bungkus">
-              <caption>Proyeksi IMF per tahun</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Tahun</th>
-                  <th scope="col">Pertumbuhan</th>
-                  <th scope="col">Target RPJMN</th>
-                  <th scope="col">Inflasi akhir tahun</th>
-                  <th scope="col">Pengangguran</th>
-                </tr>
-              </thead>
-              <tbody>
-                {barisPanjang.map((b) => (
-                  <tr key={b.tahun}>
-                    <th scope="row">{b.tahun}</th>
-                    <td className="angka">{persen(b.imf, 1)}</td>
-                    <td className="angka">{b.rpjmn != null ? persen(b.rpjmn, 1) : "-"}</td>
-                    <td className="angka">
-                      {persen(imfTahunan.inflasi.find((x) => x[0] === String(b.tahun))?.[1] ?? NaN, 1)}
-                    </td>
-                    <td className="angka">
-                      {persen(imfTahunan.pengangguran.find((x) => x[0] === String(b.tahun))?.[1] ?? NaN, 2)}
-                    </td>
+          <div className="jangka-panjang">
+            <div className="panel">
+              <GrafikJangkaPanjang
+                resmi={resmiTahunan}
+                imf={barisPanjang.map((b): Titik => [String(b.tahun), b.imf])}
+                target={barisPanjang.filter((b) => b.rpjmn != null).map((b): Titik => [String(b.tahun), b.rpjmn!])}
+              />
+              <p className="catatan">
+                Garis utuh: angka resmi. Garis putus-putus: proyeksi IMF. Titik berongga: target RPJMN.
+                {dokumenRpjmn && (
+                  <>
+                    {" "}
+                    Sumber target: <a href={dokumenRpjmn.url}>{dokumenRpjmn.document}</a>.
+                  </>
+                )}
+              </p>
+            </div>
+            <div className="gulir-tabel" role="region" aria-label="Proyeksi IMF jangka panjang" tabIndex={0}>
+              <table className="kepala-bungkus">
+                <caption>Proyeksi IMF per tahun</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Tahun</th>
+                    <th scope="col">Pertumbuhan</th>
+                    <th scope="col">Target RPJMN</th>
+                    <th scope="col">Inflasi akhir tahun</th>
+                    <th scope="col">Pengangguran</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {barisPanjang.map((b) => (
+                    <tr key={b.tahun}>
+                      <th scope="row">{b.tahun}</th>
+                      <td className="angka">{persen(b.imf, 1)}</td>
+                      <td className="angka">{b.rpjmn != null ? persen(b.rpjmn, 1) : "-"}</td>
+                      <td className="angka">
+                        {persen(imfTahunan.inflasi.find((x) => x[0] === String(b.tahun))?.[1] ?? NaN, 1)}
+                      </td>
+                      <td className="angka">
+                        {persen(imfTahunan.pengangguran.find((x) => x[0] === String(b.tahun))?.[1] ?? NaN, 2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
       )}
 
       <section aria-labelledby="judul-rekam">
-        <h2 id="judul-rekam">Rekam jejak: seberapa sering meleset</h2>
+        <p className="alis">Rekam jejak</p>
+        <h2 id="judul-rekam">Seberapa sering meleset</h2>
         <h3>Perkiraan sungguhan</h3>
         {rekam.length ? (
           <div className="gulir-tabel" role="region" aria-label="Perkiraan sungguhan dan angka rilisnya" tabIndex={0}>

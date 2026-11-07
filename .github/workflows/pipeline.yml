@@ -16,9 +16,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "run: ambil dan publikasi; full_refresh: tulis ulang semua observasi; migrate: migrasi SQL lalu uji akses; backtest: uji model pada data lama"
+        description: "run: ambil dan publikasi; full_refresh: tulis ulang semua observasi; migrate: migrasi SQL lalu uji akses; backtest: uji model pada data lama; uji_alarm: gagal dengan sengaja tanpa menyentuh data, untuk menguji workflow Alarm kegagalan"
         type: choice
-        options: [run, full_refresh, migrate, backtest]
+        options: [run, full_refresh, migrate, backtest, uji_alarm]
         default: run
 
 permissions:
@@ -34,6 +34,12 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
+      # Sebelum checkout dan tanpa Secret: yang diuji hanya alarmnya.
+      - name: Uji alarm
+        if: inputs.mode == 'uji_alarm'
+        run: |
+          echo "Gagal dengan sengaja untuk menguji alarm. Data tidak tersentuh."
+          exit 1
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false

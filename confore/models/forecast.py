@@ -123,7 +123,10 @@ def step(conn, cfg, today, git_sha):
     inputs = latest_inputs(conn, cfg, today)
     digest = input_hash(inputs, db.backtest_stamp(conn), git_sha)
     if db.last_forecast_hash(conn) == digest:
-        return None
+        if db.forecasts_published(conn):
+            return None
+        publish_tables(conn)  # database yang baru dipulihkan: ramalan ada, tabel publik masih kosong
+        return {}
     stored = db.backtest_errors(conn)
     rows = rows_for(inputs, error_offsets(frame_from_db(stored)) if stored else {}, today)
     db.write_forecasts(conn, [row[:5] for row in rows], today, data_cutoffs(inputs), digest, git_sha,

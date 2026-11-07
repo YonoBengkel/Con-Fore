@@ -1,0 +1,52 @@
+name: Backup mingguan
+
+# Senin 06.47 WIB (Minggu 23.47 UTC). Hasilnya aset rilis, bukan commit, supaya tidak memicu build Vercel.
+# Grup concurrency sama dengan pipeline, supaya ekspor tidak terjadi di tengah publikasi. Repo ini publik,
+# jadi asetnya ikut publik: isinya data sumber publik dan ramalan Con-Fore, tanpa rahasia.
+on:
+  schedule:
+    - cron: "47 23 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: con-fore-pipeline
+  queue: max
+
+jobs:
+  backup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write # membuat rilis
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+      - name: Pasang dependensi dari lockfile berhash
+        run: python -m pip install --require-hashes -r requirements.txt
+      - name: Tentukan nama berkas
+        run: echo "TANGGAL=$(TZ=Asia/Jakarta date +%F)" >> "$GITHUB_ENV"
+      - name: Ekspor
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: python -m confore backup "confore-backup-$TANGGAL.tar.gz"
+      # Rahasia database hanya ada di langkah Ekspor, dan token tulis hanya di langkah ini.
+      - name: Terbitkan sebagai rilis
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          label="backup-$TANGGAL"
+          berkas="confore-backup-$TANGGAL.tar.gz"
+          if gh release view "$label" > /dev/null 2>&1; then
+            gh release upload "$label" "$berkas" --clobber
+          else
+            gh release create "$label" "$berkas" --latest=false --title "Backup $TANGGAL" \
+              --notes "Cadangan mingguan database Con-Fore. Cara memulihkan ada di RUNBOOK.md bagian 7a. Angka di dalamnya tetap tunduk pada syarat tiap sumber, lihat BACA-SAYA.txt di dalam arsip."
+          fi
