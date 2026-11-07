@@ -103,3 +103,8 @@ export function perubahan(
   if (Math.abs(persen) < 0.05) return `hampir sama dengan ${banding}`;
   return `${persen > 0 ? "naik" : "turun"} ${angka(Math.abs(persen), 1)}% dari ${banding}`;
 }
+
+/** Awal kalimat perubahan untuk panel yang sempit: "naik 0,2 poin persen". */
+export function perubahanRingkas(...args: Parameters<typeof perubahan>): string | null {
+  return perubahan(...args)?.split(" dari ")[0] ?? null;
+}

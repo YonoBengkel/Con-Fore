@@ -2,8 +2,9 @@
 // Tanpa ramalan. Semua data dibaca di server lalu di-cache (ISR); browser tidak memanggil Supabase.
 
 import Link from "next/link";
-import { KartuKosong, KartuSeri, TabelTarget } from "@/components/Kartu";
+import { BarisDataResmi, KartuKosong, KartuSeri, TabelTarget } from "@/components/Kartu";
 import { BannerBasi, PilihLensa } from "@/components/Klien";
+import { Langit } from "@/components/Langit";
 import { DaftarStatus, Segitiga } from "@/components/Segitiga";
 import {
   bacaGrafik,
@@ -25,6 +26,7 @@ import {
   SERI_KARTU,
   SERI_TPT_RONDE,
   STATUS_VERIFIKASI,
+  adalahProyeksi,
   namaPendek,
   type KunciKartu,
 } from "@/lib/konten";
@@ -86,21 +88,68 @@ export default async function Beranda() {
   const tahunTarget = ringkasan?.tahun ?? 0;
   const targetTerdekat = target.filter((t) => t.year >= tahunTarget && t.target_kind !== "rpjmn");
   const adaBerita = ringkasan?.target?.sumber.some((s) => s.verification === "berita");
+  const seriData = meta.filter((m) => !adalahProyeksi(m.series_id));
+  const kunciKartu = Object.keys(SERI_KARTU) as KunciKartu[];
+  const seriKartu = (kunci: KunciKartu) => SERI_KARTU[kunci].find((s) => nilaiPer.has(s) && metaPer.has(s));
 
   return (
     <>
-      <section className="pembuka" aria-labelledby="judul-halaman">
-        <h1 id="judul-halaman">Kondisi ekonomi Indonesia hari ini</h1>
-        <p>
-          Tiga angka yang paling terasa dalam hidup sehari-hari: seberapa cepat ekonomi tumbuh,
-          seberapa cepat harga naik, dan seberapa banyak orang yang belum mendapat kerja. Tab ini hanya
-          berisi data yang sudah terbit, tanpa ramalan. Perkiraan ke depan ada di{" "}
-          <Link href="/prediksi">tab Prediksi</Link>.
-        </p>
-        <p className="catatan">
-          Pembaruan otomatis terakhir: {waktuWIB(status.last_success_at)}
-          {status.last_run_status === "partial" && " (sebagian sumber gagal diambil)"}.
-        </p>
+      <Langit />
+      <section className="sampul" aria-labelledby="judul-halaman">
+        <div className="sampul-atas">
+          <h1 id="judul-halaman" className="sampul-judul">
+            Ekonomi Indonesia, <em>dalam tiga angka.</em>
+          </h1>
+          <p className="sampul-isi">
+            Seberapa cepat ekonomi tumbuh, seberapa cepat harga naik, dan seberapa banyak orang yang belum
+            mendapat kerja. Dari data resmi, dijelaskan dengan bahasa sehari-hari.
+          </p>
+        </div>
+        <div className="instrumen">
+          <div className="instrumen-kepala">
+            <p className="alis">Indonesia</p>
+            <p className="alis">Data terbit terakhir</p>
+          </div>
+          {kunciKartu.map((kunci) => {
+            const id = seriKartu(kunci);
+            if (!id) return null;
+            return (
+              <BarisDataResmi
+                key={kunci}
+                judul={JUDUL_KARTU[kunci]}
+                meta={metaPer.get(id)!}
+                nilai={nilaiPer.get(id)!}
+                titik={titikSeri(grafik, id)}
+              />
+            );
+          })}
+        </div>
+        <div className="sampul-bawah">
+          <ul className="sampul-angka">
+            <li>
+              <strong>{seriData.length}</strong> seri data
+            </li>
+            <li>
+              <strong>{new Set(seriData.map((m) => m.source_id)).size}</strong> lembaga sumber
+            </li>
+            <li>
+              <strong>setiap hari</strong> diperbarui otomatis
+            </li>
+          </ul>
+          <p className="sampul-aksi">
+            <Link href="/prediksi" className="tombol tombol-utama">
+              Lihat perkiraan <span aria-hidden="true">&rarr;</span>
+            </Link>
+            <Link href="/cara-kerja" className="tombol">
+              Cara membaca angkanya
+            </Link>
+          </p>
+          <p className="catatan">
+            Tab ini hanya berisi data yang sudah terbit, tanpa ramalan. Pembaruan otomatis terakhir:{" "}
+            {waktuWIB(status.last_success_at)}
+            {status.last_run_status === "partial" && " (sebagian sumber gagal diambil)"}.
+          </p>
+        </div>
       </section>
 
       <BannerBasi terakhir={status.last_success_at} />
@@ -112,9 +161,8 @@ export default async function Beranda() {
       )}
 
       <section aria-labelledby="judul-ringkasan">
-        <h2 id="judul-ringkasan">
-          Ringkasan {ringkasan ? `tahun ${ringkasan.tahun}` : ""}: segitiga keseimbangan
-        </h2>
+        <p className="alis">Ringkasan {ringkasan ? `tahun ${ringkasan.tahun}` : ""}</p>
+        <h2 id="judul-ringkasan">Segitiga keseimbangan</h2>
         {ringkasan ? (
           <div className="panel">
             <p className="catatan">
@@ -157,10 +205,11 @@ export default async function Beranda() {
       </section>
 
       <section aria-labelledby="judul-angka">
+        <p className="alis">Yang paling terasa sehari-hari</p>
         <h2 id="judul-angka">Tiga angka utama</h2>
         <div className="kisi-kartu kisi-utama">
-          {(Object.keys(SERI_KARTU) as KunciKartu[]).map((kunci) => {
-            const id = SERI_KARTU[kunci].find((s) => nilaiPer.has(s) && metaPer.has(s));
+          {kunciKartu.map((kunci) => {
+            const id = seriKartu(kunci);
             if (!id) return <KartuKosong key={kunci} judul={JUDUL_KARTU[kunci]} />;
             return (
               <KartuSeri
@@ -185,7 +234,8 @@ export default async function Beranda() {
       </section>
 
       <section aria-labelledby="judul-penggerak">
-        <h2 id="judul-penggerak">Penggerak: yang ikut mendorong ketiga angka</h2>
+        <p className="alis">Penggerak</p>
+        <h2 id="judul-penggerak">Yang ikut mendorong ketiga angka</h2>
         <p className="catatan">
           Harga komoditas, kurs, suku bunga, dan kondisi mitra dagang memengaruhi pertumbuhan dan
           inflasi Indonesia, biasanya dengan jeda beberapa bulan.
@@ -213,6 +263,7 @@ export default async function Beranda() {
       </section>
 
       <section aria-labelledby="judul-target">
+        <p className="alis">UU APBN dan PMK</p>
         <h2 id="judul-target">Target resmi pemerintah</h2>
         <p className="catatan">
           Target pertumbuhan dan pengangguran dari UU APBN, sasaran inflasi dari PMK. Daftar lengkap,

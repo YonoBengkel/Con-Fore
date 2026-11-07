@@ -8,7 +8,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --test lib/skor.test.ts lib/format.test.ts lib/konten.test.ts lib/pekerja.test.ts lib/rincian.test.ts lib/prediksi.test.ts"
+    "test": "node --test lib/skor.test.ts lib/format.test.ts lib/konten.test.ts lib/pekerja.test.ts lib/rincian.test.ts lib/prediksi.test.ts lib/riwayat.test.ts lib/penjelas.test.ts"
   },
   "engines": {
     "node": "24.x"

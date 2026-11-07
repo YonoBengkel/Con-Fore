@@ -36,7 +36,7 @@ Yang sudah ada ditandai `[ada]`; sisanya rencana.
 ```
 Con-Fore/
   README.md  PRD.md  ARCHITECTURE.md  SCHEMA.md  RUNBOOK.md   [ada]
-  DESIGN.md              panduan desain, disetujui pengelola 2026-10-31   [ada]
+  DESIGN.md              panduan desain, arah atlasgeopo.com sejak 2026-11-07   [ada]
   .gitignore  .env.example                                    [ada]
   requirements.in        dependensi langsung (psycopg, pandas, statsmodels)   [ada]
   requirements.txt       lockfile berhash dari `uv pip compile` [ada]
@@ -68,8 +68,8 @@ Con-Fore/
     holidays.csv         tanggal Lebaran dengan sumbernya, dipakai model inflasi   [ada]
   web/                   situs Next.js (App Router), cara menjalankannya di web/README.md   [ada]
     app/                 halaman, route API (csv, health, revalidate), sitemap, robots, ikon, dan halaman 404   [ada]
-    components/          segitiga (SVG), grafik, kartu, komponen browser   [ada]
-    lib/                 pembacaan Data API, aturan skor dan status, isi tetap (SERI_KARTU), kalimat pekerja formal, rincian inflasi, isi tab Prediksi, format, alamat situs   [ada]
+    components/          segitiga (SVG), grafik, kartu, latar kisi, penggeser riwayat, komponen browser   [ada]
+    lib/                 pembacaan Data API, aturan skor dan status, isi tetap (SERI_KARTU), kalimat pekerja formal, rincian inflasi, isi tab Prediksi, penjelas per seri, kalimat riwayat, format, alamat situs   [ada]
     scripts/             salin-env.mjs: salin dua baris Supabase dari ../.env ke web/.env.local   [ada]
     vercel.json          region icn1 dan Ignored Build Step   [ada]
     .env.example         daftar variabel environment situs   [ada]
@@ -139,7 +139,9 @@ Di GitHub, nilai ini disimpan sebagai Secrets (`pipeline.yml` hanya membaca Secr
 - Unduh CSV dibuat di server dari `public.chart_series` lewat route `/api/csv/[chart_id]` yang di-cache bersama halaman.
 - Banner "data mungkin belum diperbarui" dihitung di browser dari `last_success_at` (lebih dari 36 jam), supaya tetap muncul walau Supabase sedang mati.
 - Halaman `/sumber` menampilkan kalimat atribusi wajib per sumber dari `public.sources`.
-- Bahasa Indonesia, mengutamakan HP, tema terang dan gelap. Kalimat ringkasan menjadi teks alternatif segitiga. Arah tampilannya ada di [DESIGN.md](DESIGN.md), disetujui pengelola 2026-10-31.
+- Bahasa Indonesia, mengutamakan HP, selalu gelap. Kalimat ringkasan menjadi teks alternatif segitiga. Arah tampilannya ada di [DESIGN.md](DESIGN.md).
+- Halaman detail memuat penjelas empat bagian (`web/lib/penjelas.ts`, plus kesimpulan yang dihitung di `web/lib/riwayat.ts`) dan penggeser riwayat (`components/RiwayatInteraktif.tsx`). Komponen browser ini menerima paling banyak 700 titik beserta pembandingnya. Pembandingnya dihitung dari titik asli, dengan aturan yang sama seperti `confore/publish.py`.
+- Huruf (Gelasio, Inter, JetBrains Mono) lewat `next/font/google`: diunduh saat build dan disajikan dari Vercel, tanpa panggilan ke Google dari browser. Beranda memuat empat berkas, sekitar 164 KB pada kunjungan pertama (diukur 2026-11-07).
 - Status tiga tingkat (`statusSkor` di `web/lib/skor.ts`, ambangnya di PRD 4.4) tampil di samping segitiga dan di kalimat ringkasan. Kalimat dan grafik pekerja formal ada di kartu dan halaman detail pengangguran (`web/lib/pekerja.ts`, `GrafikRonde`), dan hilang sendiri bila serinya belum terbit. Rincian inflasi ada di halaman detail inflasi (`web/lib/rincian.ts`, `GrafikKelompok`), juga hilang sendiri bila serinya belum terbit.
 - Tab Prediksi (`web/app/prediksi/page.tsx`, `web/lib/prediksi.ts`) membaca `forecast_latest`, `backtest_scores`, `track_record`, dan seri proyeksi IMF. Tahun segitiga perkiraan adalah tahun dari kuartal IV PDB pertama yang belum terbit. Angka tahunannya memakai angka resmi yang sudah ada ditambah angka utama perkiraan: pertumbuhan dari rata-rata y-on-y empat kuartal, inflasi dari Desember, dan TPT dari ronde Agustus, atau angka utama terakhir bila ronde itu belum bisa diramal. Bagian "kenapa perkiraannya begini" hanya menyebut yang bisa dibuktikan: cara yang dipakai, galat ujinya, dan efek basis inflasi. Penggerak lain tidak dikarang, karena pada backtest tidak ada yang menurunkan galat. Bila `forecast_latest` kosong, halamannya menulis bahwa perkiraan belum tersedia.
 

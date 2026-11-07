@@ -41,6 +41,7 @@ export default async function Sumber() {
       </section>
 
       <section aria-labelledby="judul-lembaga">
+        <p className="alis">Atribusi dan syarat</p>
         <h2 id="judul-lembaga">Lembaga sumber</h2>
         <ul className="daftar-sumber">
           {sumber.map((s) => {

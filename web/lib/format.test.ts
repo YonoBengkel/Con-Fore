@@ -1,13 +1,19 @@
 // Tes kalimat perubahan. Jalankan: npm test (Node 24 membaca TypeScript langsung).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { perubahan } from "./format.ts";
+import { perubahan, perubahanRingkas } from "./format.ts";
 
 test("TPT per ronde dibanding ronde yang sama tahun lalu, dua desimal", () => {
   assert.equal(
     perubahan(4.65, 4.76, "% angkatan kerja", "round_rate", "M"),
     "turun 0,11 poin persen dari ronde yang sama tahun lalu (4,76%)",
   );
+});
+
+test("kalimat ringkas untuk panel berhenti sebelum pembanding", () => {
+  assert.equal(perubahanRingkas(4.65, 4.76, "% angkatan kerja", "round_rate", "M"), "turun 0,11 poin persen");
+  assert.equal(perubahanRingkas(3.2, 3.2, "%", "yoy", "M"), "sama dengan bulan sebelumnya");
+  assert.equal(perubahanRingkas(3.2, null, "%", "yoy", "M"), null);
 });
 
 test("kalimat mengikuti angka yang tampil, bukan selisih mentah", () => {

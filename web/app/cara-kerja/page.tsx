@@ -12,9 +12,30 @@ export const metadata: Metadata = {
   description: "Dari mana angka Con-Fore berasal, kapan diperbarui, dan bagaimana skor segitiga dihitung.",
 };
 
+const BAGIAN = [
+  ["asal", "Dari mana angkanya"],
+  ["pembaruan", "Kapan diperbarui"],
+  ["label", "Arti label"],
+  ["skor", "Skor segitiga"],
+  ["pekerja-formal", "Pekerja formal dan informal"],
+  ["rincian-inflasi", "Rincian inflasi"],
+  ["perkiraan", "Perkiraan"],
+  ["unduhan", "Unduhan"],
+];
+
 export default function CaraKerja() {
   return (
-    <article className="prosa">
+    <div className="halaman-bacaan">
+      <nav aria-label="Isi halaman" className="daftar-isi">
+        <ul>
+          {BAGIAN.map(([id, nama]) => (
+            <li key={id}>
+              <a href={`#${id}`}>{nama}</a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <article className="prosa">
       <section className="pembuka">
         <h1>Cara kerja</h1>
         <p>
@@ -24,7 +45,7 @@ export default function CaraKerja() {
         </p>
       </section>
 
-      <h2>Dari mana angkanya</h2>
+      <h2 id="asal">Dari mana angkanya</h2>
       <ul>
         <li>
           Setiap hari sebuah program otomatis mengambil data publik dari lembaga sumber (BPS, IMF, BIS,
@@ -54,30 +75,27 @@ export default function CaraKerja() {
         <li>Bila pembaruan gagal lebih dari 36 jam, halaman menampilkan peringatan.</li>
       </ul>
 
-      <h2>Arti label</h2>
-      <ul>
+      <h2 id="label">Arti label</h2>
+      <ul className="daftar-label">
         <li>
-          <strong>data resmi BPS</strong>: diambil langsung dari BPS.
+          <span className="lencana">data resmi BPS</span> Diambil langsung dari BPS.
         </li>
         <li>
-          <strong>salinan IMF dari data BPS</strong>: angka BPS yang diterbitkan ulang oleh IMF.
+          <span className="lencana">salinan IMF dari data BPS</span> Angka BPS yang diterbitkan ulang oleh IMF.
         </li>
         <li>
-          <strong>dihitung Con-Fore</strong>: olahan Con-Fore dari data sumber, misalnya pertumbuhan
-          dibanding tahun lalu yang dihitung dari PDB riil, atau kurs rupiah per dolar dari dua kurs
-          acuan ECB.
+          <span className="lencana">dihitung Con-Fore</span> Olahan Con-Fore dari data sumber, misalnya pertumbuhan
+          dibanding tahun lalu yang dihitung dari PDB riil, atau kurs rupiah per dolar dari dua kurs acuan ECB.
         </li>
         <li>
-          <strong>data IMF, BIS, OECD, ECB</strong>: data lembaga itu apa adanya.
-        </li>
-      </ul>
-      <ul>
-        <li>
-          <strong>perkiraan Con-Fore</strong>: hasil perhitungan Con-Fore untuk periode yang belum terbit, ada di
-          tab Prediksi.
+          <span className="lencana">data IMF, BIS, OECD, ECB</span> Data lembaga itu apa adanya.
         </li>
         <li>
-          <strong>proyeksi IMF</strong>: proyeksi IMF World Economic Outlook apa adanya.
+          <span className="lencana lencana-perkiraan">perkiraan Con-Fore</span> Hasil perhitungan Con-Fore untuk periode
+          yang belum terbit, ada di tab Prediksi.
+        </li>
+        <li>
+          <span className="lencana">proyeksi IMF</span> Proyeksi IMF World Economic Outlook apa adanya.
         </li>
       </ul>
       <p>Tab Data tidak memuat ramalan. Perkiraan hanya ada di tab Prediksi, dengan label sendiri.</p>
@@ -256,11 +274,12 @@ export default function CaraKerja() {
         </li>
       </ul>
 
-      <h2>Unduhan</h2>
+      <h2 id="unduhan">Unduhan</h2>
       <p>
         Setiap angka punya tombol unduh CSV berisi seluruh riwayatnya. Baris-baris awal file berisi
         sumber dan syarat penggunaan yang wajib diikuti bila datanya kamu sebarkan ulang.
       </p>
-    </article>
+      </article>
+    </div>
   );
 }

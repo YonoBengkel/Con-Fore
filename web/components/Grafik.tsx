@@ -2,15 +2,7 @@
 
 import type { Titik } from "@/lib/data";
 import { angka, desimalUntuk, periode } from "@/lib/format";
-
-/** Ambil paling banyak `maks` titik dengan langkah tetap, titik terakhir selalu ikut. */
-function jarangkan(titik: Titik[], maks: number): Titik[] {
-  if (titik.length <= maks) return titik;
-  const langkah = Math.ceil(titik.length / maks);
-  const hasil = titik.filter((_, i) => i % langkah === 0);
-  if (hasil[hasil.length - 1] !== titik[titik.length - 1]) hasil.push(titik[titik.length - 1]);
-  return hasil;
-}
+import { jarangkan } from "@/lib/riwayat";
 
 function jalur(titik: Titik[], lebar: number, tinggi: number, kiri = 0, atas = 0) {
   const nilai = titik.map((t) => t[1]);
@@ -20,13 +12,21 @@ function jalur(titik: Titik[], lebar: number, tinggi: number, kiri = 0, atas = 0
   const x = (i: number) => kiri + (titik.length > 1 ? (i * lebar) / (titik.length - 1) : lebar / 2);
   const y = (v: number) => atas + tinggi - ((v - min) / rentang) * tinggi;
   const d = titik.map((t, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(t[1]).toFixed(1)}`).join("");
-  return { d, min, max, y };
+  return { d, min, max, x, y };
 }
 
 /** Jendela grafik kecil menurut frekuensi: tahunan semua, kuartalan 5 tahun, bulanan 5 tahun, harian 1 tahun. */
 const JENDELA: Record<string, number> = { A: 0, Q: 20, M: 60, D: 260 };
 
-export function GarisKecil({ titik, frekuensi }: { titik: Titik[]; frekuensi: string }) {
+export function GarisKecil({
+  titik,
+  frekuensi,
+  keterangan = true,
+}: {
+  titik: Titik[];
+  frekuensi: string;
+  keterangan?: boolean;
+}) {
   const n = JENDELA[frekuensi] ?? 60;
   const potong = n ? titik.slice(-n) : titik;
   if (potong.length < 2) return null;
@@ -36,31 +36,37 @@ export function GarisKecil({ titik, frekuensi }: { titik: Titik[]; frekuensi: st
       <svg viewBox="0 0 120 32" preserveAspectRatio="none" aria-hidden="true" focusable="false">
         <path d={d} />
       </svg>
-      <figcaption>
-        {periode(potong[0][0])} sampai {periode(potong[potong.length - 1][0])}
-      </figcaption>
+      {keterangan && (
+        <figcaption>
+          {periode(potong[0][0])} sampai {periode(potong[potong.length - 1][0])}
+        </figcaption>
+      )}
     </figure>
   );
 }
 
+/** Posisi bidang grafik riwayat di dalam gambar, juga dipakai penunjuk di RiwayatInteraktif. */
+export const POSISI_RIWAYAT = { lebarGambar: 640, kiri: 64, lebar: 564 };
+
+/** `sorot` adalah urutan titik yang sedang dipilih penggeser. */
 export function GrafikRiwayat({
   titik,
   nama,
   konsep,
+  sorot,
 }: {
   titik: Titik[];
   nama: string;
   konsep: string;
+  sorot?: number;
 }) {
   if (titik.length < 2) return <p>Riwayat belum cukup untuk digambar.</p>;
-  const W = 640;
+  const { lebarGambar: W, kiri, lebar } = POSISI_RIWAYAT;
   const H = 260;
-  const kiri = 64;
   const atas = 12;
-  const lebar = W - kiri - 12;
   const tinggi = H - atas - 32;
   const data = jarangkan(titik, 700);
-  const { d, min, max, y } = jalur(data, lebar, tinggi, kiri, atas);
+  const { d, min, max, x, y } = jalur(data, lebar, tinggi, kiri, atas);
   const des = desimalUntuk(max, konsep);
   const besar = Math.abs(max) >= 1e12;
   const label = (v: number) => (besar ? `${angka(v / 1e12, 0)} T` : angka(v, des));
@@ -73,8 +79,10 @@ export function GrafikRiwayat({
     `Terendah ${label(titik[iMin][1])} pada ${periode(titik[iMin][0])}, ` +
     `tertinggi ${label(titik[iMax][1])} pada ${periode(titik[iMax][0])}.`;
   const garisNol = min < 0 && max > 0 ? y(0) : null;
+  // Label 0 dilewati bila menimpa label nilai terendah atau tertinggi.
+  const labelNol = garisNol != null && garisNol - atas > 16 && atas + tinggi - garisNol > 16;
   return (
-    <svg className="grafik-riwayat" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={alt}>
+    <svg className="grafik-riwayat grafik-lebar" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={alt}>
       <line x1={kiri} x2={kiri + lebar} y1={atas} y2={atas} className="kisi" />
       <line x1={kiri} x2={kiri + lebar} y1={atas + tinggi} y2={atas + tinggi} className="kisi" />
       {garisNol != null && (
@@ -82,12 +90,18 @@ export function GrafikRiwayat({
       )}
       <text x={kiri - 8} y={atas + 4} textAnchor="end" className="sumbu">{label(max)}</text>
       <text x={kiri - 8} y={atas + tinggi + 4} textAnchor="end" className="sumbu">{label(min)}</text>
-      {garisNol != null && (
+      {labelNol && (
         <text x={kiri - 8} y={garisNol + 4} textAnchor="end" className="sumbu">0</text>
       )}
       <text x={kiri} y={H - 8} className="sumbu">{periode(awal)}</text>
       <text x={kiri + lebar} y={H - 8} textAnchor="end" className="sumbu">{periode(akhir)}</text>
       <path d={d} className="garis" />
+      {sorot != null && data[sorot] && (
+        <>
+          <line x1={x(sorot)} x2={x(sorot)} y1={atas} y2={atas + tinggi} className="sorot-garis" />
+          <circle cx={x(sorot)} cy={y(data[sorot][1])} r="5" className="sorot-titik" />
+        </>
+      )}
     </svg>
   );
 }
@@ -322,7 +336,7 @@ export function GrafikRonde({ titik, nama }: { titik: Titik[]; nama: string }) {
     `Grafik ${nama}, satu garis per bulan survei, ${awal} sampai ${akhir}. ` +
     garis.map((g) => `${g.nama} ${tahun(g.terakhir[0])}: ${angka(g.terakhir[1], 2)}%.`).join(" ");
   return (
-    <svg className="grafik-riwayat" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={alt}>
+    <svg className="grafik-riwayat grafik-ronde" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={alt}>
       <line x1={kiri} x2={kiri + lebar} y1={atas} y2={atas} className="kisi" />
       <line x1={kiri} x2={kiri + lebar} y1={atas + tinggi} y2={atas + tinggi} className="kisi" />
       <text x={kiri - 8} y={atas + 4} textAnchor="end" className="sumbu">{angka(max, 1)}%</text>

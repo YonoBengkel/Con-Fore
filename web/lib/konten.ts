@@ -84,6 +84,64 @@ export const SERI_DITAUTKAN: string[] = [
   ...KELOMPOK_INFLASI.map((k) => k.setahun),
 ];
 
+/** Kelompok untuk letak halaman dan tautan antarseri di halaman detail: [seri, nama singkat]. */
+const KELOMPOK_HALAMAN: { judul: string; seri: [string, string][] }[] = [
+  {
+    judul: "Tiga angka utama",
+    seri: [
+      ["bps_gdp_growth_q", "Pertumbuhan"],
+      ["bps_cpi_yoy_m", "Inflasi"],
+      ["bps_unemp_round", "Pengangguran"],
+    ],
+  },
+  {
+    judul: "Rincian inflasi",
+    seri: [
+      ["bps_cpi_yoy_m", "Umum"],
+      ["bps_cpi_core_yoy_m", "Inti"],
+      ["bps_cpi_admin_yoy_m", "Harga diatur pemerintah"],
+      ["bps_cpi_volatile_yoy_m", "Harga bergejolak"],
+    ],
+  },
+  {
+    judul: PENGGERAK[0].judul,
+    seri: [
+      ["wld_coal_m", "Batu bara"],
+      ["wld_cpo_m", "CPO"],
+      ["wld_nickel_m", "Nikel"],
+      ["wld_brent_m", "Brent"],
+    ],
+  },
+  {
+    judul: PENGGERAK[1].judul,
+    seri: [
+      ["usd_idr_d", "Kurs rupiah"],
+      ["idn_policy_rate_m", "BI-Rate"],
+      ["idn_cli_m", "Pendahulu Indonesia"],
+      ["chn_cli_m", "Pendahulu Tiongkok"],
+    ],
+  },
+  {
+    judul: "Pasar kerja",
+    seri: [
+      ["bps_unemp_round", "Pengangguran"],
+      [SERI_FORMAL, "Pekerja formal"],
+    ],
+  },
+];
+
+export function kelompokHalaman(seri: string) {
+  return KELOMPOK_HALAMAN.find((k) => k.seri.some(([id]) => id === seri));
+}
+
+export const NAMA_FREKUENSI: Record<string, string> = {
+  A: "Tahunan",
+  Q: "Kuartalan",
+  M: "Bulanan",
+  D: "Harian",
+  ronde: "Per ronde survei",
+};
+
 const ARTINYA_PENGGERAK: Record<string, string> = {
   wld_coal_m:
     "Batu bara termasuk ekspor terbesar Indonesia. Harga yang tinggi menambah devisa dan penerimaan negara; harga yang jatuh mengurangi keduanya.",
