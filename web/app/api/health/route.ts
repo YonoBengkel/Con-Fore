@@ -1,6 +1,7 @@
 // GET /api/health: dipanggil cron-job.org setiap hari (ARCHITECTURE 4.2 dan 4.9).
 // Wajib header x-health-token. 503 bila run sukses terakhir lebih dari 36 jam lalu atau Supabase
-// tidak terbaca. Tidak pernah di-cache di CDN; pembacaan site_status boleh di-cache 60 detik.
+// tidak terbaca. Tidak pernah di-cache, termasuk pembacaan site_status: cache Next.js tetap menyajikan
+// jawaban lama saat Supabase menolak, jadi kunci yang rusak baru terlihat sesudah 36 jam.
 
 import { bacaStatus } from "@/lib/data";
 import { cocokRahasia } from "@/lib/rahasia";
@@ -21,7 +22,7 @@ export async function GET(request: Request) {
 
   let s;
   try {
-    s = await bacaStatus(60);
+    s = await bacaStatus(0);
   } catch {
     return Response.json({ status: "supabase_gagal" }, { status: 503, headers: TANPA_CACHE });
   }
