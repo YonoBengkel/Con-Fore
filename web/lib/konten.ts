@@ -47,19 +47,19 @@ export const KELOMPOK_INFLASI = [
     nama: "Inti",
     setahun: "bps_cpi_core_yoy_m",
     sebulan: "bps_cpi_core_mom_m",
-    isi: "Barang dan jasa di luar dua kelompok lain, misalnya biaya sekolah, sepeda motor, telepon seluler, dan emas perhiasan. Sebagai satu kelompok, harganya cenderung bergerak pelan.",
+    isi: "Barang dan jasa di luar dua kelompok lain, misalnya telepon seluler, laptop, nasi dengan lauk, dan minyak goreng. Sebagai satu kelompok, harganya cenderung bergerak pelan.",
   },
   {
     nama: "Harga diatur pemerintah",
     setahun: "bps_cpi_admin_yoy_m",
     sebulan: "bps_cpi_admin_mom_m",
-    isi: "Harga dan tarif yang banyak dipengaruhi kebijakan pemerintah, misalnya bensin, tarif listrik, tarif angkutan, dan rokok.",
+    isi: "Harga dan tarif yang banyak dipengaruhi kebijakan pemerintah, misalnya bensin, bahan bakar rumah tangga, tarif angkutan udara, dan rokok kretek.",
   },
   {
     nama: "Harga bergejolak",
     setahun: "bps_cpi_volatile_yoy_m",
     sebulan: "bps_cpi_volatile_mom_m",
-    isi: "Sebagian besar bahan makanan yang harganya mudah naik turun, misalnya cabai merah, cabai rawit, dan bawang merah.",
+    isi: "Sebagian besar bahan makanan yang harganya mudah naik turun, misalnya cabai merah, cabai rawit, daging ayam ras, dan telur ayam ras.",
   },
 ];
 export const SERI_INFLASI_BULANAN = "bps_cpi_mom_m";
