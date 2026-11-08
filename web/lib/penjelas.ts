@@ -13,20 +13,20 @@ const PERTUMBUHAN: Penjelas = {
 
 const INFLASI: Penjelas = {
   ukur: "Seberapa berubah rata-rata harga barang dan jasa yang dibeli rumah tangga dibanding setahun sebelumnya, dihitung dari Indeks Harga Konsumen.",
-  cara: "BPS memantau harga sekumpulan barang dan jasa di banyak kota dan kabupaten, lalu merangkumnya dengan bobot menurut pengeluaran rumah tangga. Tahun dasarnya kini 2022=100.",
+  cara: "BPS memantau harga sekumpulan barang dan jasa di 150 kabupaten dan kota, lalu merangkumnya dengan bobot dari pola pengeluaran rumah tangga hasil Survei Biaya Hidup 2022. Tahun dasarnya kini 2022=100.",
   baca: "Inflasi yang turun berarti harga naik lebih lambat, bukan harganya turun. Rata-rata harga baru turun bila angkanya negatif.",
 };
 
 const PENGANGGURAN: Penjelas = {
-  ukur: "Persentase angkatan kerja yang belum bekerja, antara lain karena sedang mencari kerja, bersiap membuka usaha, atau sudah diterima tetapi belum mulai. Angkatan kerja adalah penduduk usia 15 tahun ke atas yang bekerja atau sedang mencari kerja.",
-  cara: "BPS mengukurnya lewat Survei Angkatan Kerja Nasional (Sakernas). Ronde Februari dan Agustus tersedia sejak lama, dan ronde triwulanan sejak 2025.",
-  baca: "Bandingkan dengan ronde bulan yang sama tahun lalu, karena angkanya berbeda menurut bulan survei. Orang yang bekerja beberapa jam atau berusaha kecil-kecilan sudah dihitung bekerja, jadi angka ini tidak menunjukkan kualitas pekerjaan.",
+  ukur: "Persentase angkatan kerja yang menganggur, yaitu tidak bekerja tetapi sedang mencari kerja, bersiap membuka usaha, merasa tidak mungkin mendapat kerja, atau sudah diterima tetapi belum mulai. Angkatan kerja adalah penduduk usia 15 tahun ke atas yang bekerja atau menganggur.",
+  cara: "BPS mengukurnya lewat Survei Angkatan Kerja Nasional (Sakernas). Ronde Februari dan Agustus tersedia sejak lama, ronde November sejak 2025, dan ronde Mei sejak 2026.",
+  baca: "Bandingkan dengan ronde bulan yang sama tahun lalu, karena angkanya berbeda menurut bulan survei. Orang yang bekerja paling sedikit satu jam dalam seminggu sudah dihitung bekerja, jadi angka ini tidak menunjukkan kualitas pekerjaan.",
 };
 
 const KOMODITAS: Penjelas = {
-  ukur: "Harga acuan pasar dunia untuk komoditas ini dalam dolar AS, rata-rata per bulan.",
-  cara: "Diambil dari data harga komoditas IMF (Primary Commodity Prices), yang biasanya diperbarui pada minggu pertama setiap bulan.",
-  baca: "Harganya dalam dolar AS, jadi rupiah yang melemah bisa membuat harga dalam rupiah naik walau harga dolarnya tetap. Pengaruhnya ke Indonesia biasanya baru terasa beberapa bulan kemudian.",
+  ukur: "Harga acuan pasar dunia untuk komoditas ini dalam dolar AS, satu angka per bulan.",
+  cara: "Diambil dari data harga komoditas IMF (Primary Commodity Prices), yang diperbarui setiap bulan.",
+  baca: "Harganya dalam dolar AS, jadi rupiah yang melemah bisa membuat harga dalam rupiah naik walau harga dolarnya tetap.",
 };
 
 const KURS: Penjelas = {
@@ -36,15 +36,15 @@ const KURS: Penjelas = {
 };
 
 const BUNGA: Penjelas = {
-  ukur: "Suku bunga kebijakan Bank Indonesia, yang menjadi patokan bunga di perbankan.",
-  cara: "Diambil dari kumpulan data suku bunga kebijakan BIS, jadi bisa tertinggal beberapa hari dari keputusan Bank Indonesia.",
-  baca: "Perubahan suku bunga acuan biasanya baru terasa ke bunga kredit dan harga setelah beberapa bulan.",
+  ukur: "Suku bunga kebijakan Bank Indonesia (BI-Rate), yang menjadi acuan di pasar keuangan dan memengaruhi bunga bank.",
+  cara: "Diambil dari kumpulan data suku bunga kebijakan BIS. Angka bulanannya adalah suku bunga pada hari kerja terakhir setiap bulan, jadi keputusan Bank Indonesia baru tampil sesudah bulan itu berakhir dan BIS memperbarui datanya.",
+  baca: "Perubahan suku bunga acuan tidak langsung dan tidak seluruhnya diteruskan ke bunga kredit dan simpanan bank, dan bunga kredit biasanya bergerak lebih lambat.",
 };
 
 const PENDAHULU: Penjelas = {
   ukur: "Indikator komposit dari OECD yang dirancang untuk memberi tanda awal perubahan arah ekonomi.",
   cara: "OECD menerbitkannya setiap bulan dan merevisi riwayatnya, jadi angka lama bisa berubah. Karena itu indikator ini tidak dipakai di model Con-Fore.",
-  baca: "Di atas 100 berarti di atas tren jangka panjang. Yang lebih penting arahnya selama beberapa bulan, bukan satu angka.",
+  baca: "Di atas 100 berarti kegiatan ekonomi di atas tingkat jangka panjangnya. Yang lebih penting arahnya selama beberapa bulan, bukan satu angka.",
 };
 
 const PEKERJA: Penjelas = {
