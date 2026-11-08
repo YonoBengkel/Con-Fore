@@ -199,7 +199,7 @@ Lakukan bila kredensial bocor atau terpapar (tertempel di chat, log, atau commit
 | Key FRED | Buat key baru di akun FRED, hapus yang lama. Perbarui `FRED_API_KEY` |
 | `REVALIDATE_SECRET`, `HEALTH_TOKEN` (fase 2) | Buat nilai baru (lihat bagian 2), perbarui di GitHub, Vercel, dan cron-job.org sekaligus, lalu Redeploy situs (bagian 5) |
 | Token GitHub untuk cron-job.org (fase 1) | Buat token fine-grained baru (repo ini saja, Actions: write), ganti di cron-job.org, cabut yang lama |
-| Kunci Supabase | Publishable key baru di dashboard; nonaktifkan legacy `anon` dan `service_role` bila masih aktif |
+| Kunci Supabase | Publishable key baru di dashboard; nonaktifkan legacy `anon` dan `service_role` bila masih aktif (**View legacy API keys > Disable JWT-based API keys**). Sesudah itu, **Test run** job Kesehatan menguji kunci di Vercel, dan satu run **Pipeline data** mode `migrate` menguji kunci di GitHub (mode `run` tidak memakainya) |
 
 - Terpapar di log atau ringkasan Actions: rotasi, lalu hapus run tersebut dari tab Actions.
 - Terlanjur masuk commit: **rotasi dulu**. Membersihkan riwayat tidak cukup di repo publik, karena salinannya mungkin sudah diambil orang.
@@ -210,7 +210,7 @@ Lakukan bila kredensial bocor atau terpapar (tertempel di chat, log, atau commit
 - [ ] Ada pull request Dependabot untuk action yang perlu diperbarui.
 - [ ] Perbarui lockfile Python bila ada rilis keamanan: `uv pip compile requirements.in --universal --python-version 3.12 --generate-hashes -o requirements.txt`, lalu jalankan tes.
 - [ ] (Fase 1) Job cron-job.org masih aktif dan notifikasi email kegagalan menyala.
-- [ ] (Fase 1) Tanggal kedaluwarsa token GitHub untuk cron-job.org: `____-__-__`. Perbarui sebelum lewat.
+- [ ] (Fase 1) Tanggal kedaluwarsa token GitHub untuk cron-job.org: `2027-11-07`. Perbarui sebelum lewat.
 - [ ] (Fase 1) Ukuran database Supabase di bawah 300 MB.
 - [ ] (Fase 5) Ada rilis `backup-*` baru setiap minggu, dan tidak ada issue `pipeline-failure` yang masih terbuka tanpa alasan.
 - [ ] (Fase 2) Pemakaian Vercel Hobby masih jauh dari batas.

@@ -341,7 +341,7 @@ Semua permintaan diberi jeda 1 detik dari permintaan sebelumnya, hanya mengikuti
 - Halaman disajikan dari cache CDN, jadi jumlah pengunjung tidak menambah beban Supabase.
 - `/api/revalidate` dan `/api/health` menolak permintaan tanpa header rahasia.
 - Alamat `/indikator/<id>` dan `/api/csv/<id>` dengan id karangan langsung 404 tanpa render dan tanpa menulis cache (`dynamicParams = false`), jadi tidak bisa dipakai untuk menghabiskan kuota ISR paket Hobby.
-- `/api/health` tidak di-cache di CDN (`Cache-Control: private, no-store`); pembacaan `site_status` di dalam fungsinya boleh di-cache 60 detik.
+- `/api/health` tidak di-cache di CDN (`Cache-Control: private, no-store`), dan pembacaan `site_status` di dalam fungsinya juga tidak di-cache, supaya kunci yang ditolak langsung terlihat. Token dicek lebih dulu, jadi permintaan tanpa token tidak sampai ke Supabase.
 
 ### 4.10 Cache dan CDN
 
