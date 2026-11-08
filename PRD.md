@@ -1,6 +1,6 @@
 # PRD Con-Fore
 
-> Status: disetujui pengelola 2026-10-30. Tambahan 2026-11-03 (bagian 4.4 dan butir terkait di 4, 5, 7, dan 9) disetujui pengelola hari itu. Tambahan 2026-11-07 (arti "lebih akurat" di bagian 6, dan penggerak yang tidak dikarang di 4.1) diusulkan agent saat fase 3 dan 4, dan menunggu persetujuan pengelola. Tema terang dihapus dari ukuran Tampilan di bagian 6, karena pengelola memilih migrasi penuh ke arah atlasgeopo.com pada 2026-11-07. Menggantikan `docs/RENCANA-MVP.md`. Detail teknis ada di [ARCHITECTURE.md](ARCHITECTURE.md) dan [SCHEMA.md](SCHEMA.md).
+> Status: disetujui pengelola 2026-10-30. Tambahan 2026-11-03 (bagian 4.4 dan butir terkait di 4, 5, 7, dan 9) disetujui pengelola hari itu. Tambahan 2026-11-07 (arti "lebih akurat" di bagian 6, dan penggerak yang tidak dikarang di 4.1) diusulkan agent saat fase 3 dan 4, dan menunggu persetujuan pengelola. Tema terang dihapus dari ukuran Tampilan di bagian 6, karena pengelola memilih migrasi penuh ke arah atlasgeopo.com pada 2026-11-07. Fase 6 (otomasi perawatan) di bagian 8 ditambahkan atas keputusan pengelola 2026-11-08. Menggantikan `docs/RENCANA-MVP.md`. Detail teknis ada di [ARCHITECTURE.md](ARCHITECTURE.md) dan [SCHEMA.md](SCHEMA.md).
 
 ## 1. Masalah
 
@@ -125,6 +125,7 @@ Risiko teknis ada di [ARCHITECTURE.md](ARCHITECTURE.md#5-risiko-utama).
 | 3. Model | Baseline, DFM untuk PDB, model inflasi dan TPT, backtest | Setiap model dibandingkan dengan baseline dalam laporan backtest |
 | 4. Tab Prediksi (v0.2) | Forecast dan rentang, penjelasan, jangka panjang, rekam jejak | Semua perkiraan berlabel dan bersumber |
 | 5. Pengerasan (MVP) | Pemantauan, uji tujuh hari, halaman Cara kerja | Tujuh hari berturut-turut ter-update otomatis |
+| 6. Otomasi perawatan | Dimulai sesudah uji tujuh hari lulus. Pengingat lewat issue GitHub untuk tabel tahunan (target resmi, kalender rilis, tanggal Lebaran) dan satu workflow pemeriksa untuk cek bulanan. Tanpa panggilan model AI. Angka resmi dari dokumen tetap disetujui pengelola, dan agent hanya dipakai untuk mengubah kode dan menulis teks penjelas | Cek bulanan di RUNBOOK yang bisa dijalankan script tidak lagi manual, dan setiap pengingat terbukti membuka issue saat diuji |
 
 Keputusan produk dan alasannya dicatat di catatan proyek pengelola; dokumen ini hanya memuat hasilnya.
 
