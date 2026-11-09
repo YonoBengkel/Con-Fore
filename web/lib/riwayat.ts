@@ -2,7 +2,7 @@
 // Fungsi murni, dipakai di server dan di browser.
 
 import type { Titik } from "./data";
-import { angka, desimalUntuk, nilaiSeri, perubahan, periode } from "./format.ts";
+import { angka, desimalUntuk, nilaiPendek, nilaiSeri, perubahan, periode } from "./format.ts";
 
 /** Ambil paling banyak `maks` titik dengan langkah tetap, titik terakhir selalu ikut. */
 export function jarangkan(titik: Titik[], maks: number): Titik[] {
@@ -40,6 +40,41 @@ export function kalimatPeriode(
 ): string {
   const ubah = perubahan(v, sebelum, satuan, konsep, frekuensi);
   return `${periode(p)}: ${nilaiSeri(v, satuan, konsep)}${ubah ? `, ${ubah}` : ""}.`;
+}
+
+/**
+ * Titik pada periode yang sama setahun sebelum titik terakhir: tahun, kuartal, atau bulan yang sama (termasuk
+ * ronde survei), atau hari kerja terakhir sebelum tanggal yang sama untuk seri harian. Null bila tidak ada.
+ */
+export function setahunSebelum(titik: Titik[]): Titik | null {
+  const akhir = titik[titik.length - 1]?.[0];
+  if (!akhir) return null;
+  const m = /^(\d{4})(.*)$/.exec(akhir)!;
+  const target = `${Number(m[1]) - 1}${m[2]}`;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(akhir)) {
+    const sebelum = titik.filter(([p]) => p <= target);
+    return sebelum.length ? sebelum[sebelum.length - 1] : null;
+  }
+  return titik.find(([p]) => p === target) ?? null;
+}
+
+/**
+ * Judul grafik riwayat berupa kalimat temuan netral (PRD 4.4): angka terakhir dibanding periode yang sama
+ * setahun sebelumnya, atau titik pertama bila riwayatnya lebih pendek. Hanya memakai kata naik, turun, atau
+ * tetap, dan arahnya dibaca dari angka yang tampil, bukan selisih mentah.
+ */
+export function judulTemuan(titik: Titik[], satuan: string, konsep: string): string | null {
+  if (titik.length < 2) return null;
+  const [, akhir] = titik[titik.length - 1];
+  const lalu = setahunSebelum(titik);
+  const [pAwal, awal] = lalu ?? titik[0];
+  const persen = satuan.startsWith("%");
+  const teks = (v: number) => (persen ? nilaiSeri(v, satuan, konsep) : nilaiPendek(v, satuan, konsep));
+  const satuanPendek = satuan.split(",")[0].trim();
+  const ekor = persen || satuanPendek === "indeks" ? "" : ` ${satuanPendek}`;
+  const awalan = lalu ? `Dibanding ${periode(pAwal)}` : `Sejak ${periode(pAwal)}`;
+  if (teks(awal) === teks(akhir)) return `${awalan}, angka ini tetap ${teks(akhir)}${ekor}.`;
+  return `${awalan}, angka ini ${akhir > awal ? "naik" : "turun"} dari ${teks(awal)} ke ${teks(akhir)}${ekor}.`;
 }
 
 /** Jendela ringkasan menurut frekuensi: kuartalan dan bulanan 5 tahun, harian 1 tahun, tahunan semua. */

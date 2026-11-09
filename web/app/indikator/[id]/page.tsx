@@ -35,7 +35,7 @@ import {
 import { kalimatPekerja } from "@/lib/pekerja";
 import { penjelasSeri } from "@/lib/penjelas";
 import { rincianInflasi } from "@/lib/rincian";
-import { barisRiwayat, kalimatRiwayat } from "@/lib/riwayat";
+import { barisRiwayat, judulTemuan, kalimatRiwayat } from "@/lib/riwayat";
 
 const SERI_RINCIAN = [
   SERI_KARTU.inflasi[0],
@@ -102,6 +102,12 @@ export default async function Indikator({ params }: Props) {
   const simpulan = kalimatRiwayat(titik, m.unit, m.concept, m.frequency);
   const satuanPanjang = m.unit.startsWith("%") ? m.unit.replace(/^%\s*/, "") : m.unit;
   const rentang = titik.length ? `${periode(titik[0][0])} sampai ${periode(titik[titik.length - 1][0])}` : null;
+  // Judul grafik berupa kalimat temuan, anak judulnya nama seri, satuan, dan rentang waktu (PRD 4.4).
+  const judulGrafik = judulTemuan(titik, m.unit, m.concept);
+  const satuanSudahDisebut = m.name_id.toLowerCase().includes(m.unit.toLowerCase());
+  const anakJudul = [m.name_id, satuanSudahDisebut ? null : m.unit.replace(/^%/, "persen"), rentang]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <>
@@ -119,7 +125,7 @@ export default async function Indikator({ params }: Props) {
       </p>
       {penjelas && (
         <details className="penjelas">
-          <summary>Memahami angka ini</summary>
+          <summary>Baru kenal angka ini? Mulai dari penjelasan singkatnya.</summary>
           <div className="penjelas-isi">
             <div>
               <h2>Apa yang diukur</h2>
@@ -183,9 +189,12 @@ export default async function Indikator({ params }: Props) {
 
         <section className="panel detail-grafik" aria-labelledby="judul-riwayat">
           <div className="panel-kepala">
-            <h2 id="judul-riwayat" className="alis">
-              Riwayat
-            </h2>
+            <div>
+              <h2 id="judul-riwayat" className="judul-grafik">
+                {judulGrafik ?? "Riwayat"}
+              </h2>
+              <p className="anak-judul">{anakJudul}</p>
+            </div>
             <a href={`/api/csv/${m.series_id}`} download>
               Unduh seluruh riwayat (CSV)
             </a>
