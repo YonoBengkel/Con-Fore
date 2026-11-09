@@ -5,6 +5,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { TAHUN_AKHIR, TAHUN_AWAL } from "@/lib/skor";
 
 const MENU = [
   { href: "/", teks: "Data" },
@@ -65,8 +66,9 @@ function terapkan(lensa: KunciLensa) {
 }
 
 /**
- * Pilihan lensa disimpan di URL (?lensa=target). Kedua panel sudah ada di HTML; skrip kecil di
- * <head> memilih panel sebelum halaman tampil, dan komponen ini menggantinya tanpa memuat ulang.
+ * Kedua panel lensa sudah ada di HTML. Skrip kecil di <head> memilih panel dari ?lensa=target sebelum
+ * halaman tampil, dan komponen ini menggantinya tanpa memuat ulang dan tanpa mengubah alamat, karena
+ * peserta uji baca membaca alamat yang berubah sebagai halaman lain (PRD 4.2).
  */
 export function PilihLensa() {
   const [lensa, setLensa] = useState<KunciLensa>("masa-lalu");
@@ -83,10 +85,6 @@ export function PilihLensa() {
 
   function pilih(e: React.MouseEvent<HTMLAnchorElement>, l: KunciLensa) {
     e.preventDefault();
-    const url = new URL(window.location.href);
-    if (l === "target") url.searchParams.set("lensa", "target");
-    else url.searchParams.delete("lensa");
-    window.history.replaceState(null, "", url);
     terapkan(l);
     setLensa(l);
   }
@@ -99,6 +97,9 @@ export function PilihLensa() {
         onClick={(e) => pilih(e, "masa-lalu")}
       >
         Masa lalu
+        <span className="lensa-ket">
+          dibanding {TAHUN_AWAL}-{TAHUN_AKHIR}
+        </span>
       </a>
       <a
         href="?lensa=target"
@@ -106,6 +107,7 @@ export function PilihLensa() {
         onClick={(e) => pilih(e, "target")}
       >
         Target resmi
+        <span className="lensa-ket">dibanding target pemerintah</span>
       </a>
     </nav>
   );

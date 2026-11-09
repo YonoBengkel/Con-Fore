@@ -40,6 +40,7 @@ export function Lencana({ meta, basi }: { meta: MetaSeri; basi: boolean }) {
 }
 
 export function KartuSeri({
+  id,
   judul,
   meta,
   nilai,
@@ -48,6 +49,8 @@ export function KartuSeri({
   tambahan,
   utama = false,
 }: {
+  /** Jangkar kartu, dipakai baris angka terakhir di sampul beranda. */
+  id?: string;
   judul?: string;
   meta: MetaSeri;
   nilai: NilaiTerakhir;
@@ -59,7 +62,7 @@ export function KartuSeri({
   utama?: boolean;
 }) {
   const ubah = perubahan(nilai.value, nilai.previous_value, meta.unit, meta.concept, meta.frequency);
-  const artinya = artinyaBuatmu(meta.series_id, nilai.value);
+  const artinya = artinyaBuatmu(meta.series_id, nilai.value, nilai.previous_value);
   const H = utama ? "h3" : "h4";
   const satuanPanjang = meta.unit.startsWith("%") ? meta.unit.replace(/^%\s*/, "") : meta.unit;
   const jadwalPerkiraan = !kalender || kalender.endsWith("-perkiraan");
@@ -69,7 +72,7 @@ export function KartuSeri({
     </p>
   );
   return (
-    <article className={utama ? "kartu kartu-utama" : "kartu"}>
+    <article id={id} className={utama ? "kartu kartu-utama" : "kartu"}>
       <H className="kartu-judul">{judul ?? meta.name_id}</H>
       {judul && <p className="kartu-nama">{meta.name_id}</p>}
       <p className="kartu-angka">

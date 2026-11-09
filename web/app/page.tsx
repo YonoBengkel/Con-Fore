@@ -2,6 +2,7 @@
 // Tanpa ramalan. Semua data dibaca di server lalu di-cache (ISR); browser tidak memanggil Supabase.
 
 import Link from "next/link";
+import { Berikutnya } from "@/components/Berikutnya";
 import { KartuKosong, KartuSeri, TabelTarget } from "@/components/Kartu";
 import { BannerBasi, PilihLensa } from "@/components/Klien";
 import { DaftarStatus, Segitiga } from "@/components/Segitiga";
@@ -16,7 +17,7 @@ import {
   type MetaSeri,
   type NilaiTerakhir,
 } from "@/lib/data";
-import { periode, tanggal, waktuWIB } from "@/lib/format";
+import { nilaiPendek, periode, tanggal, waktuWIB } from "@/lib/format";
 import {
   JUDUL_KARTU,
   KELOMPOK_INFLASI,
@@ -114,6 +115,24 @@ export default async function Beranda() {
             Seberapa cepat ekonomi tumbuh, seberapa cepat harga naik, dan seberapa banyak orang yang belum
             mendapat kerja. Dari data resmi, dijelaskan dengan bahasa sehari-hari.
           </p>
+          {/* Penanda topik di layar pertama: angka asli, bukan gambar hiasan (keputusan Q24, PRD 4.1). */}
+          <ul className="angka-sampul" aria-label="Angka terakhir">
+            {kunciKartu.map((kunci) => {
+              const id = seriKartu(kunci);
+              if (!id) return null;
+              const m = metaPer.get(id)!;
+              const n = nilaiPer.get(id)!;
+              return (
+                <li key={kunci}>
+                  <a href={`#kartu-${kunci}`}>
+                    <span className="angka-sampul-nama">{JUDUL_KARTU[kunci]}</span>{" "}
+                    <strong>{nilaiPendek(n.value, m.unit, m.concept)}</strong>{" "}
+                    <span className="angka-sampul-periode">{periode(n.period)}</span>
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
         </div>
         <div className="sampul-panel">
           {ringkasan ? (
@@ -124,34 +143,40 @@ export default async function Beranda() {
                 </h2>
                 <PilihLensa />
               </div>
-              <PanelLensa lensa={ringkasan.masaLalu} kelas="lensa-masa-lalu" id="kalimat-masa-lalu" />
-              {ringkasan.target ? (
-                <PanelLensa
-                  lensa={ringkasan.target}
-                  kelas="lensa-target"
-                  id="kalimat-target"
-                  catatan={
-                    adaBerita && (
-                      <p className="catatan">
-                        Sebagian target {ringkasan.tahun} masih{" "}
-                        {STATUS_VERIFIKASI.berita.replace(/^dari /, "bersumber ")}. Lihat{" "}
-                        <Link href="/metode#target">tabel target</Link>.
-                      </p>
-                    )
-                  }
-                />
-              ) : (
-                <div className="lensa-target">
-                  <p>
-                    Lensa target belum tersedia untuk tahun {ringkasan.tahun}, karena target resminya belum
-                    lengkap.
-                  </p>
-                </div>
-              )}
+              <p className="arti-skor">
+                Angka di sudut adalah skor 0 sampai 100, bukan persen. Makin besar segitiganya, makin baik
+                keadaannya.
+              </p>
+              <div className="lensa-tumpuk">
+                <PanelLensa lensa={ringkasan.masaLalu} kelas="lensa-masa-lalu" id="kalimat-masa-lalu" />
+                {ringkasan.target ? (
+                  <PanelLensa
+                    lensa={ringkasan.target}
+                    kelas="lensa-target"
+                    id="kalimat-target"
+                    catatan={
+                      adaBerita && (
+                        <p className="catatan">
+                          Sebagian target {ringkasan.tahun} masih{" "}
+                          {STATUS_VERIFIKASI.berita.replace(/^dari /, "bersumber ")}. Lihat{" "}
+                          <Link href="/metode#target">tabel target</Link>.
+                        </p>
+                      )
+                    }
+                  />
+                ) : (
+                  <div className="lensa-target">
+                    <p>
+                      Lensa target belum tersedia untuk tahun {ringkasan.tahun}, karena target resminya belum
+                      lengkap.
+                    </p>
+                  </div>
+                )}
+              </div>
               <p className="catatan">
-                Segitiga ini memakai tahun terakhir yang ketiga angkanya sudah terbit. Makin besar segitiganya,
-                makin baik keadaannya. Sumber angkanya salinan IMF (World Economic Outlook) dari data BPS. Cara
-                menghitung skornya ada di <Link href="/metode#skor">Metode</Link>.
+                Segitiga ini memakai tahun terakhir yang ketiga angkanya sudah terbit. Sumber angkanya salinan IMF
+                (World Economic Outlook) dari data BPS. Cara menghitung skornya ada di{" "}
+                <Link href="/metode#skor">Metode</Link>.
               </p>
             </>
           ) : (
@@ -192,6 +217,7 @@ export default async function Beranda() {
             return (
               <KartuSeri
                 key={kunci}
+                id={`kartu-${kunci}`}
                 utama
                 judul={JUDUL_KARTU[kunci]}
                 meta={metaPer.get(id)!}
@@ -256,6 +282,16 @@ export default async function Beranda() {
           judul={`Target resmi ${tahunTarget ? `sejak ${periode(String(tahunTarget))}` : ""}`.trim()}
         />
       </section>
+
+      <Berikutnya
+        tautan={[
+          {
+            href: "/prediksi",
+            tanya: "Ke mana arahnya?",
+            teks: "Lihat perkiraan pertumbuhan, inflasi, dan pengangguran di Prediksi",
+          },
+        ]}
+      />
     </>
   );
 }

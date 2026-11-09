@@ -2,21 +2,32 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { MetaSeri } from "./data";
-import { artinyaBuatmu, keteranganJadwal, labelSeri } from "./konten.ts";
+import { arahInflasi, artinyaBuatmu, keteranganJadwal, labelSeri } from "./konten.ts";
 
-test("contoh hitung inflasi memakai belanja Rp100.000 dari angka yang tampil", () => {
+test("kartu inflasi dibuka dengan perumpamaan keranjang belanja Rp100.000 dari angka yang tampil", () => {
   assert.match(
     artinyaBuatmu("bps_cpi_yoy_m", 3.24) ?? "",
-    /^Rata-rata harga barang dan jasa 3,2% lebih mahal dibanding setahun sebelumnya\. Belanjaan yang setahun lalu seharga Rp100\.000 kini sekitar Rp103\.200\./,
+    /^Bayangkan satu keranjang belanja yang isinya sama setiap bulan\. Inflasi 3,2% berarti keranjang yang setahun lalu Rp100\.000 kini sekitar Rp103\.200\. Kalau penghasilanmu naik kurang dari 3,2%/,
   );
-  assert.match(artinyaBuatmu("bps_cpi_yoy_m", -0.5) ?? "", /0,5% lebih murah.*sekitar Rp99\.500\./);
+  assert.match(artinyaBuatmu("bps_cpi_yoy_m", -0.5) ?? "", /sekitar Rp99\.500\. Rata-rata harga lebih murah/);
 });
 
-test("contoh uang hanya untuk inflasi: PDB, BI-Rate, dan pengangguran tanpa rupiah", () => {
+test("kartu pertumbuhan dan pengangguran dibuka dengan perumpamaan, tanpa contoh uang", () => {
+  assert.match(artinyaBuatmu("bps_gdp_growth_q", 5.5) ?? "", /^Bayangkan .* sebagai satu kue\. Pertumbuhan 5,5% berarti kuenya 5,5% lebih besar/);
+  assert.match(artinyaBuatmu("bps_unemp_round", 4.75) ?? "", /^Bayangkan 100 orang yang bekerja atau sedang mencari kerja\. Sekitar 5 di antaranya/);
   for (const [seri, nilai] of [["bps_gdp_growth_q", 5.5], ["idn_policy_rate_m", 5.75], ["bps_unemp_round", 4.75]] as const) {
     assert.doesNotMatch(artinyaBuatmu(seri, nilai) ?? "", /Rp/, seri);
   }
-  assert.match(artinyaBuatmu("bps_unemp_round", 4.75) ?? "", /Dari setiap 100 orang angkatan kerja/);
+});
+
+test("arah inflasi dalam bahasa sehari-hari mengikuti angka yang tampil", () => {
+  assert.equal(arahInflasi(3.2, 3.3), "Harga masih naik, tetapi lebih lambat dibanding bulan lalu.");
+  assert.equal(arahInflasi(3.4, 3.3), "Harga naik lebih cepat dibanding bulan lalu.");
+  assert.equal(arahInflasi(3.24, 3.21), "Harga naik secepat bulan lalu.");
+  assert.equal(arahInflasi(-0.2, 0.1), null);
+  assert.equal(arahInflasi(3.2, null), null);
+  assert.match(artinyaBuatmu("bps_cpi_yoy_m", 3.2, 3.3) ?? "", /Rp103\.200\. Harga masih naik, tetapi lebih lambat dibanding bulan lalu\. Kalau penghasilanmu/);
+  assert.doesNotMatch(artinyaBuatmu("idn_cpi_eop_a", 3.2, 3.3) ?? "", /bulan lalu/);
 });
 
 const seri = (source_id: string, country = "IDN") => ({ source_id, country }) as MetaSeri;

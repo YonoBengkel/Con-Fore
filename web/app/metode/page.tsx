@@ -3,6 +3,7 @@
 // ke sini lewat next.config.ts.
 
 import type { Metadata } from "next";
+import { Berikutnya } from "@/components/Berikutnya";
 import { Sitasi, TabelTarget } from "@/components/Kartu";
 import { bacaMeta, bacaSumber, bacaTarget } from "@/lib/data";
 import { angka } from "@/lib/format";
@@ -346,6 +347,10 @@ export default async function Metode() {
           syarat penggunaan. Bila kamu menyebarkan ulang data itu, sebutkan sumber aslinya dan nyatakan bila datanya
           kamu ubah.
         </p>
+
+        <Berikutnya
+          tautan={[{ href: "/", tanya: "Ingin melihat angkanya lagi?", teks: "Kembali ke angka terbaru di Data" }]}
+        />
       </article>
     </div>
   );

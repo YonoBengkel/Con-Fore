@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Berikutnya } from "@/components/Berikutnya";
 import { GrafikKelompok, GrafikRonde } from "@/components/Grafik";
 import { Lencana, Sitasi, TabelTarget } from "@/components/Kartu";
 import { BannerBasi } from "@/components/Klien";
@@ -19,6 +20,7 @@ import {
 } from "@/lib/data";
 import { angka, nilaiPendek, nilaiSeri, perubahan, periode, tanggal, waktuWIB } from "@/lib/format";
 import {
+  JUDUL_KARTU,
   KELOMPOK_INFLASI,
   NAMA_FREKUENSI,
   NAMA_KALENDER,
@@ -31,6 +33,7 @@ import {
   artinyaBuatmu,
   kelompokHalaman,
   labelSeri,
+  type KunciKartu,
 } from "@/lib/konten";
 import { kalimatPekerja } from "@/lib/pekerja";
 import { penjelasSeri } from "@/lib/penjelas";
@@ -90,7 +93,9 @@ export default async function Indikator({ params }: Props) {
   const titik = titikSeri(grafik, id);
   const rilis = kalender.filter((r) => r.series_id === id);
   const targetSeri = target.filter((t) => t.series_id === id);
-  const artinya = n ? artinyaBuatmu(id, n.value) : null;
+  const artinya = n ? artinyaBuatmu(id, n.value, n.previous_value) : null;
+  // Tiga angka utama punya perkiraan di Prediksi, jadi kotak Berikutnya menautkannya.
+  const kunciUtama = (Object.keys(SERI_KARTU) as KunciKartu[]).find((k) => SERI_KARTU[k].includes(id));
   const terbaru = titik.slice(-12).reverse();
   const formal = halamanTpt ? titikSeri(grafik, SERI_FORMAL) : [];
   const pekerja = kalimatPekerja(formal, halamanTpt ? titikSeri(grafik, SERI_TPT_RONDE) : []);
@@ -393,6 +398,21 @@ export default async function Indikator({ params }: Props) {
           <TabelTarget target={targetSeri} judul={`Target resmi: ${m.name_id}`} />
         </section>
       )}
+
+      <Berikutnya
+        tautan={[
+          { href: "/", tanya: "Kembali ke ringkasan?", teks: "Lihat semua angka di Data" },
+          ...(kunciUtama
+            ? [
+                {
+                  href: `/prediksi#perkiraan-${kunciUtama}`,
+                  tanya: "Ke mana arahnya?",
+                  teks: `Lihat perkiraan ${JUDUL_KARTU[kunciUtama].toLowerCase()} di Prediksi`,
+                },
+              ]
+            : []),
+        ]}
+      />
     </>
   );
 }
