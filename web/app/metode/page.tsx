@@ -273,8 +273,9 @@ export default async function Metode() {
         <h3>Arti rentang</h3>
         <ul>
           <li>
-            Rentang 80% berasal dari seberapa jauh ramalan meleset di luar masa COVID: sekitar 8 dari 10 angka jatuh
-            di dalamnya. Jadi rentang ini menggambarkan masa biasa, dan guncangan besar seperti COVID bisa membuat
+            Rentang di setiap perkiraan, yang ditulis &quot;kemungkinan antara&quot;, berasal dari seberapa jauh ramalan
+            meleset di luar masa COVID: sekitar 8 dari 10 angka jatuh di dalamnya. Karena itu di tabel batas ia
+            disebut rentang 80%. Rentang ini menggambarkan masa biasa, dan guncangan besar seperti COVID bisa membuat
             angkanya jauh di luar rentang.
           </li>
           <li>Rentang tidak dibuat bila hasil ujinya kurang dari 20.</li>

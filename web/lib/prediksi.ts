@@ -85,9 +85,20 @@ export function persen(n: number, desimal: number): string {
   return `${angka(n, desimal)}%`;
 }
 
-/** "2,7% sampai 3,8%", atau null bila backtest belum cukup untuk membuat rentang. */
-export function teksRentang(bawah: number | null, atas: number | null, desimal: number): string | null {
-  return bawah == null || atas == null ? null : `${persen(bawah, desimal)} sampai ${persen(atas, desimal)}`;
+/**
+ * Rentang dalam kata untuk kalimat utama (PRD 4.4): "kemungkinan antara 2,7% dan 3,8%", atau null bila
+ * backtest belum cukup untuk membuat rentang. Istilah "rentang 80%" hanya dipakai di tabel batas.
+ */
+export function kalimatRentang(bawah: number | null, atas: number | null, desimal: number): string | null {
+  return bawah == null || atas == null
+    ? null
+    : `kemungkinan antara ${persen(bawah, desimal)} dan ${persen(atas, desimal)}`;
+}
+
+/** Kalimat utama kartu perkiraan: "Inflasi Desember 2026 diperkirakan 2,1%, kemungkinan antara 1,6% dan 2,6%." */
+export function kalimatPerkiraan(awalan: string, b: BarisRamalan, desimal: number): string {
+  const rentang = kalimatRentang(b.lo80, b.hi80, desimal);
+  return `${awalan} ${periode(b.ref_period)} diperkirakan ${persen(b.point, desimal)}${rentang ? `, ${rentang}` : ""}.`;
 }
 
 /**

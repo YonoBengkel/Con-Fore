@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { MetaSeri, NilaiTerakhir, Target, Titik } from "@/lib/data";
-import { angka, nilaiPendek, perubahan, perubahanRingkas, periode, tanggal } from "@/lib/format";
+import { angka, nilaiPendek, perubahan, periode, tanggal } from "@/lib/format";
 import {
   NAMA_TARGET,
   STATUS_VERIFIKASI,
@@ -62,6 +62,7 @@ export function KartuSeri({
   const artinya = artinyaBuatmu(meta.series_id, nilai.value);
   const H = utama ? "h3" : "h4";
   const satuanPanjang = meta.unit.startsWith("%") ? meta.unit.replace(/^%\s*/, "") : meta.unit;
+  const jadwalPerkiraan = !kalender || kalender.endsWith("-perkiraan");
   const penjelasan = artinya && (
     <p className="artinya">
       <strong>Artinya buatmu:</strong> {artinya}
@@ -79,12 +80,36 @@ export function KartuSeri({
         {periode(nilai.period)}
         {ubah && <span className="kartu-ubah">, {ubah}</span>}
       </p>
+      {/* Waktu selalu terlihat di dekat angka (PRD 4.1). Sumber yang tidak mencatat tanggal rilis per angka,
+          seperti WebAPI BPS, diganti tanggal Con-Fore pertama kali melihatnya. Asal jadwalnya ada di lipatan. */}
+      <dl className="rincian kartu-waktu">
+        {nilai.release_date ? (
+          <div>
+            <dt>Dirilis</dt>
+            <dd>{tanggal(nilai.release_date)}</dd>
+          </div>
+        ) : (
+          <div>
+            <dt>Dilihat Con-Fore</dt>
+            <dd>{tanggal(nilai.seen_date)}</dd>
+          </div>
+        )}
+        {meta.next_release_date && (
+          <div>
+            <dt>Rilis berikutnya</dt>
+            <dd>
+              {tanggal(meta.next_release_date)}
+              {jadwalPerkiraan && " (perkiraan)"}
+            </dd>
+          </div>
+        )}
+      </dl>
       <GarisKecil titik={titik} frekuensi={meta.frequency} />
       <Lencana meta={meta} basi={nilai.is_stale} />
       {utama && penjelasan}
       {tambahan && <p className="catatan">{tambahan}</p>}
       <details className="rincian-kartu">
-        <summary>{utama ? "Sumber dan jadwal rilis" : "Artinya buatmu dan sumbernya"}</summary>
+        <summary>{utama ? "Sumber dan jadwal" : "Artinya buatmu dan sumbernya"}</summary>
         {!utama && penjelasan}
         <dl className="rincian">
           <div>
@@ -95,20 +120,14 @@ export function KartuSeri({
           </div>
           {nilai.release_date && (
             <div>
-              <dt>Tanggal rilis</dt>
-              <dd>{tanggal(nilai.release_date)}</dd>
+              <dt>Dilihat Con-Fore</dt>
+              <dd>{tanggal(nilai.seen_date)}</dd>
             </div>
           )}
-          <div>
-            <dt>Dilihat Con-Fore</dt>
-            <dd>{tanggal(nilai.seen_date)}</dd>
-          </div>
           {meta.next_release_date && (
             <div>
-              <dt>Rilis berikutnya</dt>
-              <dd>
-                {tanggal(meta.next_release_date)} ({keteranganJadwal(meta, kalender)})
-              </dd>
+              <dt>Asal tanggal rilis berikutnya</dt>
+              <dd>{keteranganJadwal(meta, kalender)}</dd>
             </div>
           )}
         </dl>
@@ -122,59 +141,6 @@ export function KartuSeri({
         </a>
       </p>
     </article>
-  );
-}
-
-/** Satu baris panel instrumen di sampul: nama, angka, keterangan singkat, dan grafik kecil. */
-export function BarisInstrumen({
-  judul,
-  nilai,
-  keterangan,
-  titik,
-  frekuensi,
-  href,
-}: {
-  judul: string;
-  nilai: string;
-  keterangan: string;
-  titik: Titik[];
-  frekuensi: string;
-  href: string;
-}) {
-  return (
-    <Link href={href} className="instrumen-baris">
-      <span>
-        <span className="instrumen-nama">{judul}</span>
-        <span className="instrumen-nilai">{nilai}</span>
-        <span className="instrumen-ket">{keterangan}</span>
-      </span>
-      <GarisKecil titik={titik} frekuensi={frekuensi} keterangan={false} />
-    </Link>
-  );
-}
-
-/** Baris panel instrumen untuk angka resmi terakhir, dengan arah perubahannya. */
-export function BarisDataResmi({
-  judul,
-  meta,
-  nilai,
-  titik,
-}: {
-  judul: string;
-  meta: MetaSeri;
-  nilai: NilaiTerakhir;
-  titik: Titik[];
-}) {
-  const ubah = perubahanRingkas(nilai.value, nilai.previous_value, meta.unit, meta.concept, meta.frequency);
-  return (
-    <BarisInstrumen
-      judul={judul}
-      nilai={nilaiPendek(nilai.value, meta.unit, meta.concept)}
-      keterangan={`${periode(nilai.period)}${ubah ? `, ${ubah}` : ""}`}
-      titik={titik}
-      frekuensi={meta.frequency}
-      href={`/indikator/${meta.series_id}`}
-    />
   );
 }
 

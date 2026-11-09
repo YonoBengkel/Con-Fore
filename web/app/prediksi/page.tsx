@@ -4,9 +4,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { GrafikJangkaPanjang, GrafikPerkiraan } from "@/components/Grafik";
-import { BarisInstrumen, Sitasi } from "@/components/Kartu";
+import { Sitasi } from "@/components/Kartu";
 import { BannerBasi, PilihLensa } from "@/components/Klien";
-import { Langit } from "@/components/Langit";
 import { DaftarStatus, Segitiga } from "@/components/Segitiga";
 import {
   bacaGrafik,
@@ -33,12 +32,13 @@ import {
   kalimatCara,
   kalimatEfekBasis,
   kalimatJangkaPanjang,
+  kalimatPerkiraan,
+  kalimatRentang,
   maeModel,
   modelTerurut,
   nilaiTahunPerkiraan,
   persen,
   tahunPerkiraan,
-  teksRentang,
   type TargetPrediksi,
 } from "@/lib/prediksi";
 import { dataTahunan, ringkasanTahun, type Lensa } from "@/lib/ringkasan";
@@ -99,8 +99,7 @@ function KartuPerkiraan({
   const d = target.desimal;
   const [awal] = jalur;
   const akhir = jalur[jalur.length - 1];
-  const rentang = teksRentang(awal.lo80, awal.hi80, d);
-  const rentangAkhir = teksRentang(akhir.lo80, akhir.hi80, d);
+  const adaRentang = kalimatRentang(awal.lo80, awal.hi80, d) != null;
   const terakhir = riwayat[riwayat.length - 1];
   const efekBasis =
     target.kunci === "inflasi" && terakhir ? kalimatEfekBasis(jalur, terakhir[1], bulanan) : null;
@@ -113,16 +112,11 @@ function KartuPerkiraan({
       <p className="kartu-angka">
         <data value={awal.point}>{persen(awal.point, d)}</data>
       </p>
-      <p className="kartu-periode">Perkiraan {periode(awal.ref_period)}</p>
-      <p className="prediksi-rentang">
-        {rentang ? `Rentang 80%: ${rentang}` : "Rentang belum tersedia, karena uji dengan data lama untuk jarak ini masih sedikit."}
-      </p>
-      {akhir !== awal && (
-        <p className="prediksi-lanjut">
-          Sampai {periode(akhir.ref_period)}: {persen(akhir.point, d)}
-          {rentangAkhir ? ` (rentang 80%: ${rentangAkhir})` : ""}
-        </p>
+      <p className="prediksi-kalimat">{kalimatPerkiraan(target.judul, awal, d)}</p>
+      {!adaRentang && (
+        <p className="catatan">Rentangnya belum tersedia, karena uji dengan data lama untuk jarak ini masih sedikit.</p>
       )}
+      {akhir !== awal && <p className="prediksi-lanjut">{kalimatPerkiraan("Untuk", akhir, d)}</p>}
       <GrafikPerkiraan
         riwayat={riwayat.slice(target.kunci === "inflasi" ? -24 : target.kunci === "pertumbuhan" ? -12 : -8)}
         ramalan={jalur.map((b) => ({ periode: b.ref_period, titik: b.point, bawah: b.lo80, atas: b.hi80 }))}
@@ -188,14 +182,20 @@ function KartuPerkiraan({
         <summary>
           Rincian per periode<span className="sr-only"> {target.judul}</span>
         </summary>
+        <p className="catatan">
+          {caraSama
+            ? `Angka utama memakai cara: ${NAMA_MODEL[awal.model] ?? awal.model}.`
+            : "Cara yang menjadi angka utama bisa berbeda antarperiode."}
+        </p>
         <div className="gulir-tabel" role="region" aria-label={`Rincian perkiraan ${target.judul}`} tabIndex={0}>
           <table className="kepala-bungkus">
-            <caption>{caraSama ? `Angka utama: ${NAMA_MODEL[awal.model] ?? awal.model}` : "Angka utama per periode"}</caption>
+            <caption>Batas rentang 80% per periode</caption>
             <thead>
               <tr>
                 <th scope="col">Periode</th>
                 <th scope="col">Perkiraan</th>
-                <th scope="col">Rentang 80%</th>
+                <th scope="col">Batas bawah</th>
+                <th scope="col">Batas atas</th>
                 {!caraSama && <th scope="col">Cara</th>}
                 {pembanding.map((m) => (
                   <th scope="col" key={m}>
@@ -209,7 +209,8 @@ function KartuPerkiraan({
                 <tr key={b.ref_period}>
                   <th scope="row">{periode(b.ref_period)}</th>
                   <td className="angka">{persen(b.point, d)}</td>
-                  <td className="angka">{teksRentang(b.lo80, b.hi80, d) ?? "-"}</td>
+                  <td className="angka">{b.lo80 != null ? persen(b.lo80, d) : "-"}</td>
+                  <td className="angka">{b.hi80 != null ? persen(b.hi80, d) : "-"}</td>
                   {!caraSama && <td>{NAMA_MODEL[b.model] ?? b.model}</td>}
                   {pembanding.map((m) => {
                     const lain = semua.find((x) => x.model === m && x.ref_period === b.ref_period);
@@ -400,7 +401,6 @@ export default async function Prediksi() {
 
   return (
     <>
-      <Langit />
       <section className="sampul" aria-labelledby="judul-halaman">
         <div className="sampul-atas">
           <h1 id="judul-halaman" className="sampul-judul">
@@ -412,36 +412,46 @@ export default async function Prediksi() {
             seberapa sering perkiraan itu meleset.
           </p>
         </div>
-        <div className="instrumen">
-          <div className="instrumen-kepala">
-            <p className="alis">Perkiraan Con-Fore</p>
-            <p className="alis">Bukan angka resmi</p>
-          </div>
-          {TARGET_PREDIKSI.map((t, i) => {
-            const [awal] = jalurPer.get(t.kunci)!;
-            const rentang = teksRentang(awal.lo80, awal.hi80, t.desimal);
-            return (
-              <BarisInstrumen
-                key={t.kunci}
-                judul={t.judul}
-                nilai={persen(awal.point, t.desimal)}
-                keterangan={`${periode(awal.ref_period)}, ${rentang ? `rentang 80%: ${rentang}` : "rentang belum tersedia"}`}
-                titik={[gPdb, gInflasi, gTpt][i]}
-                frekuensi={t.kunci === "pertumbuhan" ? "Q" : "M"}
-                href={`#perkiraan-${t.kunci}`}
+        <div className="sampul-panel">
+          {ringkasan ? (
+            <>
+              <div className="sampul-panel-kepala">
+                <h2 id="judul-ringkasan" className="sampul-panel-judul">
+                  Segitiga perkiraan {tahun}
+                </h2>
+                <PilihLensa />
+              </div>
+              <PanelLensa
+                lensa={ringkasan.masaLalu}
+                pembanding={pembanding?.masaLalu.skor}
+                kelas="lensa-masa-lalu"
+                id="kalimat-masa-lalu"
               />
-            );
-          })}
+              {ringkasan.target ? (
+                <PanelLensa
+                  lensa={ringkasan.target}
+                  pembanding={pembanding?.target?.skor}
+                  kelas="lensa-target"
+                  id="kalimat-target"
+                />
+              ) : (
+                <div className="lensa-target">
+                  <p>Lensa target belum tersedia untuk tahun {tahun}, karena target resminya belum lengkap.</p>
+                </div>
+              )}
+              <p className="catatan">
+                Garis putus-putus adalah perkiraan {tahun}, bukan angka resmi. Garis tipis adalah angka resmi{" "}
+                {tahunResmi}. Makin besar segitiganya, makin baik keadaannya. Angka {tahun} memakai angka resmi yang
+                sudah terbit, ditambah perkiraan untuk sisanya: pertumbuhan dari rata-rata empat kuartal, inflasi dari
+                Desember, dan pengangguran dari ronde Agustus. Cara menghitung skornya ada di{" "}
+                <Link href="/metode#skor">Metode</Link>.
+              </p>
+            </>
+          ) : (
+            <p>Segitiga perkiraan belum bisa digambar, karena perkiraan untuk satu tahun penuh belum lengkap.</p>
+          )}
         </div>
         <div className="sampul-bawah">
-          <ul className="sampul-angka">
-            <li>
-              <strong>{new Set(ramalan.map((b) => b.model)).size}</strong> cara dibandingkan
-            </li>
-            <li>
-              <strong>sejak 2012</strong> diuji dengan data lama
-            </li>
-          </ul>
           <p className="sampul-aksi">
             <a href="#judul-rekam" className="tombol tombol-utama">
               Lihat rekam jejak <span aria-hidden="true">&darr;</span>
@@ -456,48 +466,12 @@ export default async function Prediksi() {
 
       <BannerBasi terakhir={status.last_success_at} />
 
-      {ringkasan && (
-        <section aria-labelledby="judul-ringkasan">
-          <p className="alis">Ringkasan perkiraan tahun {tahun}</p>
-          <h2 id="judul-ringkasan">Segitiga keseimbangan</h2>
-          <div className="panel">
-            <p className="catatan">
-              Garis putus-putus adalah perkiraan {tahun}. Garis tipis adalah angka resmi {tahunResmi}. Makin besar
-              segitiganya, makin baik keadaannya. Pilih pembandingnya:
-            </p>
-            <PilihLensa />
-            <PanelLensa
-              lensa={ringkasan.masaLalu}
-              pembanding={pembanding?.masaLalu.skor}
-              kelas="lensa-masa-lalu"
-              id="kalimat-masa-lalu"
-            />
-            {ringkasan.target ? (
-              <PanelLensa
-                lensa={ringkasan.target}
-                pembanding={pembanding?.target?.skor}
-                kelas="lensa-target"
-                id="kalimat-target"
-              />
-            ) : (
-              <div className="lensa-target">
-                <p>Lensa target belum tersedia untuk tahun {tahun}, karena target resminya belum lengkap.</p>
-              </div>
-            )}
-            <p className="catatan">
-              Angka {tahun} memakai angka resmi yang sudah terbit, ditambah perkiraan untuk sisanya. Pertumbuhan dari
-              rata-rata empat kuartal, inflasi dari Desember, dan pengangguran dari ronde Agustus. Cara menghitung
-              skornya ada di <Link href="/metode#skor">Metode</Link>.
-            </p>
-          </div>
-        </section>
-      )}
-
       <section aria-labelledby="judul-perkiraan">
         <h2 id="judul-perkiraan">Tiga perkiraan</h2>
         <p className="catatan">
-          Pada grafik, garis utuh adalah angka resmi, garis putus-putus adalah perkiraan, dan pita adalah rentang
-          80%: pada uji dengan data lama, sekitar 8 dari 10 angka di masa biasa jatuh di dalam pita selebar ini.
+          Kata &quot;kemungkinan&quot; di setiap perkiraan berarti: pada uji dengan data lama, sekitar 8 dari 10 angka
+          resmi di masa biasa jatuh di dalam rentang selebar itu. Pada grafik, garis utuh adalah angka resmi, garis
+          putus-putus adalah perkiraan, dan pita adalah rentangnya.
         </p>
         <div className="kisi-kartu kisi-utama">
           {TARGET_PREDIKSI.map((t, i) => (

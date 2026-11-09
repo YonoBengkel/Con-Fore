@@ -52,7 +52,7 @@ Tiga peran huruf, disajikan dari Vercel sendiri lewat `next/font`, tanpa panggil
 
 - Judul selalu tegak dan berwarna `--tinta`, tanpa kata atau frasa miring.
 - Label kecil di atas judul (`.alis`) hanya dipakai bila membawa info baru, seperti periode, sumber, atau "Bukan angka resmi". Label yang mengulang judul dibuang. Label yang tersisa memakai Inter dengan huruf biasa, bukan kapital semua.
-- Judul sampul 44 sampai 76 px dengan jarak baris 0,98. `h1` halaman lain 36 sampai 44 px, dan `h2` 28 sampai 38 px, bobot 400.
+- Judul sampul 44 sampai 60 px dengan jarak baris 0,98, supaya tetap tiga baris di samping panel segitiga. `h1` halaman lain 36 sampai 44 px, dan `h2` 28 sampai 38 px, bobot 400.
 - Teks dasar 16,5 px dengan jarak baris 1,6. Tidak ada teks di bawah 12 px.
 - Angka memakai format Indonesia: koma desimal, titik ribuan, dan tanda persen menempel ("5,5%", "18.143"). Selisih dua persentase ditulis "poin persen". Kalimat memakai kata biasa ("dibanding setahun sebelumnya"), label pendek memakai "tahunan", dan "y-on-y" disebut sekali di penjelas (PRD 4.4).
 
@@ -69,7 +69,7 @@ Tiga peran huruf, disajikan dari Vercel sendiri lewat `next/font`, tanpa panggil
 - **Sampul tab Prediksi:** susunan yang sama dengan beranda, dengan judul "Ke mana arahnya, dan seberapa yakin." dan segitiga perkiraan sebagai visual utama.
 - **Segitiga keseimbangan:** SVG, tiga sudut (Pertumbuhan, Harga stabil, Lapangan kerja), kisi 25/50/75/100, skor bulat di tiap sudut. Kalimat ringkasan di sebelahnya menjadi teks alternatif (`aria-labelledby`).
 - **Pilihan lensa:** dua tombol segmen ("Masa lalu", "Target resmi"), tersimpan di URL.
-- **Kartu angka:** judul, nama seri, angka, perubahan, grafik kecil, lencana label kejujuran, dan tautan riwayat dan unduh CSV. Periode data, tanggal rilis, dan tanggal rilis berikutnya selalu terlihat. Kartu utama menampilkan "Artinya buatmu". Kartu penggerak melipatnya bersama sumber, supaya delapan kartu tetap terbaca sekilas.
+- **Kartu angka:** judul, nama seri, angka, perubahan, grafik kecil, lencana label kejujuran, dan tautan riwayat dan unduh CSV. Periode data, tanggal rilis, dan tanggal rilis berikutnya selalu terlihat. Bila sumbernya tidak mencatat tanggal rilis per angka (WebAPI BPS), yang tampil tanggal Con-Fore pertama kali melihat angka itu, dengan label "Dilihat Con-Fore". Kartu utama menampilkan "Artinya buatmu". Kartu penggerak melipatnya bersama sumber, supaya delapan kartu tetap terbaca sekilas.
 - **Baris rilis berikutnya:** satu baris di bawah tiga kartu utama, berisi tanggal rilis berikutnya untuk ketiganya.
 - **Kartu perkiraan:** kalimat utama yang memuat angka dan rentangnya, misalnya (angka contoh) "diperkirakan 2,1%, kemungkinan antara 1,6% dan 2,6%", lalu grafik, label, dan "Artinya buatmu" terbuka. Arti "kemungkinan" dijelaskan sekali di tab Prediksi. "Kenapa perkiraannya begini" dan rincian per periode dilipat.
 - **Tabel batas:** tabel kecil berisi periode, perkiraan, batas bawah, dan batas atas. Satu-satunya tempat istilah "rentang 80%".

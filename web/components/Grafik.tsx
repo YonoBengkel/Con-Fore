@@ -223,7 +223,7 @@ export function GrafikPerkiraan({
     `Grafik ${nama}. Angka resmi sampai ${periode(terakhir[0])} sebesar ${teks(terakhir[1])}. ` +
     `Perkiraan sampai ${periode(akhir.periode)} sebesar ${teks(akhir.titik)}` +
     (akhir.bawah != null && akhir.atas != null
-      ? `, dengan rentang 80% dari ${teks(akhir.bawah)} sampai ${teks(akhir.atas)}.`
+      ? `, kemungkinan antara ${teks(akhir.bawah)} dan ${teks(akhir.atas)}.`
       : ".");
   const xBatas = x(terakhir[0]);
   return (
@@ -233,8 +233,8 @@ export function GrafikPerkiraan({
       <text x={kiri - 6} y={atas + 4} textAnchor="end" className="sumbu">{angka(max, 1)}%</text>
       <text x={kiri - 6} y={atas + tinggi + 4} textAnchor="end" className="sumbu">{angka(min, 1)}%</text>
       <line x1={xBatas} x2={xBatas} y1={atas} y2={atas + tinggi} className="batas-resmi" />
-      <text x={xBatas - 5} y={atas - 9} textAnchor="end" className="sumbu">Resmi</text>
-      <text x={xBatas + 5} y={atas - 9} className="sumbu">Perkiraan</text>
+      <text x={xBatas - 5} y={atas - 9} textAnchor="end" className="sumbu kata">Resmi</text>
+      <text x={xBatas + 5} y={atas - 9} className="sumbu kata">Perkiraan</text>
       {pita && <path d={pita} className="pita-rentang" />}
       <path d={garis(riwayat)} className="garis" />
       <path
@@ -299,10 +299,12 @@ export function GrafikJangkaPanjang({
       {target.map(([p, v]) => (
         <circle key={p} cx={x(p)} cy={y(v)} r={4.5} className="target-titik" />
       ))}
-      <text x={x(akhirImf[0]) + 8} y={y(akhirImf[1]) + 4} className="sumbu-nilai">IMF {teks(akhirImf[1])}</text>
+      <text x={x(akhirImf[0]) + 8} y={y(akhirImf[1]) + 4} className="sumbu-nilai">
+        <tspan className="kata">IMF</tspan> {teks(akhirImf[1])}
+      </text>
       {akhirTarget && (
         <text x={x(akhirTarget[0]) + 9} y={y(akhirTarget[1]) + 4} className="sumbu-nilai">
-          RPJMN {teks(akhirTarget[1])}
+          <tspan className="kata">RPJMN</tspan> {teks(akhirTarget[1])}
         </text>
       )}
       <text x={kiri} y={H - 6} className="sumbu">{resmi[0][0]}</text>
