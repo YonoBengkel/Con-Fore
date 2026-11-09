@@ -92,3 +92,9 @@ Tiga peran huruf, disajikan dari Vercel sendiri lewat `next/font`, tanpa panggil
 ## Belum diputuskan
 
 - Logo penuh (sekarang tanda segitiga dan teks "Con-Fore").
+
+## Referensi
+
+- atlasgeopo.com (https://atlasgeopo.com/en): susunan dan ritme, rinciannya di bagian Arah. Halaman pembanding negaranya (`/en/comparateur`, dua kolom) menjadi acuan halaman pembanding fase 7.
+
+Sebelum keputusan desain baru (halaman atau layar baru, atau arah visual baru), buka daftar referensi desain yang disebut di aturan agent, kecuali proyek ini punya `.no-vault`, lalu catat referensi yang dipakai di sini. Baris ini tetap di sini.

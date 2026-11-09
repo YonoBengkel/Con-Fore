@@ -1,6 +1,6 @@
 # PRD Con-Fore
 
-> Status: disetujui pengelola 2026-10-30. Tambahan 2026-11-03 (bagian 4.4 dan butir terkait di 4, 5, 7, dan 9) disetujui pengelola hari itu. Tambahan 2026-11-07 (arti "lebih akurat" di bagian 6, dan penggerak yang tidak dikarang di 4.1) diusulkan agent saat fase 3 dan 4, dan menunggu persetujuan pengelola. Tema terang dihapus dari ukuran Tampilan di bagian 6, karena pengelola memilih migrasi penuh ke arah atlasgeopo.com pada 2026-11-07. Fase 6 (otomasi perawatan) di bagian 8 ditambahkan atas keputusan pengelola 2026-11-08. Menggantikan `docs/RENCANA-MVP.md`. Detail teknis ada di [ARCHITECTURE.md](ARCHITECTURE.md) dan [SCHEMA.md](SCHEMA.md).
+> Status: disetujui pengelola 2026-10-30. Tambahan 2026-11-03 (bagian 4.4 dan butir terkait di 4, 5, 7, dan 9) disetujui pengelola hari itu. Tambahan 2026-11-07 (arti "lebih akurat" di bagian 6, dan penggerak yang tidak dikarang di 4.1) diusulkan agent saat fase 3 dan 4, dan menunggu persetujuan pengelola. Tema terang dihapus dari ukuran Tampilan di bagian 6, karena pengelola memilih migrasi penuh ke arah atlasgeopo.com pada 2026-11-07. Fase 6 (otomasi perawatan) di bagian 8 ditambahkan atas keputusan pengelola 2026-11-08. Fase 7 (pembanding negara) di bagian 8 dan catatannya di bagian 5 ditambahkan atas keputusan pengelola di hari yang sama. Menggantikan `docs/RENCANA-MVP.md`. Detail teknis ada di [ARCHITECTURE.md](ARCHITECTURE.md) dan [SCHEMA.md](SCHEMA.md).
 
 ## 1. Masalah
 
@@ -81,7 +81,7 @@ Ringkasan di kedua tab berupa **segitiga keseimbangan** (pertumbuhan, harga stab
 
 ## 5. Bukan tujuan MVP
 
-- Negara lain dan model panel lintas negara.
+- Negara lain dan model panel lintas negara. Sesudah MVP, fase 7 hanya menambah pembanding proyeksi IMF untuk empat negara tetangga, tanpa model Con-Fore untuk negara itu.
 - Model skenario jangka panjang sendiri (World Bank LTGM).
 - Dasbor fondasi struktural: tata kelola, korupsi, SDG, pendidikan.
 - Sentimen berita (GDELT), data alternatif (kunjungan kapal, lampu malam), dan panel cek silang PDB.
@@ -126,6 +126,7 @@ Risiko teknis ada di [ARCHITECTURE.md](ARCHITECTURE.md#5-risiko-utama).
 | 4. Tab Prediksi (v0.2) | Forecast dan rentang, penjelasan, jangka panjang, rekam jejak | Semua perkiraan berlabel dan bersumber |
 | 5. Pengerasan (MVP) | Pemantauan, uji tujuh hari, halaman Cara kerja | Tujuh hari berturut-turut ter-update otomatis |
 | 6. Otomasi perawatan | Dimulai sesudah uji tujuh hari lulus. Pengingat lewat issue GitHub untuk tabel tahunan (target resmi, kalender rilis, tanggal Lebaran) dan satu workflow pemeriksa untuk cek bulanan. Tanpa panggilan model AI. Angka resmi dari dokumen tetap disetujui pengelola, dan agent hanya dipakai untuk mengubah kode dan menulis teks penjelas | Cek bulanan di RUNBOOK yang bisa dijalankan script tidak lagi manual, dan setiap pengingat terbukti membuka issue saat diuji |
+| 7. Pembanding negara | Dimulai sesudah fase 6. Satu halaman yang menampilkan proyeksi IMF untuk Indonesia dan satu negara pilihan pengunjung (Malaysia, Thailand, Filipina, atau Vietnam) berdampingan: pertumbuhan, inflasi akhir tahun, dan pengangguran sampai tahun terakhir proyeksi IMF. Perkiraan Con-Fore untuk Indonesia tampil sebagai baris berlabel pada tahun yang juga diramal Con-Fore. Tanpa rentang, karena IMF tidak menerbitkannya. Model Con-Fore untuk negara lain tidak termasuk | Keempat pasangan tampil benar di HP dan desktop, setiap angka berlabel proyeksi IMF dengan sumber dan tanggal terbitnya, dan perbedaan definisi pengangguran antarnegara tertulis di halaman |
 
 Keputusan produk dan alasannya dicatat di catatan proyek pengelola; dokumen ini hanya memuat hasilnya.
 

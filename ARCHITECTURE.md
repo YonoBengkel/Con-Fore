@@ -356,7 +356,7 @@ Semua permintaan diberi jeda 1 detik dari permintaan sebelumnya, hanya mengikuti
 
 - **Pengunjung:** halaman cache di CDN Vercel; Supabase hanya dibaca saat revalidasi, sehingga egress tidak mengikuti jumlah pengunjung.
 - **Data:** tabel `public.chart_series` menyimpan satu baris per grafik (menghindari batas 1.000 baris Data API dan menghemat egress). Peringatan muncul saat database mencapai 300 MB dari batas 500 MB.
-- **Negara lain (setelah MVP):** registri seri sudah memuat kode negara, sehingga negara baru berarti baris konfigurasi baru, bukan kode baru.
+- **Negara lain (setelah MVP):** registri seri sudah memuat kode negara, sehingga data negara baru cukup lewat baris konfigurasi. Model masih khusus Indonesia, karena `confore/models/data.py` memakai seri BPS dan kalender Lebaran secara langsung, jadi meramal negara lain butuh perubahan kode. Karena itu fase 7 hanya memakai proyeksi IMF (PRD 8).
 
 ### 4.12 Error tracking dan log
 
