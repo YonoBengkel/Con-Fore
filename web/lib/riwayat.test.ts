@@ -1,7 +1,32 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { Titik } from "./data";
-import { barisRiwayat, jarangkan, kalimatPeriode, kalimatRiwayat } from "./riwayat.ts";
+import { barisRiwayat, jarangkan, judulTemuan, kalimatPeriode, kalimatRiwayat } from "./riwayat.ts";
+
+test("judul temuan membandingkan periode yang sama setahun sebelumnya dengan kata netral", () => {
+  const hasil = [
+    judulTemuan([["2025-09", 2.0], ["2025-10", 1.9], ["2026-09", 3.3], ["2026-10", 3.2]], "%", "yoy"),
+    judulTemuan([["2025-Q3", 5.0], ["2026-Q2", 5.3], ["2026-Q3", 4.9]], "%", "yoy"),
+    judulTemuan([["2025-08", 4.85], ["2026-02", 4.68], ["2026-08", 4.75]], "% angkatan kerja", "round_rate"),
+    judulTemuan([["2025-09", 5.75], ["2026-09", 5.749]], "% per tahun", "rate"),
+    judulTemuan([["2025-11-05", 16300], ["2025-11-07", 16350], ["2026-11-06", 18100]], "rupiah per dolar AS", "level"),
+    judulTemuan([["2025-10", 99.2], ["2026-10", 98.6]], "indeks, rata-rata jangka panjang = 100", "level"),
+  ];
+  assert.deepEqual(hasil, [
+    "Dibanding Oktober 2025, angka ini naik dari 1,9% ke 3,2%.",
+    "Dibanding kuartal III 2025, angka ini turun dari 5,0% ke 4,9%.",
+    "Dibanding Agustus 2025, angka ini turun dari 4,85% ke 4,75%.",
+    "Dibanding September 2025, angka ini tetap 5,75%.",
+    "Dibanding 5 November 2025, angka ini naik dari 16.300 ke 18.100 rupiah per dolar AS.",
+    "Dibanding Oktober 2025, angka ini turun dari 99,2 ke 98,6.",
+  ]);
+  for (const k of hasil) assert.doesNotMatch(k ?? "", /membaik|memburuk|mengkhawatirkan|baik|buruk|solid|anjlok|melonjak/);
+});
+
+test("judul temuan memakai titik pertama bila riwayatnya belum setahun", () => {
+  assert.equal(judulTemuan([["2026-08", 3.0], ["2026-10", 3.2]], "%", "yoy"), "Sejak Agustus 2026, angka ini naik dari 3,0% ke 3,2%.");
+  assert.equal(judulTemuan([["2026-10", 3.2]], "%", "yoy"), null);
+});
 
 const bulanan = (n: number, nilai: (i: number) => number): Titik[] =>
   Array.from({ length: n }, (_, i) => [

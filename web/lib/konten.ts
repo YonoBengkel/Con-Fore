@@ -168,6 +168,16 @@ function gerakHarga(nilai: number, desimal: number, pembanding: string, awalan =
   return `${awalan}${angka(Math.abs(tampil), desimal)}% ${tampil > 0 ? "lebih mahal" : "lebih murah"} dibanding ${pembanding}`;
 }
 
+/**
+ * Contoh hitung inflasi dengan angka tetap (PRD 4.4), dari angka yang tampil (satu desimal), dibulatkan ke
+ * Rp100 terdekat: "Belanjaan yang setahun lalu seharga Rp100.000 kini sekitar Rp103.200."
+ */
+function contohBelanja(nilai: number): string {
+  const tampil = Number(nilai.toFixed(1));
+  const kini = Math.round((100000 * (1 + tampil / 100)) / 100) * 100;
+  return `Belanjaan yang setahun lalu seharga Rp100.000 kini sekitar Rp${angka(kini, 0)}.`;
+}
+
 /** Penjelasan sehari-hari untuk satu nilai, atau null bila belum ada penjelasan untuk seri itu. */
 export function artinyaBuatmu(seri: string, nilai: number): string | null {
   const kelompok = KELOMPOK_INFLASI.find((k) => k.setahun === seri || k.sebulan === seri);
@@ -188,7 +198,7 @@ export function artinyaBuatmu(seri: string, nilai: number): string | null {
   }
   if (jenis === "inflasi") {
     const arah = nilai >= 0 ? "lebih mahal" : "lebih murah";
-    return `Rata-rata harga barang dan jasa ${angka(Math.abs(nilai), 1)}% ${arah} dibanding setahun sebelumnya. Kalau penghasilanmu naik kurang dari itu dalam setahun, daya belimu turun.`;
+    return `Rata-rata harga barang dan jasa ${angka(Math.abs(nilai), 1)}% ${arah} dibanding setahun sebelumnya. ${contohBelanja(nilai)} Kalau penghasilanmu naik kurang dari itu dalam setahun, daya belimu turun.`;
   }
   if (jenis === "pengangguran") {
     return `Dari setiap 100 orang angkatan kerja (yang bekerja atau sedang mencari kerja), sekitar ${angka(nilai, 0)} belum mendapat pekerjaan. Makin rendah angkanya, makin mudah orang mendapat kerja.`;
