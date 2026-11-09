@@ -9,11 +9,12 @@ import {
   kalimatCara,
   kalimatEfekBasis,
   kalimatJangkaPanjang,
+  kalimatPerkiraan,
+  kalimatRentang,
   maeModel,
   modelTerurut,
   nilaiTahunPerkiraan,
   tahunPerkiraan,
-  teksRentang,
 } from "./prediksi.ts";
 
 function ramalan(series_id: string, ref_period: string, point: number, ubah: Partial<BarisRamalan> = {}): BarisRamalan {
@@ -47,9 +48,18 @@ test("jalur utama hanya angka utama satu seri, urut menurut periode", () => {
   assert.deepEqual(jalurUtama(baris, "a").map((b) => b.point), [2, 3]);
 });
 
-test("rentang kosong bila backtest belum cukup", () => {
-  assert.equal(teksRentang(null, 3, 1), null);
-  assert.equal(teksRentang(2.7, 3.8, 1), "2,7% sampai 3,8%");
+test("rentang ditulis dengan kata, dan kosong bila backtest belum cukup", () => {
+  assert.equal(kalimatRentang(null, 3, 1), null);
+  assert.equal(kalimatRentang(2.7, 3.8, 1), "kemungkinan antara 2,7% dan 3,8%");
+});
+
+test("kalimat utama perkiraan memuat periode, angka, dan rentang bila ada", () => {
+  assert.equal(
+    kalimatPerkiraan("Inflasi", ramalan("x", "2026-12", 2.1, { lo80: 1.6, hi80: 2.6 }), 1),
+    "Inflasi Desember 2026 diperkirakan 2,1%, kemungkinan antara 1,6% dan 2,6%.",
+  );
+  assert.equal(kalimatPerkiraan("Pengangguran", ramalan("x", "2026-11", 4.75), 2), "Pengangguran November 2026 diperkirakan 4,75%.");
+  assert.doesNotMatch(kalimatPerkiraan("Inflasi", ramalan("x", "2026-12", 2.1, { lo80: 1.6, hi80: 2.6 }), 1), /80%/);
 });
 
 test("tahun perkiraan mengikuti kuartal IV pertama yang belum terbit", () => {

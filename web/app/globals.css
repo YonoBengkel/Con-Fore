@@ -166,46 +166,6 @@ main > section > h2:first-child {
   margin-top: 4rem;
 }
 
-/* Latar kisi segitiga: dibesarkan sampai menjadi cakrawala, hanya hiasan */
-
-.langit {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.langit svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.langit-kisi {
-  fill: none;
-  stroke: rgba(150, 190, 230, 0.09);
-  stroke-width: 1;
-}
-
-.langit-tepi {
-  fill: none;
-  stroke: var(--aksen);
-  stroke-opacity: 0.32;
-  stroke-width: 1.5;
-}
-
-.langit-pijar {
-  fill: none;
-  stroke: var(--aksen);
-  stroke-opacity: 0.06;
-  stroke-width: 14;
-}
-
-.langit-titik {
-  fill: rgba(190, 220, 245, 0.28);
-}
-
 /* Kepala dan navigasi */
 
 .kepala {
@@ -284,7 +244,7 @@ main > section > h2:first-child {
 }
 
 .sampul-judul {
-  font-size: clamp(2.75rem, 1.6rem + 5vw, 4.75rem);
+  font-size: clamp(2.75rem, 1.6rem + 4vw, 3.75rem);
   line-height: 0.98;
   letter-spacing: -0.01em;
   margin-bottom: 1.25rem;
@@ -294,24 +254,6 @@ main > section > h2:first-child {
   color: var(--redup);
   font-size: 1.0625rem;
   max-width: 36rem;
-}
-
-.sampul-angka {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.5rem;
-  padding: 0;
-  margin: 0 0 1.5rem;
-  color: var(--redup);
-  font-size: 0.875rem;
-}
-
-.sampul-angka strong {
-  font-family: var(--huruf-angka);
-  font-weight: 500;
-  color: var(--tinta);
-  font-size: 1rem;
 }
 
 .sampul-aksi {
@@ -352,67 +294,36 @@ main > section > h2:first-child {
   border-color: #93e6f1;
 }
 
-/* Panel instrumen: tiga angka di sampul */
+/* Panel segitiga di sampul: visual utama beranda dan tab Prediksi, satu-satunya panel berbayang */
 
-.instrumen {
+.sampul-panel {
   background: var(--kartu);
   border: 1px solid var(--garis-kuat);
   border-radius: var(--r-panel);
-  padding: 1.1rem 1.25rem 0.4rem;
+  padding: 1.1rem 1rem 0.5rem;
   box-shadow: 0 24px 60px -30px rgba(0, 0, 0, 0.8);
 }
 
-.instrumen-kepala {
+.sampul-panel-kepala {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 0.25rem 1rem;
-  padding-bottom: 0.65rem;
-}
-
-.instrumen-kepala .alis {
-  margin: 0;
-}
-
-.instrumen-baris {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 6.5rem;
   align-items: center;
-  gap: 0 1rem;
-  padding: 0.85rem 0.25rem;
-  border-top: 1px solid var(--garis);
-  color: var(--tinta);
-  text-decoration: none;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
 }
 
-.instrumen-baris:hover .instrumen-nama {
-  color: var(--aksen);
-}
-
-.instrumen-nama {
-  display: block;
-  font-size: 0.875rem;
-  color: var(--redup);
-}
-
-.instrumen-nilai {
-  display: block;
-  font-family: var(--huruf-angka);
-  font-size: 1.625rem;
-  font-weight: 500;
-  line-height: 1.25;
-  letter-spacing: -0.02em;
-}
-
-.instrumen-ket {
-  display: block;
-  font-size: 0.8125rem;
-  line-height: 1.4;
-  color: var(--samar);
-}
-
-.instrumen-baris .garis-kecil {
+.sampul-panel-judul {
+  font-size: 1.375rem;
   margin: 0;
+}
+
+.sampul-panel .pilih-lensa {
+  margin: 0;
+}
+
+.sampul-panel .catatan {
+  margin-top: 1rem;
 }
 
 /* Bagian halaman */
@@ -666,6 +577,23 @@ html[data-lensa="target"] .lensa-masa-lalu {
 
 .kartu-ubah {
   color: var(--redup);
+}
+
+/* Tanggal rilis dan rilis berikutnya, selalu terlihat di dekat angka */
+.kartu-waktu {
+  margin: 0.1rem 0 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.baris-rilis {
+  margin-top: 1rem;
+  color: var(--redup);
+  font-size: 0.9375rem;
+}
+
+.baris-rilis strong {
+  color: var(--tinta);
+  font-weight: 600;
 }
 
 .garis-kecil {
@@ -929,6 +857,11 @@ td.angka {
   font-family: var(--huruf-angka);
 }
 
+/* Kata di dalam grafik memakai huruf isi, karena mono hanya untuk angka dan tanggal (DESIGN.md) */
+.grafik-riwayat .kata {
+  font-family: var(--huruf);
+}
+
 .grafik-riwayat .titik-akhir {
   fill: var(--aksen);
   stroke: var(--permukaan);
@@ -957,7 +890,7 @@ td.angka {
 
 /* Tab Prediksi */
 
-.prediksi-rentang {
+.prediksi-kalimat {
   font-size: 0.9375rem;
   margin-bottom: 0.25rem;
 }
@@ -1407,6 +1340,15 @@ td.angka {
     grid-template-columns: minmax(260px, 340px) 1fr;
   }
 
+  .sampul-panel {
+    padding: 1.5rem 1.5rem 0.75rem;
+  }
+
+  .sampul-panel .ringkasan {
+    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+    gap: 1rem 1.5rem;
+  }
+
   .kisi-penggerak {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1435,13 +1377,13 @@ td.angka {
 
 @media (min-width: 960px) {
   .sampul {
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
     grid-template-rows: auto auto;
-    gap: 1.25rem 3.5rem;
+    gap: 1.25rem 3rem;
     padding-top: 4.5rem;
   }
 
-  .sampul .instrumen {
+  .sampul .sampul-panel {
     grid-column: 2;
     grid-row: 1 / span 2;
     align-self: center;
@@ -1519,8 +1461,7 @@ td.angka {
   .pilih-lensa a,
   .nav-utama a,
   .tombol,
-  .kaki a,
-  .instrumen-nama {
+  .kaki a {
     transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
       border-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
   }

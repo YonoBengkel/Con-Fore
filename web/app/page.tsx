@@ -1,10 +1,9 @@
-// Tab Data (beranda): segitiga data resmi, tiga angka utama, penggerak, dan target resmi.
+// Tab Data (beranda): segitiga data resmi di sampul, tiga angka utama, penggerak, dan target resmi.
 // Tanpa ramalan. Semua data dibaca di server lalu di-cache (ISR); browser tidak memanggil Supabase.
 
 import Link from "next/link";
-import { BarisDataResmi, KartuKosong, KartuSeri, TabelTarget } from "@/components/Kartu";
+import { KartuKosong, KartuSeri, TabelTarget } from "@/components/Kartu";
 import { BannerBasi, PilihLensa } from "@/components/Klien";
-import { Langit } from "@/components/Langit";
 import { DaftarStatus, Segitiga } from "@/components/Segitiga";
 import {
   bacaGrafik,
@@ -17,7 +16,7 @@ import {
   type MetaSeri,
   type NilaiTerakhir,
 } from "@/lib/data";
-import { periode, waktuWIB } from "@/lib/format";
+import { periode, tanggal, waktuWIB } from "@/lib/format";
 import {
   JUDUL_KARTU,
   KELOMPOK_INFLASI,
@@ -26,7 +25,6 @@ import {
   SERI_KARTU,
   SERI_TPT_RONDE,
   STATUS_VERIFIKASI,
-  adalahProyeksi,
   namaPendek,
   type KunciKartu,
 } from "@/lib/konten";
@@ -78,23 +76,35 @@ export default async function Beranda() {
 
   const metaPer = new Map<string, MetaSeri>(meta.map((m) => [m.series_id, m]));
   const nilaiPer = new Map<string, NilaiTerakhir>(nilai.map((n) => [n.series_id, n]));
-  // Jadwal siapa yang menjadi next_release_date tiap seri (SCHEMA 2.2).
-  const jadwal = (id: string) => {
+  // Rilis di kalender yang menjadi next_release_date tiap seri (SCHEMA 2.2).
+  const rilisBerikutnya = (id: string) => {
     const tgl = metaPer.get(id)?.next_release_date?.slice(0, 10);
-    return kalender.find((r) => r.series_id === id && r.release_date.slice(0, 10) === tgl)?.calendar_source;
+    return tgl ? kalender.find((r) => r.series_id === id && r.release_date.slice(0, 10) === tgl) : undefined;
   };
+  const jadwal = (id: string) => rilisBerikutnya(id)?.calendar_source;
   const ringkasan = buatRingkasan(grafik, target);
   const pekerja = kalimatPekerja(titikSeri(grafik, SERI_FORMAL), titikSeri(grafik, SERI_TPT_RONDE));
   const tahunTarget = ringkasan?.tahun ?? 0;
   const targetTerdekat = target.filter((t) => t.year >= tahunTarget && t.target_kind !== "rpjmn");
   const adaBerita = ringkasan?.target?.sumber.some((s) => s.verification === "berita");
-  const seriData = meta.filter((m) => !adalahProyeksi(m.series_id));
   const kunciKartu = Object.keys(SERI_KARTU) as KunciKartu[];
   const seriKartu = (kunci: KunciKartu) => SERI_KARTU[kunci].find((s) => nilaiPer.has(s) && metaPer.has(s));
 
+  // Satu baris rilis berikutnya untuk ketiga angka utama, dari yang paling dekat (PRD 4.1).
+  const barisRilis = kunciKartu
+    .flatMap((kunci) => {
+      const id = seriKartu(kunci);
+      const tgl = id ? metaPer.get(id)?.next_release_date?.slice(0, 10) : undefined;
+      if (!id || !tgl) return [];
+      const r = rilisBerikutnya(id);
+      const perkiraan = !r || r.calendar_source.endsWith("-perkiraan");
+      const isi = r ? `${JUDUL_KARTU[kunci].toLowerCase()} ${periode(r.ref_period)}` : JUDUL_KARTU[kunci].toLowerCase();
+      return [{ tgl, teks: `${isi} pada ${perkiraan ? "sekitar " : ""}${tanggal(tgl)}` }];
+    })
+    .sort((a, b) => a.tgl.localeCompare(b.tgl));
+
   return (
     <>
-      <Langit />
       <section className="sampul" aria-labelledby="judul-halaman">
         <div className="sampul-atas">
           <h1 id="judul-halaman" className="sampul-judul">
@@ -105,37 +115,50 @@ export default async function Beranda() {
             mendapat kerja. Dari data resmi, dijelaskan dengan bahasa sehari-hari.
           </p>
         </div>
-        <div className="instrumen">
-          <div className="instrumen-kepala">
-            <p className="alis">Indonesia</p>
-            <p className="alis">Data terbit terakhir</p>
-          </div>
-          {kunciKartu.map((kunci) => {
-            const id = seriKartu(kunci);
-            if (!id) return null;
-            return (
-              <BarisDataResmi
-                key={kunci}
-                judul={JUDUL_KARTU[kunci]}
-                meta={metaPer.get(id)!}
-                nilai={nilaiPer.get(id)!}
-                titik={titikSeri(grafik, id)}
-              />
-            );
-          })}
+        <div className="sampul-panel">
+          {ringkasan ? (
+            <>
+              <div className="sampul-panel-kepala">
+                <h2 id="judul-ringkasan" className="sampul-panel-judul">
+                  Segitiga keseimbangan {ringkasan.tahun}
+                </h2>
+                <PilihLensa />
+              </div>
+              <PanelLensa lensa={ringkasan.masaLalu} kelas="lensa-masa-lalu" id="kalimat-masa-lalu" />
+              {ringkasan.target ? (
+                <PanelLensa
+                  lensa={ringkasan.target}
+                  kelas="lensa-target"
+                  id="kalimat-target"
+                  catatan={
+                    adaBerita && (
+                      <p className="catatan">
+                        Sebagian target {ringkasan.tahun} masih{" "}
+                        {STATUS_VERIFIKASI.berita.replace(/^dari /, "bersumber ")}. Lihat{" "}
+                        <Link href="/metode#target">tabel target</Link>.
+                      </p>
+                    )
+                  }
+                />
+              ) : (
+                <div className="lensa-target">
+                  <p>
+                    Lensa target belum tersedia untuk tahun {ringkasan.tahun}, karena target resminya belum
+                    lengkap.
+                  </p>
+                </div>
+              )}
+              <p className="catatan">
+                Segitiga ini memakai tahun terakhir yang ketiga angkanya sudah terbit. Makin besar segitiganya,
+                makin baik keadaannya. Sumber angkanya salinan IMF (World Economic Outlook) dari data BPS. Cara
+                menghitung skornya ada di <Link href="/metode#skor">Metode</Link>.
+              </p>
+            </>
+          ) : (
+            <p>Ringkasan belum bisa dihitung karena data tahunan belum lengkap.</p>
+          )}
         </div>
         <div className="sampul-bawah">
-          <ul className="sampul-angka">
-            <li>
-              <strong>{seriData.length}</strong> seri data
-            </li>
-            <li>
-              <strong>{new Set(seriData.map((m) => m.source_id)).size}</strong> lembaga sumber
-            </li>
-            <li>
-              <strong>setiap hari</strong> diperbarui otomatis
-            </li>
-          </ul>
           <p className="sampul-aksi">
             <Link href="/prediksi" className="tombol tombol-utama">
               Lihat perkiraan <span aria-hidden="true">&rarr;</span>
@@ -159,50 +182,6 @@ export default async function Beranda() {
           diperbarui. Angka yang terdampak ditandai &quot;terlambat diperbarui&quot;.
         </div>
       )}
-
-      <section aria-labelledby="judul-ringkasan">
-        <p className="alis">Ringkasan {ringkasan ? `tahun ${ringkasan.tahun}` : ""}</p>
-        <h2 id="judul-ringkasan">Segitiga keseimbangan</h2>
-        {ringkasan ? (
-          <div className="panel">
-            <p className="catatan">
-              Segitiga ini memakai tahun terakhir yang ketiga angkanya sudah terbit. Makin besar
-              segitiganya, makin baik keadaannya. Pilih pembandingnya:
-            </p>
-            <PilihLensa />
-            <PanelLensa lensa={ringkasan.masaLalu} kelas="lensa-masa-lalu" id="kalimat-masa-lalu" />
-            {ringkasan.target ? (
-              <PanelLensa
-                lensa={ringkasan.target}
-                kelas="lensa-target"
-                id="kalimat-target"
-                catatan={
-                  adaBerita && (
-                    <p className="catatan">
-                      Sebagian target {ringkasan.tahun} masih{" "}
-                      {STATUS_VERIFIKASI.berita.replace(/^dari /, "bersumber ")}. Lihat{" "}
-                      <Link href="/metode#target">tabel target</Link>.
-                    </p>
-                  )
-                }
-              />
-            ) : (
-              <div className="lensa-target">
-                <p>
-                  Lensa target belum tersedia untuk tahun {ringkasan.tahun}, karena target resminya
-                  belum lengkap.
-                </p>
-              </div>
-            )}
-            <p className="catatan">
-              Sumber angka segitiga: salinan IMF (World Economic Outlook) dari data BPS. Cara
-              menghitung skornya ada di <Link href="/metode#skor">Metode</Link>.
-            </p>
-          </div>
-        ) : (
-          <p>Ringkasan belum bisa dihitung karena data tahunan belum lengkap.</p>
-        )}
-      </section>
 
       <section aria-labelledby="judul-angka">
         <h2 id="judul-angka">Tiga angka utama</h2>
@@ -230,6 +209,11 @@ export default async function Beranda() {
             );
           })}
         </div>
+        {barisRilis.length > 0 && (
+          <p className="baris-rilis">
+            <strong>Rilis berikutnya:</strong> {barisRilis.map((r) => r.teks).join(", ")}.
+          </p>
+        )}
       </section>
 
       <section aria-labelledby="judul-penggerak">
