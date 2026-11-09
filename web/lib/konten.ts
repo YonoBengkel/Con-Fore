@@ -169,17 +169,34 @@ function gerakHarga(nilai: number, desimal: number, pembanding: string, awalan =
 }
 
 /**
- * Contoh hitung inflasi dengan angka tetap (PRD 4.4), dari angka yang tampil (satu desimal), dibulatkan ke
- * Rp100 terdekat: "Belanjaan yang setahun lalu seharga Rp100.000 kini sekitar Rp103.200."
+ * Isi keranjang belanja Rp100.000 setahun lalu sesudah inflasi (PRD 4.4), dari angka yang tampil (satu
+ * desimal), dibulatkan ke Rp100 terdekat: "Rp103.200".
  */
-function contohBelanja(nilai: number): string {
+function keranjangKini(nilai: number): string {
   const tampil = Number(nilai.toFixed(1));
-  const kini = Math.round((100000 * (1 + tampil / 100)) / 100) * 100;
-  return `Belanjaan yang setahun lalu seharga Rp100.000 kini sekitar Rp${angka(kini, 0)}.`;
+  return `Rp${angka(Math.round((100000 * (1 + tampil / 100)) / 100) * 100, 0)}`;
 }
 
-/** Penjelasan sehari-hari untuk satu nilai, atau null bila belum ada penjelasan untuk seri itu. */
-export function artinyaBuatmu(seri: string, nilai: number): string | null {
+/**
+ * Arah inflasi dibanding bulan sebelumnya dalam bahasa sehari-hari (PRD 4.4), dari angka yang tampil (satu
+ * desimal). Null bila tidak ada pembanding, atau bila harga rata-rata tidak naik dibanding setahun sebelumnya.
+ */
+export function arahInflasi(nilai: number, sebelumnya: number | null | undefined): string | null {
+  if (sebelumnya == null) return null;
+  const kini = Number(nilai.toFixed(1));
+  const lalu = Number(sebelumnya.toFixed(1));
+  if (kini <= 0) return null;
+  if (kini < lalu) return "Harga masih naik, tetapi lebih lambat dibanding bulan lalu.";
+  if (kini > lalu) return "Harga naik lebih cepat dibanding bulan lalu.";
+  return "Harga naik secepat bulan lalu.";
+}
+
+/**
+ * Penjelasan sehari-hari untuk satu nilai, atau null bila belum ada penjelasan untuk seri itu. Tiga angka
+ * utama dibuka dengan perumpamaan (uji baca 2026-11-09). `sebelumnya` = nilai periode sebelumnya, dipakai
+ * untuk arah inflasi bulanan.
+ */
+export function artinyaBuatmu(seri: string, nilai: number, sebelumnya?: number | null): string | null {
   const kelompok = KELOMPOK_INFLASI.find((k) => k.setahun === seri || k.sebulan === seri);
   if (kelompok) {
     const gerak =
@@ -194,14 +211,27 @@ export function artinyaBuatmu(seri: string, nilai: number): string | null {
   const jenis = JENIS_SERI[seri];
   if (jenis === "pertumbuhan") {
     const arah = nilai >= 0 ? "lebih besar" : "lebih kecil";
-    return `Nilai barang dan jasa yang dihasilkan di Indonesia ${angka(Math.abs(nilai), 1)}% ${arah} dibanding periode yang sama setahun sebelumnya. Pertumbuhan yang melambat biasanya membuat lapangan kerja baru dan kenaikan penghasilan lebih sulit didapat.`;
+    return `Bayangkan semua barang dan jasa yang dihasilkan di Indonesia sebagai satu kue. Pertumbuhan ${angka(nilai, 1)}% berarti kuenya ${angka(Math.abs(nilai), 1)}% ${arah} dibanding setahun sebelumnya. Pertumbuhan yang melambat biasanya membuat lapangan kerja baru dan kenaikan penghasilan lebih sulit didapat.`;
   }
   if (jenis === "inflasi") {
-    const arah = nilai >= 0 ? "lebih mahal" : "lebih murah";
-    return `Rata-rata harga barang dan jasa ${angka(Math.abs(nilai), 1)}% ${arah} dibanding setahun sebelumnya. ${contohBelanja(nilai)} Kalau penghasilanmu naik kurang dari itu dalam setahun, daya belimu turun.`;
+    const tampil = Number(nilai.toFixed(1));
+    const arah = seri.endsWith("_m") ? arahInflasi(nilai, sebelumnya) : null;
+    const penutup =
+      tampil > 0
+        ? `Kalau penghasilanmu naik kurang dari ${angka(tampil, 1)}% dalam setahun, daya belimu turun.`
+        : tampil < 0
+          ? "Rata-rata harga lebih murah dibanding setahun sebelumnya."
+          : "Rata-rata harga hampir sama dengan setahun sebelumnya.";
+    return [
+      `Bayangkan satu keranjang belanja yang isinya sama setiap bulan. Inflasi ${angka(tampil, 1)}% berarti keranjang yang setahun lalu Rp100.000 kini sekitar ${keranjangKini(nilai)}.`,
+      arah,
+      penutup,
+    ]
+      .filter(Boolean)
+      .join(" ");
   }
   if (jenis === "pengangguran") {
-    return `Dari setiap 100 orang angkatan kerja (yang bekerja atau sedang mencari kerja), sekitar ${angka(nilai, 0)} belum mendapat pekerjaan. Makin rendah angkanya, makin mudah orang mendapat kerja.`;
+    return `Bayangkan 100 orang yang bekerja atau sedang mencari kerja. Sekitar ${angka(nilai, 0)} di antaranya belum mendapat pekerjaan. Makin rendah angkanya, makin mudah orang mendapat kerja.`;
   }
   if (seri === SERI_FORMAL) {
     return `Dari setiap 100 orang yang bekerja, sekitar ${angka(nilai, 0)} adalah pekerja formal: pengusaha dengan buruh tetap, atau buruh, karyawan, dan pegawai. Sisanya pekerja informal, misalnya berusaha sendiri atau pekerja lepas.`;

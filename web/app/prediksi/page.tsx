@@ -3,6 +3,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Berikutnya } from "@/components/Berikutnya";
 import { GrafikJangkaPanjang, GrafikPerkiraan } from "@/components/Grafik";
 import { Sitasi } from "@/components/Kartu";
 import { BannerBasi, PilihLensa } from "@/components/Klien";
@@ -421,30 +422,35 @@ export default async function Prediksi() {
                 </h2>
                 <PilihLensa />
               </div>
-              <PanelLensa
-                lensa={ringkasan.masaLalu}
-                pembanding={pembanding?.masaLalu.skor}
-                kelas="lensa-masa-lalu"
-                id="kalimat-masa-lalu"
-              />
-              {ringkasan.target ? (
+              <p className="arti-skor">
+                Angka di sudut adalah skor 0 sampai 100, bukan persen. Makin besar segitiganya, makin baik
+                keadaannya.
+              </p>
+              <div className="lensa-tumpuk">
                 <PanelLensa
-                  lensa={ringkasan.target}
-                  pembanding={pembanding?.target?.skor}
-                  kelas="lensa-target"
-                  id="kalimat-target"
+                  lensa={ringkasan.masaLalu}
+                  pembanding={pembanding?.masaLalu.skor}
+                  kelas="lensa-masa-lalu"
+                  id="kalimat-masa-lalu"
                 />
-              ) : (
-                <div className="lensa-target">
-                  <p>Lensa target belum tersedia untuk tahun {tahun}, karena target resminya belum lengkap.</p>
-                </div>
-              )}
+                {ringkasan.target ? (
+                  <PanelLensa
+                    lensa={ringkasan.target}
+                    pembanding={pembanding?.target?.skor}
+                    kelas="lensa-target"
+                    id="kalimat-target"
+                  />
+                ) : (
+                  <div className="lensa-target">
+                    <p>Lensa target belum tersedia untuk tahun {tahun}, karena target resminya belum lengkap.</p>
+                  </div>
+                )}
+              </div>
               <p className="catatan">
                 Garis putus-putus adalah perkiraan {tahun}, bukan angka resmi. Garis tipis adalah angka resmi{" "}
-                {tahunResmi}. Makin besar segitiganya, makin baik keadaannya. Angka {tahun} memakai angka resmi yang
-                sudah terbit, ditambah perkiraan untuk sisanya: pertumbuhan dari rata-rata empat kuartal, inflasi dari
-                Desember, dan pengangguran dari ronde Agustus. Cara menghitung skornya ada di{" "}
-                <Link href="/metode#skor">Metode</Link>.
+                {tahunResmi}. Angka {tahun} memakai angka resmi yang sudah terbit, ditambah perkiraan untuk sisanya:
+                pertumbuhan dari rata-rata empat kuartal, inflasi dari Desember, dan pengangguran dari ronde Agustus.
+                Cara menghitung skornya ada di <Link href="/metode#skor">Metode</Link>.
               </p>
             </>
           ) : (
@@ -628,6 +634,16 @@ export default async function Prediksi() {
           Penjelasan model, sumber data, dan syarat penggunaannya ada di <Link href="/metode">Metode</Link>.
         </p>
       </section>
+
+      <Berikutnya
+        tautan={[
+          {
+            href: "/metode#perkiraan",
+            tanya: "Bagaimana angka ini dihitung?",
+            teks: "Baca cara perkiraannya dibuat dan diuji di Metode",
+          },
+        ]}
+      />
     </>
   );
 }

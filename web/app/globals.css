@@ -482,13 +482,27 @@ main > section > h2:first-child {
 
 .pilih-lensa a {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
   text-align: center;
-  white-space: nowrap;
   text-decoration: none;
   color: var(--redup);
-  padding: 0.45rem 0.75rem;
+  padding: 0.4rem 0.6rem;
   border-radius: 7px;
   font-size: 0.9375rem;
+  line-height: 1.25;
+}
+
+/* Keterangan pendek di bawah nama lensa, supaya beda keduanya terbaca tanpa membuka Metode */
+.lensa-ket {
+  font-size: 0.75rem;
+  color: var(--samar);
+}
+
+.pilih-lensa a[aria-current="true"] .lensa-ket {
+  color: var(--redup);
 }
 
 .pilih-lensa a:hover {
@@ -501,16 +515,120 @@ main > section > h2:first-child {
   box-shadow: inset 0 0 0 1px var(--aksen);
 }
 
+/* Kedua panel lensa ditumpuk di sel kisi yang sama, jadi tinggi panel tetap saat lensa dipindah dan isi di
+   bawahnya tidak bergeser (uji baca 2026-11-09). Panel yang tidak dipilih tersembunyi dari mata dan pembaca
+   layar, tetapi tetap memegang ruangnya. */
+.lensa-tumpuk {
+  display: grid;
+}
+
+.lensa-tumpuk > * {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
 .lensa-target {
-  display: none;
+  visibility: hidden;
 }
 
 html[data-lensa="target"] .lensa-target {
-  display: block;
+  visibility: visible;
 }
 
 html[data-lensa="target"] .lensa-masa-lalu {
-  display: none;
+  visibility: hidden;
+}
+
+/* Arti skor tepat di bawah judul panel segitiga: peserta uji baca mengira skor itu persen */
+.arti-skor {
+  font-size: 0.9375rem;
+  margin: 0 0 1rem;
+}
+
+/* Baris angka terakhir di sampul beranda: penanda topik di layar pertama, periode di dekat angka */
+.angka-sampul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  padding: 0;
+  margin: 1.25rem 0 0;
+}
+
+.angka-sampul a {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 0.4rem;
+  color: var(--redup);
+  text-decoration: none;
+  font-size: 0.9375rem;
+}
+
+.angka-sampul a:hover .angka-sampul-nama {
+  color: var(--tinta);
+  text-decoration: underline;
+}
+
+.angka-sampul strong {
+  font-family: var(--huruf-angka);
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--tinta);
+}
+
+.angka-sampul-periode {
+  font-size: 0.8125rem;
+  color: var(--samar);
+}
+
+/* Kotak Berikutnya: penutup halaman utama, bentuknya sama dengan pintu penjelas */
+.berikutnya {
+  margin: 4rem 0 0;
+}
+
+.berikutnya-judul {
+  font-size: 0.8125rem;
+  color: var(--redup);
+  margin: 0 0 0.5rem;
+}
+
+.berikutnya ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.berikutnya li {
+  margin: 0;
+}
+
+.berikutnya a {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--garis-kuat);
+  border-radius: var(--r-tombol);
+  background: var(--isi-lembut);
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+.berikutnya a:hover {
+  border-color: var(--redup);
+}
+
+.berikutnya-tanya {
+  font-family: var(--huruf-judul);
+  font-size: 1.125rem;
+}
+
+.berikutnya-teks {
+  font-size: 0.9375rem;
+  color: var(--redup);
 }
 
 /* Kartu */
@@ -1366,6 +1484,10 @@ td.angka {
     gap: 1rem 1.5rem;
   }
 
+  .berikutnya ul {
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  }
+
   .kisi-penggerak {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1393,9 +1515,10 @@ td.angka {
 }
 
 @media (min-width: 960px) {
+  /* Baris kedua menyerap sisa tinggi panel, jadi tombol tetap dekat teks sampul */
   .sampul {
     grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-    grid-template-rows: auto auto;
+    grid-template-rows: auto 1fr;
     gap: 1.25rem 3rem;
     padding-top: 4.5rem;
   }
@@ -1409,6 +1532,7 @@ td.angka {
   .sampul-bawah {
     grid-column: 1;
     grid-row: 2;
+    align-self: start;
   }
 
   .kisi-utama {
