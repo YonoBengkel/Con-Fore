@@ -6,7 +6,7 @@ import { ALAMAT_SITUS } from "@/lib/situs";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const indikator = [...new Set(SERI_DITAUTKAN)].map((id) => `/indikator/${id}`);
-  return ["", "/prediksi", "/cara-kerja", "/sumber", ...indikator].map((jalur) => ({
+  return ["", "/prediksi", "/metode", ...indikator].map((jalur) => ({
     url: `${ALAMAT_SITUS}${jalur}`,
   }));
 }

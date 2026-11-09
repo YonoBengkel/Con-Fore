@@ -98,7 +98,7 @@ export default async function Beranda() {
       <section className="sampul" aria-labelledby="judul-halaman">
         <div className="sampul-atas">
           <h1 id="judul-halaman" className="sampul-judul">
-            Ekonomi Indonesia, <em>dalam tiga angka.</em>
+            Ekonomi Indonesia, dalam tiga angka.
           </h1>
           <p className="sampul-isi">
             Seberapa cepat ekonomi tumbuh, seberapa cepat harga naik, dan seberapa banyak orang yang belum
@@ -140,7 +140,7 @@ export default async function Beranda() {
             <Link href="/prediksi" className="tombol tombol-utama">
               Lihat perkiraan <span aria-hidden="true">&rarr;</span>
             </Link>
-            <Link href="/cara-kerja" className="tombol">
+            <Link href="/metode" className="tombol">
               Cara membaca angkanya
             </Link>
           </p>
@@ -181,7 +181,7 @@ export default async function Beranda() {
                     <p className="catatan">
                       Sebagian target {ringkasan.tahun} masih{" "}
                       {STATUS_VERIFIKASI.berita.replace(/^dari /, "bersumber ")}. Lihat{" "}
-                      <Link href="/sumber#target">tabel target</Link>.
+                      <Link href="/metode#target">tabel target</Link>.
                     </p>
                   )
                 }
@@ -196,7 +196,7 @@ export default async function Beranda() {
             )}
             <p className="catatan">
               Sumber angka segitiga: salinan IMF (World Economic Outlook) dari data BPS. Cara
-              menghitung skornya ada di <Link href="/cara-kerja#skor">Cara kerja</Link>.
+              menghitung skornya ada di <Link href="/metode#skor">Metode</Link>.
             </p>
           </div>
         ) : (
@@ -205,7 +205,6 @@ export default async function Beranda() {
       </section>
 
       <section aria-labelledby="judul-angka">
-        <p className="alis">Yang paling terasa sehari-hari</p>
         <h2 id="judul-angka">Tiga angka utama</h2>
         <div className="kisi-kartu kisi-utama">
           {kunciKartu.map((kunci) => {
@@ -234,7 +233,6 @@ export default async function Beranda() {
       </section>
 
       <section aria-labelledby="judul-penggerak">
-        <p className="alis">Penggerak</p>
         <h2 id="judul-penggerak">Yang ikut mendorong ketiga angka</h2>
         <p className="catatan">
           Harga komoditas, kurs, suku bunga, dan kondisi mitra dagang memengaruhi pertumbuhan dan
@@ -263,12 +261,11 @@ export default async function Beranda() {
       </section>
 
       <section aria-labelledby="judul-target">
-        <p className="alis">UU APBN dan PMK</p>
         <h2 id="judul-target">Target resmi pemerintah</h2>
         <p className="catatan">
           Target pertumbuhan dan pengangguran dari UU APBN, sasaran inflasi dari PMK. Daftar lengkap,
           termasuk tahun-tahun sebelumnya dan target RPJMN, ada di{" "}
-          <Link href="/sumber#target">Sumber data</Link>.
+          <Link href="/metode#target">Metode</Link>.
         </p>
         <TabelTarget
           target={targetTerdekat}

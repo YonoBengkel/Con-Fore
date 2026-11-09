@@ -240,7 +240,7 @@ export default async function Indikator({ params }: Props) {
               Pekerja formal menurut BPS adalah yang berusaha dibantu buruh tetap dan dibayar, serta
               buruh, karyawan, atau pegawai. Selebihnya informal. Garisnya dipisah per bulan survei,
               karena porsinya berbeda antara Februari dan Agustus. Lihat{" "}
-              <Link href="/cara-kerja#pekerja-formal">Cara kerja</Link>.
+              <Link href="/metode#pekerja-formal">Metode</Link>.
             </p>
             <div className="gulir-tabel" role="region" aria-labelledby="judul-pekerja" tabIndex={0}>
               <table>
@@ -314,7 +314,7 @@ export default async function Indikator({ params }: Props) {
               Angka kelompok tidak bisa dijumlahkan menjadi angka umum, karena bobot tiap kelompok berbeda.
               Angka dibanding bulan lalu dan angka umum adalah data resmi BPS. Angka setahun per kelompok
               dihitung Con-Fore dari 12 perubahan bulanan, jadi bisa berbeda sekitar 0,02 poin persen dari
-              angka rilis BPS. Lihat <Link href="/cara-kerja#rincian-inflasi">Cara kerja</Link>.
+              angka rilis BPS. Lihat <Link href="/metode#rincian-inflasi">Metode</Link>.
             </p>
           </div>
         </section>

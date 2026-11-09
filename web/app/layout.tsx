@@ -6,7 +6,7 @@ import "./globals.css";
 
 // Disajikan dari Vercel sendiri: unduhan dari Google hanya saat build, tanpa panggilan dari browser.
 const sans = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
-const serif = Gelasio({ subsets: ["latin"], style: ["normal", "italic"], variable: "--font-serif", display: "swap" });
+const serif = Gelasio({ subsets: ["latin"], style: ["normal"], variable: "--font-serif", display: "swap" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
 
 /** Tanda merek: garis luar segitiga keseimbangan. */
@@ -68,8 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </p>
               <p>
                 Angka diolah dari data publik dengan menyebut sumbernya. Lihat{" "}
-                <Link href="/sumber">Sumber data</Link> untuk atribusi dan syarat penggunaan, dan{" "}
-                <Link href="/cara-kerja">Cara kerja</Link> untuk aturan skor.
+                <Link href="/metode">Metode</Link> untuk atribusi, syarat penggunaan, dan cara angkanya dihitung.
               </p>
             </div>
             <nav aria-label="Jelajahi">
@@ -81,16 +80,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <li>
                   <Link href="/prediksi">Prediksi</Link>
                 </li>
+                <li>
+                  <Link href="/metode">Metode</Link>
+                </li>
               </ul>
             </nav>
-            <nav aria-label="Proyek">
-              <p className="kaki-judul">Proyek</p>
+            <nav aria-label="Tentang data">
+              <p className="kaki-judul">Tentang data</p>
               <ul>
                 <li>
-                  <Link href="/cara-kerja">Cara kerja</Link>
+                  <Link href="/metode#label">Arti label</Link>
                 </li>
                 <li>
-                  <Link href="/sumber">Sumber data</Link>
+                  <Link href="/metode#pembaruan">Kapan diperbarui</Link>
+                </li>
+                <li>
+                  <Link href="/metode#sumber">Sumber dan syarat</Link>
                 </li>
               </ul>
             </nav>

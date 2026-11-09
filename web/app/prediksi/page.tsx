@@ -404,7 +404,7 @@ export default async function Prediksi() {
       <section className="sampul" aria-labelledby="judul-halaman">
         <div className="sampul-atas">
           <h1 id="judul-halaman" className="sampul-judul">
-            Ke mana arahnya, <em>dan seberapa yakin.</em>
+            Ke mana arahnya, dan seberapa yakin.
           </h1>
           <p className="sampul-isi">
             Perkiraan pertumbuhan, inflasi, dan pengangguran Indonesia. Semua angka di tab ini perkiraan, bukan angka
@@ -446,7 +446,7 @@ export default async function Prediksi() {
             <a href="#judul-rekam" className="tombol tombol-utama">
               Lihat rekam jejak <span aria-hidden="true">&darr;</span>
             </a>
-            <Link href="/cara-kerja#perkiraan" className="tombol">
+            <Link href="/metode#perkiraan" className="tombol">
               Cara mengujinya
             </Link>
           </p>
@@ -487,14 +487,13 @@ export default async function Prediksi() {
             <p className="catatan">
               Angka {tahun} memakai angka resmi yang sudah terbit, ditambah perkiraan untuk sisanya. Pertumbuhan dari
               rata-rata empat kuartal, inflasi dari Desember, dan pengangguran dari ronde Agustus. Cara menghitung
-              skornya ada di <Link href="/cara-kerja#skor">Cara kerja</Link>.
+              skornya ada di <Link href="/metode#skor">Metode</Link>.
             </p>
           </div>
         </section>
       )}
 
       <section aria-labelledby="judul-perkiraan">
-        <p className="alis">Pertumbuhan, inflasi, pengangguran</p>
         <h2 id="judul-perkiraan">Tiga perkiraan</h2>
         <p className="catatan">
           Pada grafik, garis utuh adalah angka resmi, garis putus-putus adalah perkiraan, dan pita adalah rentang
@@ -517,7 +516,6 @@ export default async function Prediksi() {
       </section>
 
       <section aria-labelledby="judul-imf">
-        <p className="alis">Pembanding</p>
         <h2 id="judul-imf">Dibanding proyeksi IMF</h2>
         <p className="catatan">
           IMF memperbarui proyeksinya dua kali setahun, April dan Oktober, jadi angkanya bisa tertinggal dari data
@@ -534,8 +532,7 @@ export default async function Prediksi() {
 
       {barisPanjang.length > 0 && (
         <section aria-labelledby="judul-panjang">
-          <p className="alis">Jangka panjang</p>
-          <h2 id="judul-panjang">Proyeksi IMF dan target RPJMN</h2>
+          <h2 id="judul-panjang">Jangka panjang: proyeksi IMF dan target RPJMN</h2>
           <p className="catatan">
             Di luar jangka pendek, Con-Fore tidak membuat model sendiri. Panel ini memakai proyeksi IMF, dan
             membandingkannya dengan target pertumbuhan dalam RPJMN 2025-2029 (Perpres 12/2025).
@@ -592,8 +589,7 @@ export default async function Prediksi() {
       )}
 
       <section aria-labelledby="judul-rekam">
-        <p className="alis">Rekam jejak</p>
-        <h2 id="judul-rekam">Seberapa sering meleset</h2>
+        <h2 id="judul-rekam">Rekam jejak: seberapa sering meleset</h2>
         <h3>Perkiraan sungguhan</h3>
         {rekam.length ? (
           <div className="gulir-tabel" role="region" aria-label="Perkiraan sungguhan dan angka rilisnya" tabIndex={0}>
@@ -655,8 +651,7 @@ export default async function Prediksi() {
           })}
         </div>
         <p className="catatan">
-          Penjelasan modelnya ada di <Link href="/cara-kerja#perkiraan">Cara kerja</Link>. Sumber data dan syarat
-          penggunaannya ada di <Link href="/sumber">Sumber data</Link>.
+          Penjelasan model, sumber data, dan syarat penggunaannya ada di <Link href="/metode">Metode</Link>.
         </p>
       </section>
     </>
