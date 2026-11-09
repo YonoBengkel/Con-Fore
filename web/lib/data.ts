@@ -151,7 +151,7 @@ async function baca<T>(
   return baris;
 }
 
-// Wajib: tanpa baris sumber, /sumber dan setiap CSV kehilangan atribusi yang diwajibkan (PRD 9.3).
+// Wajib: tanpa baris sumber, /metode dan setiap CSV kehilangan atribusi yang diwajibkan (PRD 9.3).
 export const bacaSumber = () =>
   baca<Sumber>("sources", "select=*&order=source_id", { wajib: true });
 

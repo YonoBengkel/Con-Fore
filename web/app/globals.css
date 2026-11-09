@@ -140,13 +140,11 @@ main.wadah {
   padding-bottom: 4rem;
 }
 
-/* Label kecil di atas judul dan di panel */
+/* Label kecil di atas judul dan di panel, hanya bila membawa info baru. Huruf biasa, bukan kapital
+   semua, dan bukan mono, karena mono hanya untuk angka (DESIGN.md) */
 
 .alis {
-  font-family: var(--huruf-angka);
-  font-size: 0.75rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 0.8125rem;
   color: var(--redup);
   margin: 0 0 0.5rem;
 }
@@ -161,6 +159,11 @@ section.panel > .alis:first-child {
 
 .alis + h2 {
   margin-top: 0;
+}
+
+/* Bagian utama yang tidak diawali label kecil tetap berjarak sama dengan yang diawali label */
+main > section > h2:first-child {
+  margin-top: 4rem;
 }
 
 /* Latar kisi segitiga: dibesarkan sampai menjadi cakrawala, hanya hiasan */
@@ -285,11 +288,6 @@ section.panel > .alis:first-child {
   line-height: 0.98;
   letter-spacing: -0.01em;
   margin-bottom: 1.25rem;
-}
-
-.sampul-judul em {
-  color: var(--aksen);
-  display: block;
 }
 
 .sampul-isi {
@@ -818,10 +816,7 @@ td {
 }
 
 thead th {
-  font-family: var(--huruf-angka);
-  font-size: 0.75rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 0.8125rem;
   color: var(--samar);
   font-weight: 500;
   white-space: nowrap;
@@ -1328,11 +1323,8 @@ td.angka {
 }
 
 .kaki-judul {
-  font-family: var(--huruf-angka);
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 0.875rem;
+  font-weight: 600;
   color: var(--tinta);
   margin-bottom: 0.65rem;
 }

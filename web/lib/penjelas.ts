@@ -6,13 +6,13 @@ import { KELOMPOK_INFLASI, SERI_FORMAL } from "./konten.ts";
 export type Penjelas = { ukur: string; cara: string; baca: string };
 
 const PERTUMBUHAN: Penjelas = {
-  ukur: "Seberapa besar nilai barang dan jasa yang dihasilkan di Indonesia berubah dibanding periode yang sama setahun sebelumnya, setelah pengaruh kenaikan harga dikeluarkan. Itu sebabnya disebut PDB riil.",
+  ukur: "Seberapa besar nilai barang dan jasa yang dihasilkan di Indonesia berubah dibanding periode yang sama setahun sebelumnya, setelah pengaruh kenaikan harga dikeluarkan. Itu sebabnya disebut PDB riil. Di rilis BPS dan berita, perbandingan dengan periode yang sama setahun sebelumnya ini ditulis y-on-y (year on year).",
   cara: "BPS menghitung PDB setiap kuartal, dan angka lama bisa direvisi. Con-Fore menyimpan setiap revisi yang terlihat.",
   baca: "Angka 5% berarti ekonomi 5% lebih besar dibanding setahun sebelumnya. Angka yang turun dari 5% ke 4% berarti pertumbuhannya melambat, bukan ekonominya mengecil. Ekonomi baru mengecil bila angkanya negatif.",
 };
 
 const INFLASI: Penjelas = {
-  ukur: "Seberapa berubah rata-rata harga barang dan jasa yang dibeli rumah tangga dibanding setahun sebelumnya, dihitung dari Indeks Harga Konsumen.",
+  ukur: "Seberapa berubah rata-rata harga barang dan jasa yang dibeli rumah tangga dibanding setahun sebelumnya, dihitung dari Indeks Harga Konsumen. Di rilis BPS dan berita, angka ini disebut inflasi tahunan atau y-on-y (year on year).",
   cara: "BPS memantau harga sekumpulan barang dan jasa di 150 kabupaten dan kota, lalu merangkumnya dengan bobot dari pola pengeluaran rumah tangga hasil Survei Biaya Hidup 2022. Tahun dasarnya kini 2022=100.",
   baca: "Inflasi yang turun berarti harga naik lebih lambat, bukan harganya turun. Rata-rata harga baru turun bila angkanya negatif.",
 };

@@ -9,8 +9,7 @@ import { useEffect, useState } from "react";
 const MENU = [
   { href: "/", teks: "Data" },
   { href: "/prediksi", teks: "Prediksi" },
-  { href: "/cara-kerja", teks: "Cara kerja" },
-  { href: "/sumber", teks: "Sumber data" },
+  { href: "/metode", teks: "Metode" },
 ];
 
 /** Navigasi utama dengan aria-current pada halaman yang sedang dibuka. */

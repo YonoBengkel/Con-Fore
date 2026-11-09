@@ -1,6 +1,6 @@
 # PRD Con-Fore
 
-> Status: disetujui pengelola 2026-10-30. Tambahan 2026-11-03 (bagian 4.4 dan butir terkait di 4, 5, 7, dan 9) disetujui pengelola hari itu. Tambahan 2026-11-07 (arti "lebih akurat" di bagian 6, dan penggerak yang tidak dikarang di 4.1) diusulkan agent saat fase 3 dan 4, dan menunggu persetujuan pengelola. Tema terang dihapus dari ukuran Tampilan di bagian 6, karena pengelola memilih migrasi penuh ke arah atlasgeopo.com pada 2026-11-07. Fase 6 (otomasi perawatan) di bagian 8 ditambahkan atas keputusan pengelola 2026-11-08. Fase 7 (pembanding negara) di bagian 8 dan catatannya di bagian 5 ditambahkan atas keputusan pengelola di hari yang sama. Menggantikan `docs/RENCANA-MVP.md`. Detail teknis ada di [ARCHITECTURE.md](ARCHITECTURE.md) dan [SCHEMA.md](SCHEMA.md).
+> Status: disetujui pengelola 2026-10-30. Tambahan 2026-11-03 (bagian 4.4 dan butir terkait di 4, 5, 7, dan 9) disetujui pengelola hari itu. Tambahan 2026-11-07 (arti "lebih akurat" di bagian 6, dan penggerak yang tidak dikarang di 4.1) diusulkan agent saat fase 3 dan 4, dan menunggu persetujuan pengelola. Tema terang dihapus dari ukuran Tampilan di bagian 6, karena pengelola memilih migrasi penuh ke arah atlasgeopo.com pada 2026-11-07. Fase 6 (otomasi perawatan) di bagian 8 ditambahkan atas keputusan pengelola 2026-11-08. Fase 7 (pembanding negara) di bagian 8 dan catatannya di bagian 5 ditambahkan atas keputusan pengelola di hari yang sama. Susunan baru (bagian 3, 4.1, 4.4, ukuran Tampilan di bagian 6, dan fase 5b di bagian 8) ditambahkan atas keputusan pengelola 2026-11-09. Menggantikan `docs/RENCANA-MVP.md`. Detail teknis ada di [ARCHITECTURE.md](ARCHITECTURE.md) dan [SCHEMA.md](SCHEMA.md).
 
 ## 1. Masalah
 
@@ -16,12 +16,13 @@ Data ekonomi Indonesia tersebar di banyak lembaga (BPS, Bank Indonesia, IMF, OEC
 
 ## 3. Solusi singkat
 
-Website publik berbahasa Indonesia yang online 24/7 dan diperbarui otomatis setiap hari, dengan dua tab:
+Website publik berbahasa Indonesia yang online 24/7 dan diperbarui otomatis setiap hari, dengan tiga menu:
 
-- **Tab Data (beranda):** kondisi terkini dari data resmi yang sudah diolah ("semi-mentah"). Tab ini tidak memuat ramalan.
-- **Tab Prediksi:** perkiraan berlabel jelas, lengkap dengan penjelasan, rentang ketidakpastian, dan rekam jejak.
+- **Data (beranda):** kondisi terkini dari data resmi yang sudah diolah ("semi-mentah"). Halaman ini tidak memuat ramalan.
+- **Prediksi:** perkiraan berlabel jelas, lengkap dengan penjelasan, rentang ketidakpastian, dan rekam jejak.
+- **Metode:** cara membaca label, jadwal pembaruan, cara model diuji, serta sumber dan lisensi.
 
-Ringkasan di kedua tab berupa **segitiga keseimbangan** (pertumbuhan, harga stabil, lapangan kerja), **kalimat ringkasan otomatis**, dan **tiga kartu angka**. Pengunjung bisa memilih dua lensa skor: dibanding masa lalu atau dibanding target resmi.
+Menu keempat, Banding, ditambahkan saat fase 7 tayang. Sampul Data dan Prediksi adalah **segitiga keseimbangan** (pertumbuhan, harga stabil, lapangan kerja) dengan **kalimat ringkasan otomatis**, disusul **kartu angka**. Pengunjung bisa memilih dua lensa skor: dibanding masa lalu atau dibanding target resmi.
 
 ## 4. Ruang lingkup MVP
 
@@ -33,27 +34,45 @@ Ringkasan di kedua tab berupa **segitiga keseimbangan** (pertumbuhan, harga stab
 
 ### 4.1 Isi halaman
 
-**Tab Data (beranda)**
+Lima prinsip susunan berlaku di semua halaman:
 
-- Ringkasan: segitiga khusus tahun yang sudah punya data resmi, kalimat ringkasan, pilihan lensa.
-- Tiga angka utama dengan grafik kecil. Kartu pengangguran menambah satu kalimat tentang porsi pekerja formal (4.4).
+1. Satu halaman menjawab satu pertanyaan. Data menjawab "sedang bagaimana", Prediksi menjawab "ke mana arahnya", dan Metode menjawab "dari mana dan bagaimana".
+2. Setiap angka membawa waktunya: periode data, tanggal rilis, dan rilis berikutnya.
+3. Penjelasan berlapis, dari angka ke penjelas, lalu ke metode.
+4. Perkiraan tidak pernah tampil tanpa rentang dan rekam jejak.
+5. Tampilan jelas independen dan netral (4.4).
+
+**Data (beranda)**
+
+- Sampul: segitiga khusus tahun yang sudah punya data resmi sebagai visual utama, dengan kalimat ringkasan, status tiga tingkat, pilihan lensa, dan waktu pembaruan otomatis terakhir.
+- Tiga angka utama dengan grafik kecil, ditambah satu baris rilis berikutnya untuk ketiganya. Kartu pengangguran menambah satu kalimat tentang porsi pekerja formal (4.4).
 - Panel penggerak: harga komoditas, kurs, BI-Rate, indikator pendahulu OECD, mitra dagang. Paling banyak 15 indikator supaya tetap terbaca, masing-masing berlabel tanggal datanya (4.4).
 - Tabel target resmi beserta sumbernya.
-- Untuk setiap angka: sumber, tanggal rilis, penjelasan "artinya buatmu", dan tombol unduh CSV.
+- Setiap kartu selalu menampilkan periode data, tanggal rilis, dan tanggal rilis berikutnya. Sumber, penjelasan "artinya buatmu", dan tombol unduh CSV ada di kartu atau lipatannya.
 
-**Tab Prediksi**
+**Prediksi**
 
-- Segitiga dengan tahun perkiraan (garis putus-putus) dan kalimat ringkasannya.
-- Forecast ketiga target beserta rentangnya, dan penjelasan "kenapa perkiraannya begini" berupa penggerak terbesar dalam bahasa awam.
-- Panel jangka panjang (proyeksi IMF dibanding target RPJMN) dan bagian Rekam jejak.
+- Sampul: segitiga dengan tahun perkiraan (garis putus-putus) sebagai visual utama, dengan kalimat ringkasannya.
+- Forecast ketiga target. Kalimat utama setiap kartu memuat rentangnya (4.4), disertai tabel batas kecil dan penjelasan "kenapa perkiraannya begini" berupa penggerak terbesar dalam bahasa awam.
+- Grafik perkiraan memuat perkiraan lama dan angka resmi pertama begitu rekam jejak terisi.
+- Panel jangka panjang (proyeksi IMF dibanding target RPJMN) dan bagian Rekam jejak. Rekam jejak menulis selisih dalam poin persen dan cakupan rentang sebagai hitungan, misalnya "3 dari 4 perkiraan jatuh di dalam rentangnya", dibanding angka resmi pertama. Persen tidak dipakai, karena persen dari sedikit perkiraan terlihat lebih pasti daripada kenyataannya.
 - Selalu berangkat dari angka resmi terakhir.
 - "Kenapa perkiraannya begini" hanya menyebut yang terbukti pada backtest. Bila tidak ada penggerak yang terbukti membantu, halamannya mengatakan itu, tidak mengarang penggerak.
 
-**Halaman pendukung**
+**Metode**
 
-- Detail per target (dibuka dari kartu): riwayat panjang dan jadwal rilis berikutnya. Detail pengangguran menambah grafik porsi pekerja formal dan informal, dan detail inflasi menambah rincian tiga kelompok (4.4).
-- Cara kerja: data, model, aturan skor, dan ambang status dalam bahasa awam.
-- Sumber data: daftar sumber, lisensi, kalimat atribusi wajib (termasuk atribusi BPS), dan tabel target resmi beserta tautannya. Situs tidak boleh terkesan sebagai situs resmi BPS atau lembaga lain.
+- Gabungan halaman Cara kerja dan Sumber data, dengan daftar isi: cara membaca label, jadwal pembaruan (4.4), data dan model, cara model diuji, aturan skor dan ambang status, serta sumber, lisensi, kalimat atribusi wajib (termasuk atribusi BPS), dan tabel target resmi beserta tautannya. Situs tidak boleh terkesan sebagai situs resmi BPS atau lembaga lain.
+- Alamat lama `/cara-kerja` dan `/sumber` dialihkan permanen ke bagiannya di `/metode`.
+
+**Halaman detail** (dibuka dari kartu)
+
+- Riwayat panjang dan jadwal rilis berikutnya. Detail pengangguran menambah grafik porsi pekerja formal dan informal, dan detail inflasi menambah rincian tiga kelompok (4.4).
+- Kotak selebar halaman di bawah judul ("Baru kenal angka ini?") membuka penjelas empat bagian.
+- Catatan revisi bila angka resmi yang tampil berubah (4.4).
+
+**Banding**
+
+- Halaman pembanding negara di fase 7 (bagian 8). Menunya baru muncul saat halaman itu tayang, supaya tidak ada menu yang berujung halaman kosong.
 
 ### 4.2 Aturan skor segitiga
 
@@ -72,12 +91,17 @@ Ringkasan di kedua tab berupa **segitiga keseimbangan** (pertumbuhan, harga stab
 - **Dua tingkat.** Tingkat utama memuat angka agregat, kalimat ringkasan, dan "artinya buatmu". Tingkat rinci di halaman detail memuat komponen dan konteks. Rentang ramalan (fan chart) hanya ada di tab Prediksi.
 - **Pekerja formal dan informal.** Konteks pendamping TPT dari Sakernas BPS, tersedia untuk ronde Februari dan Agustus. TPT tetap angka utama. Kalimat otomatisnya hanya membandingkan ronde bulan yang sama (Februari dengan Februari), karena porsi pekerja formal berbeda menurut bulan survei. Yang dibandingkan adalah porsi terhadap seluruh pekerja, bukan jumlah orang, karena jumlah pekerja terus bertambah. Perubahan porsi di bawah 0,1 poin persen ditulis "hampir tidak berubah".
 - **Rincian inflasi.** Inflasi umum y-on-y tetap angka utama. Halaman detail inflasi memecahnya menjadi tiga kelompok BPS dengan nama netral: inti, harga diatur pemerintah, dan harga bergejolak. Setiap kelompok dijelaskan dari isinya (contoh barang dan jasa), bukan dari satu sebab tunggal seperti "cuaca" atau "BBM". BPS tidak menyediakan y-on-y per kelompok lewat API, jadi angkanya dirangkai dari 12 perubahan bulanan, berlabel "dihitung Con-Fore", dan ditulis satu desimal dengan kata "sekitar". Penyumbang terbesar bulan itu disebut bila datanya tersedia lewat API. Per 2026-11-06 data itu hanya ada di naskah rilis BPS, jadi belum ditampilkan.
-- **Tanggal data, bukan "real-time".** Kurs, harga komoditas, dan suku bunga tampil pada periode terbaru yang sudah terbit, berlabel tanggal atau periode datanya. Situs tidak memakai kata "real-time", "langsung", atau "live", karena pipeline berjalan sekali sehari dan seri bulanan bisa tertinggal sekitar sebulan.
+- **Tanggal data, bukan "real-time".** Kurs, harga komoditas, dan suku bunga tampil pada periode terbaru yang sudah terbit, berlabel tanggal atau periode datanya. Situs tidak memakai kata "real-time", "langsung", atau "live", karena pipeline berjalan satu sampai dua kali sehari dan seri bulanan bisa tertinggal sekitar sebulan.
 - **Narasi netral.** Kalimat tidak memberi vonis mutlak seperti "solid", "gagal", atau "hancur". Sebutan seperti "baik" atau "lemah" hanya dipakai bersama pembandingnya. Pembandingnya riwayat Indonesia sendiri (lensa masa lalu), target resmi (lensa target), dan pertumbuhan dunia dari IMF WEO setelah serinya ditambahkan. Di lensa target, skor yang turun dijelaskan sebagai jarak ke target APBN tahun itu. Target 8% RPJMN hanya dibahas di panel jangka panjang.
-- **"Artinya buatmu" menjelaskan arti angka** bagi rumah tangga, misalnya "dengan inflasi 3%, belanja yang setahun lalu Rp100.000 kini sekitar Rp103.000". Isinya tidak pernah berupa saran belanja (5).
-- **Status tiga tingkat.** Setiap dimensi segitiga mendapat status normal, perlu waspada, atau tekanan berat, yang diturunkan dari skor lensa yang sedang dipilih. Status selalu tertulis sebagai kata, dan kalimat ringkasan memakai kata yang sama, menggantikan sebutan lama (baik, cukup baik, kurang baik, lemah). Ambangnya dijelaskan di halaman Cara kerja, dan tidak ada judul atau banner bernada genting. Ambangnya:
+- **"Artinya buatmu" menjelaskan arti angka** bagi rumah tangga, misalnya "dengan inflasi 3%, belanja yang setahun lalu Rp100.000 kini sekitar Rp103.000". Isinya tidak pernah berupa saran belanja (5), dan tidak pernah meminta data pribadi seperti gaji. Contoh hitung memakai angka tetap dan hanya untuk dua angka: inflasi (belanja Rp100.000) dan pengangguran ("dari 100 orang angkatan kerja"). PDB, BI-Rate, dan angka lain tanpa contoh uang, karena PDB bukan pendapatan per orang dan BI-Rate tidak langsung menjadi bunga bank.
+- **Status tiga tingkat.** Setiap dimensi segitiga mendapat status normal, perlu waspada, atau tekanan berat, yang diturunkan dari skor lensa yang sedang dipilih. Status selalu tertulis sebagai kata, dan kalimat ringkasan memakai kata yang sama, menggantikan sebutan lama (baik, cukup baik, kurang baik, lemah). Ambangnya dijelaskan di halaman Metode, dan tidak ada judul atau banner bernada genting. Ambangnya:
   - Lensa masa lalu: tekanan berat bila skor di bawah 10 (kira-kira sepersepuluh tahun terburuk sejak 2000), perlu waspada bila 10 sampai di bawah 25, dan normal bila 25 ke atas.
   - Lensa target: normal bila skor 75 ke atas (di dalam zona atau meleset paling banyak 1 poin persen), perlu waspada bila 50 sampai di bawah 75 (meleset lebih dari 1 sampai 2 poin persen), dan tekanan berat bila di bawah 50 (meleset lebih dari 2 poin persen).
+- **Format angka.** Koma desimal dan titik ribuan, dengan tanda persen menempel ("2,6%"). Selisih dua persentase ditulis "poin persen". Kalimat memakai kata biasa ("dibanding setahun sebelumnya"), label pendek memakai "tahunan", dan istilah "y-on-y" disebut sekali di penjelas supaya pembaca bisa mencocokkannya dengan berita.
+- **Rentang dalam kata.** Kalimat utama perkiraan menulis rentang sebagai "kemungkinan antara X dan Y". Artinya dijelaskan sekali: pada uji dengan data lama, sekitar 8 dari 10 angka resmi di masa biasa jatuh di dalam rentang selebar itu. Istilah "rentang 80%" hanya dipakai di tabel.
+- **Judul grafik berupa kalimat temuan.** Judul dibuat skrip dari templat yang hanya memakai kata naik, turun, atau tetap, dan diuji supaya kata yang menilai seperti "membaik" atau "memburuk" tidak muncul.
+- **Jadwal pembaruan.** Ditulis sebagai rentang jam yang teramati dalam WIB, bukan jam jadwal, karena run terjadwal GitHub Actions biasanya mulai beberapa jam sesudah jadwalnya.
+- **Catatan revisi.** Halaman detail mencatat revisi bila angka yang tampil berubah sesudah dibulatkan, lengkap dengan angka lama, angka baru, dan tanggal rilisnya. Revisi sebelum Con-Fore mulai menyimpan setiap versi data tidak terekam, dan halaman menyebut tanggal mulainya. Kartu di beranda tidak memuat catatan revisi.
 
 ## 5. Bukan tujuan MVP
 
@@ -100,7 +124,7 @@ Ringkasan di kedua tab berupa **segitiga keseimbangan** (pertumbuhan, harga stab
 | Kejujuran label | Setiap angka punya sumber, tanggal, dan label "data resmi", "perkiraan Con-Fore", atau "proyeksi IMF" |
 | Akurasi model | Galat (MAE) forecast Con-Fore dibandingkan dengan baseline per horizon dan diterbitkan di Rekam jejak. Angka utama adalah yang lebih akurat (model atau baseline). Model dianggap lebih akurat hanya bila menang di masa normal dan di data sejak 2022. Baseline dan proyeksi IMF selalu tampil sebagai pembanding, dan hasil yang kalah tetap dipublikasikan |
 | Dipahami pembaca awam | Uji baca dengan lima orang awam: minimal empat bisa menjelaskan arti segitiga dan tiga kartu tanpa bantuan |
-| Tampilan | Kedua tab tampil benar di HP dan desktop, dan segitiga punya teks alternatif untuk pembaca layar |
+| Tampilan | Halaman Data, Prediksi, Metode, dan detail tampil benar di HP dan desktop, dan segitiga punya teks alternatif untuk pembaca layar |
 | Biaya | Rp0 untuk layanan (semua memakai paket gratis permanen); domain sendiri, bila dipilih, satu-satunya biaya |
 
 ## 7. Risiko produk
@@ -125,6 +149,7 @@ Risiko teknis ada di [ARCHITECTURE.md](ARCHITECTURE.md#5-risiko-utama).
 | 3. Model | Baseline, DFM untuk PDB, model inflasi dan TPT, backtest | Setiap model dibandingkan dengan baseline dalam laporan backtest |
 | 4. Tab Prediksi (v0.2) | Forecast dan rentang, penjelasan, jangka panjang, rekam jejak | Semua perkiraan berlabel dan bersumber |
 | 5. Pengerasan (MVP) | Pemantauan, uji tujuh hari, halaman Cara kerja | Tujuh hari berturut-turut ter-update otomatis |
+| 5b. Susunan baru | Dimulai 2026-11-09, sebelum fase 6. Menerapkan susunan di 4.1 dan 4.4 dalam tiga tahap di `web/`, masing-masing ditinjau pengelola sebelum tayang: (1) huruf, menu, halaman Metode, format angka, dan jadwal pembaruan, (2) sampul segitiga di Data dan Prediksi, waktu yang selalu terlihat di kartu, dan rentang dalam kalimat, (3) halaman detail dan judul grafik. Bagian yang butuh tabel baru (cakupan rentang di rekam jejak dan catatan revisi) menunggu uji tujuh hari lulus dan dikerjakan bersama fase 6. Uji baca lima orang (6) dijalankan sesudah ketiga tahap tayang | Semua bagian tampil benar di HP dan desktop, dan lolos daftar periksa tampilan pengelola serta linter Design Kit |
 | 6. Otomasi perawatan | Dimulai sesudah uji tujuh hari lulus. Pengingat lewat issue GitHub untuk tabel tahunan (target resmi, kalender rilis, tanggal Lebaran) dan satu workflow pemeriksa untuk cek bulanan. Tanpa panggilan model AI. Angka resmi dari dokumen tetap disetujui pengelola, dan agent hanya dipakai untuk mengubah kode dan menulis teks penjelas | Cek bulanan di RUNBOOK yang bisa dijalankan script tidak lagi manual, dan setiap pengingat terbukti membuka issue saat diuji |
 | 7. Pembanding negara | Dimulai sesudah fase 6. Satu halaman yang menampilkan proyeksi IMF untuk Indonesia dan satu negara pilihan pengunjung (Malaysia, Thailand, Filipina, atau Vietnam) berdampingan: pertumbuhan, inflasi akhir tahun, dan pengangguran sampai tahun terakhir proyeksi IMF. Perkiraan Con-Fore untuk Indonesia tampil sebagai baris berlabel pada tahun yang juga diramal Con-Fore. Tanpa rentang, karena IMF tidak menerbitkannya. Model Con-Fore untuk negara lain tidak termasuk | Keempat pasangan tampil benar di HP dan desktop, setiap angka berlabel proyeksi IMF dengan sumber dan tanggal terbitnya, dan perbedaan definisi pengangguran antarnegara tertulis di halaman |
 
