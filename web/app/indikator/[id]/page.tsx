@@ -107,12 +107,11 @@ export default async function Indikator({ params }: Props) {
   const simpulan = kalimatRiwayat(titik, m.unit, m.concept, m.frequency);
   const satuanPanjang = m.unit.startsWith("%") ? m.unit.replace(/^%\s*/, "") : m.unit;
   const rentang = titik.length ? `${periode(titik[0][0])} sampai ${periode(titik[titik.length - 1][0])}` : null;
-  // Judul grafik berupa kalimat temuan, anak judulnya nama seri, satuan, dan rentang waktu (PRD 4.4).
+  // Judul grafik berupa kalimat temuan (PRD 4.4). Satuannya ikut baris keterangan di bawah judul halaman,
+  // tanpa anak judul yang mengulang nama seri dan rentang waktu.
   const judulGrafik = judulTemuan(titik, m.unit, m.concept);
   const satuanSudahDisebut = m.name_id.toLowerCase().includes(m.unit.toLowerCase());
-  const anakJudul = [m.name_id, satuanSudahDisebut ? null : m.unit.replace(/^%/, "persen"), rentang]
-    .filter(Boolean)
-    .join(" · ");
+  const satuanMeta = satuanSudahDisebut ? null : m.unit.replace(/^%/, "persen");
 
   return (
     <>
@@ -126,7 +125,9 @@ export default async function Indikator({ params }: Props) {
       </nav>
       <h1>{m.name_id}</h1>
       <p className="meta-seri">
-        {[NAMA_FREKUENSI[m.concept === "round_rate" ? "ronde" : m.frequency], rentang, labelSeri(m)].filter(Boolean).join(" · ")}
+        {[NAMA_FREKUENSI[m.concept === "round_rate" ? "ronde" : m.frequency], satuanMeta, rentang, labelSeri(m)]
+          .filter(Boolean)
+          .join(" · ")}
       </p>
       {penjelas && (
         <details className="penjelas">
@@ -194,12 +195,9 @@ export default async function Indikator({ params }: Props) {
 
         <section className="panel detail-grafik" aria-labelledby="judul-riwayat">
           <div className="panel-kepala">
-            <div>
-              <h2 id="judul-riwayat" className="judul-grafik">
-                {judulGrafik ?? "Riwayat"}
-              </h2>
-              <p className="anak-judul">{anakJudul}</p>
-            </div>
+            <h2 id="judul-riwayat" className="judul-grafik">
+              {judulGrafik ?? "Riwayat"}
+            </h2>
             <a href={`/api/csv/${m.series_id}`} download>
               Unduh seluruh riwayat (CSV)
             </a>
@@ -253,8 +251,7 @@ export default async function Indikator({ params }: Props) {
             <p className="catatan">
               Pekerja formal menurut BPS adalah yang berusaha dibantu buruh tetap dan dibayar, serta
               buruh, karyawan, atau pegawai. Selebihnya informal. Garisnya dipisah per bulan survei,
-              karena porsinya berbeda antara Februari dan Agustus. Lihat{" "}
-              <Link href="/metode#pekerja-formal">Metode</Link>.
+              karena porsinya berbeda antara Februari dan Agustus.
             </p>
             <div className="gulir-tabel" role="region" aria-labelledby="judul-pekerja" tabIndex={0}>
               <table>
@@ -328,7 +325,7 @@ export default async function Indikator({ params }: Props) {
               Angka kelompok tidak bisa dijumlahkan menjadi angka umum, karena bobot tiap kelompok berbeda.
               Angka dibanding bulan lalu dan angka umum adalah data resmi BPS. Angka setahun per kelompok
               dihitung Con-Fore dari 12 perubahan bulanan, jadi bisa berbeda sekitar 0,02 poin persen dari
-              angka rilis BPS. Lihat <Link href="/metode#rincian-inflasi">Metode</Link>.
+              angka rilis BPS.
             </p>
           </div>
         </section>

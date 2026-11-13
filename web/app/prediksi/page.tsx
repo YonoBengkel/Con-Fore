@@ -408,9 +408,8 @@ export default async function Prediksi() {
             Ke mana arahnya, dan seberapa yakin.
           </h1>
           <p className="sampul-isi">
-            Perkiraan pertumbuhan, inflasi, dan pengangguran Indonesia. Semua angka di tab ini perkiraan, bukan angka
-            resmi dan bukan janji. Setiap perkiraan berangkat dari angka resmi terakhir, disertai rentang dan catatan
-            seberapa sering perkiraan itu meleset.
+            Perkiraan pertumbuhan, inflasi, dan pengangguran Indonesia, lengkap dengan rentang dan catatan seberapa
+            sering perkiraan itu meleset.
           </p>
         </div>
         <div className="sampul-panel">
@@ -448,9 +447,7 @@ export default async function Prediksi() {
               </div>
               <p className="catatan">
                 Garis putus-putus adalah perkiraan {tahun}, bukan angka resmi. Garis tipis adalah angka resmi{" "}
-                {tahunResmi}. Angka {tahun} memakai angka resmi yang sudah terbit, ditambah perkiraan untuk sisanya:
-                pertumbuhan dari rata-rata empat kuartal, inflasi dari Desember, dan pengangguran dari ronde Agustus.
-                Cara menghitung skornya ada di <Link href="/metode#skor">Metode</Link>.
+                {tahunResmi}.
               </p>
             </>
           ) : (
@@ -513,10 +510,6 @@ export default async function Prediksi() {
       {barisPanjang.length > 0 && (
         <section aria-labelledby="judul-panjang">
           <h2 id="judul-panjang">Jangka panjang: proyeksi IMF dan target RPJMN</h2>
-          <p className="catatan">
-            Di luar jangka pendek, Con-Fore tidak membuat model sendiri. Panel ini memakai proyeksi IMF, dan
-            membandingkannya dengan target pertumbuhan dalam RPJMN 2025-2029 (Perpres 12/2025).
-          </p>
           {kalimatPanjang && <p>{kalimatPanjang}</p>}
           <div className="jangka-panjang">
             <div className="panel">
@@ -609,10 +602,9 @@ export default async function Prediksi() {
         )}
         <h3>Uji dengan data lama</h3>
         <p className="catatan">
-          Sejak 2012, setiap bulan, Con-Fore meramal hanya dengan data yang sudah terbit saat itu, lalu membandingkan
-          dengan angka yang kemudian terbit. Angka di tabel adalah rata-rata meleset dalam poin persen, jadi makin
-          kecil makin baik. Yang tebal adalah angka utama. Kolomnya menunjukkan jarak dari angka resmi terakhir. Uji
-          ini memakai angka terbaru, bukan rilis pertama, jadi hasilnya bisa sedikit lebih baik daripada kenyataan.
+          Angka di tabel adalah rata-rata meleset dalam poin persen, jadi makin kecil makin baik. Yang tebal adalah
+          angka utama. Kolomnya menunjukkan jarak dari angka resmi terakhir. Uji ini memakai angka terbaru, bukan
+          rilis pertama, jadi hasilnya bisa sedikit lebih baik daripada kenyataan.
         </p>
         <div className="dua-kolom">
           {TARGET_PREDIKSI.map((t) => {
@@ -630,9 +622,6 @@ export default async function Prediksi() {
             );
           })}
         </div>
-        <p className="catatan">
-          Penjelasan model, sumber data, dan syarat penggunaannya ada di <Link href="/metode">Metode</Link>.
-        </p>
       </section>
 
       <Berikutnya

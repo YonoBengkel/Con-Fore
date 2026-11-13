@@ -49,17 +49,6 @@ export default async function Metode() {
       <article className="prosa">
         <section className="pembuka">
           <h1>Metode</h1>
-          <p>
-            Con-Fore merangkum ekonomi Indonesia lewat tiga angka: pertumbuhan ekonomi, inflasi, dan
-            pengangguran. Halaman ini menjelaskan arti label di setiap angka, kapan angkanya diperbarui,
-            dari mana asalnya, cara skor segitiga dan perkiraan dihitung, serta sumber dan syarat
-            penggunaan datanya.
-          </p>
-          <p>
-            Con-Fore adalah situs independen. Semua angka diambil dari data publik, diolah seperlunya, dan
-            selalu disertai sumbernya. Situs ini bukan situs resmi BPS, Bank Indonesia, Kementerian
-            Keuangan, atau lembaga mana pun yang disebut di halaman ini.
-          </p>
         </section>
 
         <h2 id="label">Arti label</h2>
