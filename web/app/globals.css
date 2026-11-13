@@ -1244,12 +1244,6 @@ td.angka {
   margin: 0 0 0.2rem;
 }
 
-.anak-judul {
-  color: var(--samar);
-  font-size: 0.8125rem;
-  margin: 0;
-}
-
 .panel-kepala a {
   font-size: 0.875rem;
   color: var(--redup);

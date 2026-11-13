@@ -74,7 +74,6 @@ export function KartuSeri({
   return (
     <article id={id} className={utama ? "kartu kartu-utama" : "kartu"}>
       <H className="kartu-judul">{judul ?? meta.name_id}</H>
-      {judul && <p className="kartu-nama">{meta.name_id}</p>}
       <p className="kartu-angka">
         <data value={nilai.value}>{nilaiPendek(nilai.value, meta.unit, meta.concept)}</data>
         {satuanPanjang && <span className="kartu-satuan"> {satuanPanjang}</span>}

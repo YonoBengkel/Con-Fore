@@ -20,7 +20,6 @@ import {
 import { nilaiPendek, periode, tanggal, waktuWIB } from "@/lib/format";
 import {
   JUDUL_KARTU,
-  KELOMPOK_INFLASI,
   PENGGERAK,
   SERI_FORMAL,
   SERI_KARTU,
@@ -173,11 +172,7 @@ export default async function Beranda() {
                   </div>
                 )}
               </div>
-              <p className="catatan">
-                Segitiga ini memakai tahun terakhir yang ketiga angkanya sudah terbit. Sumber angkanya salinan IMF
-                (World Economic Outlook) dari data BPS. Cara menghitung skornya ada di{" "}
-                <Link href="/metode#skor">Metode</Link>.
-              </p>
+              <p className="catatan">Sumber angkanya salinan IMF (World Economic Outlook) dari data BPS.</p>
             </>
           ) : (
             <p>Ringkasan belum bisa dihitung karena data tahunan belum lengkap.</p>
@@ -193,8 +188,7 @@ export default async function Beranda() {
             </Link>
           </p>
           <p className="catatan">
-            Tab ini hanya berisi data yang sudah terbit, tanpa ramalan. Pembaruan otomatis terakhir:{" "}
-            {waktuWIB(status.last_success_at)}
+            Pembaruan otomatis terakhir: {waktuWIB(status.last_success_at)}
             {status.last_run_status === "partial" && " (sebagian sumber gagal diambil)"}.
           </p>
         </div>
@@ -224,13 +218,7 @@ export default async function Beranda() {
                 nilai={nilaiPer.get(id)!}
                 titik={titikSeri(grafik, id)}
                 kalender={jadwal(id)}
-                tambahan={
-                  kunci === "pengangguran"
-                    ? pekerja?.porsi
-                    : kunci === "inflasi" && nilaiPer.has(KELOMPOK_INFLASI[0].setahun)
-                      ? "Rincian inti, harga diatur pemerintah, dan harga bergejolak ada di Riwayat lengkap."
-                      : undefined
-                }
+                tambahan={kunci === "pengangguran" ? pekerja?.porsi : undefined}
               />
             );
           })}
@@ -244,10 +232,6 @@ export default async function Beranda() {
 
       <section aria-labelledby="judul-penggerak">
         <h2 id="judul-penggerak">Yang ikut mendorong ketiga angka</h2>
-        <p className="catatan">
-          Harga komoditas, kurs, suku bunga, dan kondisi mitra dagang memengaruhi pertumbuhan dan
-          inflasi Indonesia, biasanya dengan jeda beberapa bulan.
-        </p>
         {PENGGERAK.map((kelompok) => {
           const ada = kelompok.seri.filter((s) => nilaiPer.has(s) && metaPer.has(s));
           if (!ada.length) return null;
@@ -272,11 +256,6 @@ export default async function Beranda() {
 
       <section aria-labelledby="judul-target">
         <h2 id="judul-target">Target resmi pemerintah</h2>
-        <p className="catatan">
-          Target pertumbuhan dan pengangguran dari UU APBN, sasaran inflasi dari PMK. Daftar lengkap,
-          termasuk tahun-tahun sebelumnya dan target RPJMN, ada di{" "}
-          <Link href="/metode#target">Metode</Link>.
-        </p>
         <TabelTarget
           target={targetTerdekat}
           judul={`Target resmi ${tahunTarget ? `sejak ${periode(String(tahunTarget))}` : ""}`.trim()}
