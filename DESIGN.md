@@ -14,7 +14,7 @@ Panduan tampilan situs Con-Fore. Nilai tokennya ada di `web/app/globals.css`; do
 - Setiap angka membawa waktunya: periode data, tanggal rilis, dan rilis berikutnya selalu terlihat, tidak disembunyikan di lipatan (PRD 4.1).
 - Netral: kalimat menjelaskan dan membandingkan, tanpa vonis dan tanpa nasihat. "Artinya buatmu" menjelaskan arti angka, bukan saran belanja. Aturannya di PRD 4.4.
 - Jujur soal waktu: tanggal data selalu tertulis, dan kata "LIVE", "real-time", atau "langsung" tidak dipakai (PRD 4.4).
-- Tulisan abu-abu hanya untuk data, waktu, sumber, kunci membaca angka atau grafik, dan pemberitahuan wajib (bukan situs resmi, bukan nasihat keuangan). Kalimat yang mengulang judul, menjelaskan isi halaman, atau sekadar menunjuk ke halaman lain tidak dipakai. Isi lipatan penjelas dan halaman Metode tidak termasuk aturan ini, karena dibuka pembaca dengan sengaja.
+- Tulisan abu-abu hanya untuk data, waktu, sumber, kunci membaca angka atau grafik, dan pemberitahuan wajib (bukan situs resmi, bukan nasihat keuangan). Kalimat yang mengulang judul, menjelaskan isi halaman, atau sekadar menunjuk ke halaman lain tidak dipakai. Isi lipatan penjelas dan bagian penjelasan di halaman Metode tidak termasuk aturan ini, karena dibuka pembaca dengan sengaja.
 - Jelas independen. Tidak memakai lambang negara, warna merah-putih sebagai identitas, atau gaya visual BPS, Bank Indonesia, maupun kementerian. Kalimat "bukan situs resmi" selalu ada di kaki halaman.
 
 ## Warna
