@@ -108,8 +108,8 @@ export function jsonLdSeri(
 }
 
 /**
- * Dataset perkiraan di Prediksi, dengan satu unduhan CSV per target. Lisensi tidak ditulis, karena
- * lisensi angka olahan Con-Fore belum diputuskan.
+ * Dataset perkiraan di Prediksi, dengan satu unduhan CSV per target. Lisensi sengaja tidak ditulis:
+ * angka olahan Con-Fore tidak mencantumkan lisensi.
  */
 export function jsonLdPerkiraan(ramalan: BarisRamalan[], meta: MetaSeri[]): Objek {
   const utama = ramalan.filter((b) => b.is_main && TARGET_PREDIKSI.some((t) => t.seri === b.series_id));
