@@ -30,13 +30,12 @@ Panduan susunan dan isi tampilan situs Con-Fore untuk desain ulang. Isi halaman 
 ## Halaman Indonesia
 
 - Menjawab keempat pertanyaan dengan urutan di Arah. Tiga pertanyaan pertama memakai angka resmi terakhir, dan pertanyaan keempat memakai perkiraan ketiganya.
-- Bentuknya dipilih lewat uji konsep dari tiga calon:
-  - **A, satu halaman bergulir:** empat blok jawaban berurutan.
-  - **B, empat kartu:** layar pertama berisi empat kartu pendek (pertanyaan dan angka), dan mengetuk kartu membuka jawaban lengkapnya.
-  - **C, ringkasan bercerita:** satu paragraf pendek yang menjawab keempat pertanyaan dengan angka di dalam kalimat, lalu blok jawaban di bawahnya.
+- Bentuknya ringkasan bercerita: satu paragraf pendek yang menjawab keempat pertanyaan dengan angka di dalam kalimat, lalu blok jawaban di bawahnya.
+- Bentuk ini (C) dipilih di uji tahap pilih pada 2026-11-20 dari tiga calon, dan masih harus lulus uji tahap lulus (PRD 6). Dua calon lain tidak dipakai: satu halaman bergulir berisi empat blok jawaban (A), dan empat kartu pendek yang dibuka dengan diketuk (B).
 
 ## Komponen isi
 
+- **Ringkasan bercerita:** satu paragraf di awal halaman Indonesia, berisi satu kalimat per pertanyaan dengan angkanya, berurutan seperti blok jawaban. Label di bawahnya menyebut kalimat mana yang angka resmi dan mana yang perkiraan.
 - **Blok jawaban:** pertanyaan sebagai judul, jawaban satu kalimat, angka, contoh sehari-hari, perbandingan, label, dan waktu data. Urutannya sama di semua pertanyaan.
 - **Perbandingan dalam kalimat:** dengan periode yang sama setahun sebelumnya, dengan rata-rata tahun 2000 sampai 2025, dan dengan target pemerintah tahun itu. Periode patokan selalu disebut (PRD 4.2).
 - **Label:** "angka resmi BPS" atau "perkiraan Con-Fore, bukan angka resmi", selalu terlihat tanpa harus dibuka.
