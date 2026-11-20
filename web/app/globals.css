@@ -1083,6 +1083,12 @@ td.angka {
   gap: 1rem;
 }
 
+/* Sitasi di daftar seri memuat alamat panjang: tanpa ini, membuka daftarnya melebarkan panel di layar HP. */
+.daftar-sumber > li {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .prosa {
   max-width: 46rem;
 }
