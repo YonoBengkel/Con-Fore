@@ -5,6 +5,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Berikutnya } from "@/components/Berikutnya";
 import { GrafikKelompok, GrafikRonde } from "@/components/Grafik";
+import { JsonLd } from "@/components/JsonLd";
 import { Lencana, Sitasi, TabelTarget } from "@/components/Kartu";
 import { BannerBasi } from "@/components/Klien";
 import { RiwayatInteraktif } from "@/components/RiwayatInteraktif";
@@ -15,10 +16,12 @@ import {
   bacaMeta,
   bacaNilai,
   bacaStatus,
+  bacaSumber,
   bacaTarget,
   titikSeri,
 } from "@/lib/data";
 import { angka, nilaiPendek, nilaiSeri, perubahan, periode, tanggal, waktuWIB } from "@/lib/format";
+import { jsonLdSeri } from "@/lib/jsonld";
 import {
   JUDUL_KARTU,
   KELOMPOK_INFLASI,
@@ -75,7 +78,7 @@ export default async function Indikator({ params }: Props) {
   if (!POLA_ID.test(id)) notFound();
   const halamanTpt = SERI_KARTU.pengangguran.includes(id);
   const halamanInflasi = SERI_KARTU.inflasi.includes(id);
-  const [meta, nilai, status, grafik, kalender, target] = await Promise.all([
+  const [meta, nilai, status, grafik, kalender, target, sumber] = await Promise.all([
     bacaMeta(),
     bacaNilai(),
     bacaStatus(),
@@ -86,6 +89,7 @@ export default async function Indikator({ params }: Props) {
     ]),
     bacaKalender(),
     bacaTarget(),
+    bacaSumber(),
   ]);
   const m = meta.find((x) => x.series_id === id);
   if (!m) notFound();
@@ -115,6 +119,7 @@ export default async function Indikator({ params }: Props) {
 
   return (
     <>
+      <JsonLd data={jsonLdSeri(m, titik, n, sumber.find((s) => s.source_id === m.source_id))} />
       <nav aria-label="Letak halaman" className="remah">
         <ol>
           <li>

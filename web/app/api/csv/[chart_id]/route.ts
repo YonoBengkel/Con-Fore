@@ -1,9 +1,9 @@
 // GET /api/csv/[chart_id]: unduhan CSV dari public.chart_series, di-cache bersama halaman (ISR).
-// Baris awal berawalan # memuat sumber dan syarat penggunaan, karena penyedia unduhan wajib
-// menyampaikan syarat sumber ke penggunanya (PRD 9.3).
+// Baris awal berawalan # memuat sumber dan syarat penggunaan (web/lib/csv.ts, PRD 9.3).
 
+import { kepalaSumber, komentar } from "@/lib/csv";
 import { POLA_ID, bacaGrafik, bacaIdGrafik, bacaMeta, bacaSumber } from "@/lib/data";
-import { SERI_DITAUTKAN, labelSeri } from "@/lib/konten";
+import { SERI_DITAUTKAN } from "@/lib/konten";
 
 // 6 jam, sama dengan halaman.
 export const revalidate = 21600;
@@ -17,9 +17,6 @@ export async function generateStaticParams() {
   return [...ids].map((chart_id) => ({ chart_id }));
 }
 
-/** Satu baris komentar: tanpa baris baru di dalamnya. */
-const komentar = (teks: string) => `# ${teks.replace(/\s+/g, " ").trim()}`;
-
 export async function GET(_request: Request, { params }: Konteks) {
   const { chart_id } = await params;
   if (!POLA_ID.test(chart_id)) {
@@ -31,22 +28,11 @@ export async function GET(_request: Request, { params }: Konteks) {
     return new Response("Grafik tidak ditemukan.\n", { status: 404 });
   }
 
-  const kepala: string[] = [komentar(`Con-Fore, unduhan grafik ${chart_id}. Situs independen, bukan situs resmi lembaga mana pun.`)];
-  const sumberDipakai = new Set<string>();
-  for (const seri of g.series_ids) {
-    const m = meta.find((x) => x.series_id === seri);
-    if (!m) continue;
-    sumberDipakai.add(m.source_id);
-    kepala.push(komentar(`${seri}: ${m.name_id} (${m.unit}); ${labelSeri(m)}`));
-    kepala.push(komentar(`Sitasi: ${m.citation}`));
-  }
-  for (const id of sumberDipakai) {
-    const s = sumber.find((x) => x.source_id === id);
-    if (!s) continue;
-    kepala.push(komentar(`Atribusi ${s.name}: ${s.attribution_text}`));
-    kepala.push(komentar(`Syarat penggunaan: ${s.license} ${s.terms_url}`));
-  }
-  kepala.push(komentar(`Diterbitkan Con-Fore: ${g.updated_at}`));
+  const kepala = [
+    komentar(`Con-Fore, unduhan grafik ${chart_id}. Situs independen, bukan situs resmi lembaga mana pun.`),
+    ...kepalaSumber(g.series_ids, meta, sumber),
+    komentar(`Diterbitkan Con-Fore: ${g.updated_at}`),
+  ];
 
   const baris = ["series_id,periode,nilai"];
   for (const seri of g.series_ids) {

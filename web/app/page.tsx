@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { Berikutnya } from "@/components/Berikutnya";
+import { JsonLd } from "@/components/JsonLd";
 import { KartuKosong, KartuSeri, TabelTarget } from "@/components/Kartu";
 import { BannerBasi, PilihLensa } from "@/components/Klien";
 import { DaftarStatus, Segitiga } from "@/components/Segitiga";
@@ -18,6 +19,7 @@ import {
   type NilaiTerakhir,
 } from "@/lib/data";
 import { nilaiPendek, periode, tanggal, waktuWIB } from "@/lib/format";
+import { jsonLdSitus } from "@/lib/jsonld";
 import {
   JUDUL_KARTU,
   PENGGERAK,
@@ -30,6 +32,7 @@ import {
 } from "@/lib/konten";
 import { kalimatPekerja } from "@/lib/pekerja";
 import { buatRingkasan, type Lensa } from "@/lib/ringkasan";
+import { DESKRIPSI_SITUS } from "@/lib/situs";
 import { SERI_SEGITIGA } from "@/lib/skor";
 
 // 6 jam; pipeline memanggil /api/revalidate setelah setiap publikasi.
@@ -105,6 +108,7 @@ export default async function Beranda() {
 
   return (
     <>
+      <JsonLd data={jsonLdSitus(DESKRIPSI_SITUS)} />
       <section className="sampul" aria-labelledby="judul-halaman">
         <div className="sampul-atas">
           <h1 id="judul-halaman" className="sampul-judul">
