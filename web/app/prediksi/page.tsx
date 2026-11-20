@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Berikutnya } from "@/components/Berikutnya";
 import { GrafikJangkaPanjang, GrafikPerkiraan } from "@/components/Grafik";
+import { JsonLd } from "@/components/JsonLd";
 import { Sitasi } from "@/components/Kartu";
 import { BannerBasi, PilihLensa } from "@/components/Klien";
 import { DaftarStatus, Segitiga } from "@/components/Segitiga";
@@ -22,6 +23,7 @@ import {
   type Titik,
 } from "@/lib/data";
 import { angka, periode, tanggal } from "@/lib/format";
+import { jsonLdPerkiraan } from "@/lib/jsonld";
 import {
   NAMA_MODEL,
   SERI_BULANAN,
@@ -226,6 +228,11 @@ function KartuPerkiraan({
             </tbody>
           </table>
         </div>
+        <p>
+          <a href={`/api/csv/perkiraan/${target.kunci}`} download>
+            Unduh rincian ini (CSV)<span className="sr-only"> {target.judul}</span>
+          </a>
+        </p>
       </details>
     </article>
   );
@@ -402,6 +409,7 @@ export default async function Prediksi() {
 
   return (
     <>
+      <JsonLd data={jsonLdPerkiraan(ramalan, meta)} />
       <section className="sampul" aria-labelledby="judul-halaman">
         <div className="sampul-atas">
           <h1 id="judul-halaman" className="sampul-judul">

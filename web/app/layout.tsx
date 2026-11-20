@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Gelasio, Inter, JetBrains_Mono } from "next/font/google";
 import Link from "next/link";
 import { NavUtama } from "@/components/Klien";
+import { DESKRIPSI_SITUS } from "@/lib/situs";
 import "./globals.css";
 
 // Disajikan dari Vercel sendiri: unduhan dari Google hanya saat build, tanpa panggilan dari browser.
@@ -20,8 +21,7 @@ function TandaMerek() {
 
 export const metadata: Metadata = {
   title: { default: "Con-Fore: ekonomi Indonesia dalam tiga angka", template: "%s | Con-Fore" },
-  description:
-    "Pertumbuhan, inflasi, dan pengangguran Indonesia dalam bahasa sehari-hari, diperbarui otomatis dari data publik. Situs independen, bukan situs resmi lembaga mana pun.",
+  description: DESKRIPSI_SITUS,
 };
 
 export const viewport: Viewport = {

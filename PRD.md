@@ -55,7 +55,7 @@ Setiap halaman utama ditutup dengan kotak "Berikutnya" yang menunjukkan alurnya:
 **Prediksi**
 
 - Sampul: segitiga dengan tahun perkiraan (garis putus-putus) sebagai visual utama, dengan kalimat ringkasannya.
-- Forecast ketiga target. Kalimat utama setiap kartu memuat rentangnya (4.4), disertai tabel batas kecil dan penjelasan "kenapa perkiraannya begini" berupa penggerak terbesar dalam bahasa awam.
+- Forecast ketiga target. Kalimat utama setiap kartu memuat rentangnya (4.4), disertai tabel batas kecil dan penjelasan "kenapa perkiraannya begini" berupa penggerak terbesar dalam bahasa awam. Tabel batas bisa diunduh sebagai CSV, dengan sumber angka resmi yang diperkirakan dan syaratnya di baris awal.
 - Grafik perkiraan memuat perkiraan lama dan angka resmi pertama begitu rekam jejak terisi.
 - Panel jangka panjang (proyeksi IMF dibanding target RPJMN) dan bagian Rekam jejak. Rekam jejak menulis selisih dalam poin persen dan cakupan rentang sebagai hitungan, misalnya "3 dari 4 perkiraan jatuh di dalam rentangnya", dibanding angka resmi pertama. Persen tidak dipakai, karena persen dari sedikit perkiraan terlihat lebih pasti daripada kenyataannya.
 - Selalu berangkat dari angka resmi terakhir.

@@ -8,13 +8,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --test lib/skor.test.ts lib/format.test.ts lib/konten.test.ts lib/pekerja.test.ts lib/rincian.test.ts lib/prediksi.test.ts lib/riwayat.test.ts lib/penjelas.test.ts"
+    "test": "node --test lib/skor.test.ts lib/format.test.ts lib/konten.test.ts lib/pekerja.test.ts lib/rincian.test.ts lib/prediksi.test.ts lib/riwayat.test.ts lib/penjelas.test.ts lib/jsonld.test.ts lib/csv.test.ts"
   },
   "engines": {
     "node": "24.x"
   },
   "dependencies": {
-    "next": "16.4.3",
+    "next": "16.4.6",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },
