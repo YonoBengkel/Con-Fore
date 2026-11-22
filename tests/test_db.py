@@ -271,7 +271,8 @@ class DatabaseTest(unittest.TestCase):
         latest = self.conn.execute("""select release_date, seen_date from public.latest_values
                                       where series_id = 'bps_cpi_yoy_m'""").fetchone()
         self.assertEqual(latest, (date(2026, 11, 2), date(2026, 11, 4)))
-        meta = self.conn.execute("""select last_release_date, versions_since from public.series_meta
+        self.assertEqual(self.db.latest_releases(self.conn)["bps_cpi_yoy_m"], ("2026-10", date(2026, 11, 2)))
+        meta =self.conn.execute("""select last_release_date, versions_since from public.series_meta
                                     where series_id = 'bps_cpi_yoy_m'""").fetchone()
         self.assertEqual(meta, (date(2026, 11, 2), date(2026, 11, 2)))
         with self.conn.transaction():

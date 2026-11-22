@@ -464,6 +464,12 @@ def vintage_changes(conn, series_ids):
     """, (series_ids,)).fetchall()
 
 
+def latest_releases(conn):
+    """Periode dan tanggal rilis angka terbaru yang tampil di situs: {series_id: (periode, tanggal rilis)}."""
+    return {series_id: (period, release) for series_id, period, release in
+            conn.execute("select series_id, period, release_date from public.latest_values")}
+
+
 def latest_points(conn, series_ids):
     """Vintage terbaru setiap periode, per seri, terurut menurut waktu; periode yang ditarik
     sumber (vintage terbarunya NULL) tidak ikut."""

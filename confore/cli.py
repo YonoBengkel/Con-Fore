@@ -1,10 +1,11 @@
-"""Perintah pipeline: `python -m confore <migrate, run, backtest, backup, restore, status>`.
+"""Perintah pipeline: `python -m confore <migrate, run, backtest, backup, restore, status, checkup>`.
 
 Hasil dicetak sebagai tabel markdown ke layar dan ke ringkasan job GitHub. Error tak terduga
 dicetak tanpa isi pesannya (bisa memuat host atau user database): hanya baris kode dan jenis error.
 """
 
 import argparse
+import json
 import logging
 import os
 import sys
@@ -12,7 +13,7 @@ import time
 import traceback
 from datetime import date, datetime, timedelta, timezone
 
-from confore import availability, backup, config, db, fetch, publish, revalidate
+from confore import availability, backup, checkup, config, db, fetch, publish, revalidate
 from confore.derive import derive_all
 from confore.smoke import load_dotenv
 
@@ -226,6 +227,25 @@ def cmd_status(args):
     return 1 if result.verdict == "gagal" else 0
 
 
+def cmd_checkup(args):
+    """Pemeriksaan bulanan dan pengingat tabel kurasi (RUNBOOK bagian 9). Hanya membaca database. Temuan
+    tidak membuat perintah gagal: temuan menjadi issue, yang dibuka langkah workflow berikutnya dari --out."""
+    today = wib_date()
+    if args.test:
+        issues = checkup.test_issues(today)
+    else:
+        checks, issues = checkup.collect(today, args.state_dir)
+        names = {True: "beres", False: "perlu tindakan", None: "dilewati"}
+        report(f"Pemeriksaan bulanan {today}", ["Pemeriksaan", "Hasil", "Keterangan"],
+               [(c.name, names[c.ok], c.detail) for c in checks])
+    report("Issue yang dibuka atau dikomentari", ["Judul", "Langsung ditutup"],
+           [(issue["title"], "ya" if issue["close"] else "tidak") for issue in issues])
+    if args.out:
+        with open(args.out, "w", encoding="utf-8") as handle:
+            json.dump(issues, handle, ensure_ascii=False, indent=2)
+    return 0
+
+
 def refresh_site(cfg):
     """Segarkan situs sesudah data terbit. Data sudah aman, jadi kegagalan di sini hanya membuat
     job merah (GitHub mengirim email), tanpa mengubah status run di database."""
@@ -341,6 +361,12 @@ def main(argv=None):
     status.add_argument("--since", type=date.fromisoformat, help="tanggal WIB hari pertama, YYYY-MM-DD")
     status.add_argument("--days", type=int, default=7, help="panjang jendela, bawaan 7 hari")
     status.set_defaults(func=cmd_status)
+    check = commands.add_parser("checkup", help="pemeriksaan bulanan dan pengingat tabel kurasi")
+    check.add_argument("--state-dir", help="folder berkas JSON keadaan repo dari langkah workflow sebelumnya")
+    check.add_argument("--out", help="berkas JSON berisi issue untuk langkah workflow berikutnya")
+    check.add_argument("--test", action="store_true",
+                       help="hanya siapkan satu issue uji per jenis pengingat, yang langsung ditutup lagi")
+    check.set_defaults(func=cmd_checkup)
     args = parser.parse_args(argv)
     try:
         return args.func(args)

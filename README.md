@@ -36,6 +36,7 @@ python -m confore backtest                 # uji model dari database, lalu ganti
 python -m confore backup <berkas>          # tulis arsip tabel yang tidak bisa dibangun ulang, hanya membaca
 python -m confore restore <berkas>         # isi database kosong dari arsip, lalu lanjut dengan run
 python -m confore status --since YYYY-MM-DD   # hasil uji tujuh hari per hari, hanya membaca
+python -m confore checkup                  # pemeriksaan bulanan dan pengingat tabel config/, hanya membaca
 ```
 
 Variabel environment dibaca dari environment atau `.env` (lihat `.env.example`). Tes database butuh Postgres lokal sekali pakai dengan peran `anon`, `authenticated`, dan `service_role`; arahkan `CONFORE_TEST_DB_URL` ke database berakhiran `_test` sebagai variabel environment (bukan lewat `.env`), misalnya `postgresql://postgres@localhost:55432/confore_test?sslmode=disable`. Tes itu menghapus skema `etl` dan tabel `public` di database tersebut. Seri yang ditarik diatur di `config/series.toml`; target resmi, sumber, kalender rilis, dan tanggal Lebaran di `config/*.csv`. Seri BPS butuh `BPS_API_KEY` di `.env`.

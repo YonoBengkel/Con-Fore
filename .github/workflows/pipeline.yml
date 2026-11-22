@@ -4,7 +4,8 @@ name: Pipeline data
 # tersibuk GitHub. Jadwal dan push memakai mode run.
 # - 17 23 * * *: harian 06.17 WIB keesokan harinya, semua sumber.
 # - 17 8,11 1-8 * *: hari rilis BPS (tanggal 1-8), 15.17 dan 18.17 WIB, hanya sumber BPS.
-# - 47 9 9 * *: backtest bulanan tanggal 9, 16.47 WIB, sesudah rilis inflasi, PDB, dan TPT bulan itu.
+# - 47 9 9 * *: backtest bulanan tanggal 9, 16.47 WIB, sesudah rilis inflasi, PDB, dan TPT bulan itu,
+#   lalu pemeriksaan bulanan dan pengingat tabel kurasi (checkup.yml).
 on:
   schedule:
     - cron: "17 23 * * *"
@@ -89,3 +90,16 @@ jobs:
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: python -m confore backtest
+
+  # Pemeriksaan bulanan (RUNBOOK bagian 9). Tetap berjalan bila backtest gagal, supaya pengingat tidak ikut
+  # berhenti. Hanya membaca database; izin menulis issue hanya ada di job ini.
+  checkup:
+    needs: backtest
+    if: ${{ !cancelled() && github.event.schedule == '47 9 9 * *' }}
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    uses: ./.github/workflows/checkup.yml
+    secrets:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
