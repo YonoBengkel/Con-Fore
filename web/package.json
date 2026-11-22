@@ -2,13 +2,13 @@
   "name": "con-fore-web",
   "version": "0.1.0",
   "private": true,
-  "description": "Situs Con-Fore (Next.js): tab Data yang membaca tabel public Supabase lewat server.",
+  "description": "Situs Con-Fore (Next.js): halaman Indonesia, halaman rinci, dan Ke depan yang membaca tabel public Supabase lewat server.",
   "scripts": {
     "salin-env": "node scripts/salin-env.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --test lib/skor.test.ts lib/format.test.ts lib/konten.test.ts lib/pekerja.test.ts lib/rincian.test.ts lib/prediksi.test.ts lib/riwayat.test.ts lib/penjelas.test.ts lib/jsonld.test.ts lib/csv.test.ts"
+    "test": "node --test lib/jawaban.test.ts lib/format.test.ts lib/konten.test.ts lib/pekerja.test.ts lib/rincian.test.ts lib/prediksi.test.ts lib/riwayat.test.ts lib/penjelas.test.ts lib/jsonld.test.ts lib/csv.test.ts"
   },
   "engines": {
     "node": "24.x"

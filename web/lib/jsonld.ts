@@ -1,5 +1,5 @@
 // Data terstruktur JSON-LD (schema.org) untuk mesin pencari: WebSite di beranda, Dataset per seri di
-// halaman detail, dan Dataset perkiraan di Prediksi. Isinya hanya yang juga tampil di halaman atau di
+// halaman data per seri, dan Dataset perkiraan di halaman Ke depan. Isinya hanya yang juga tampil di halaman atau di
 // CSV-nya. Tanggal ubahnya mengikuti kapan isi benar-benar berubah, bukan waktu build, dan dipakai juga
 // untuk lastModified di sitemap.
 
@@ -50,7 +50,7 @@ export function teksJsonLd(data: Objek): string {
   return JSON.stringify(data).replace(/</g, "\\u003c");
 }
 
-/** WebSite di beranda, supaya nama situs terbaca di hasil pencarian. */
+/** WebSite di halaman depan, supaya nama situs terbaca di hasil pencarian. */
 export function jsonLdSitus(deskripsi: string): Objek {
   return {
     "@context": KONTEKS,
@@ -108,7 +108,7 @@ export function jsonLdSeri(
 }
 
 /**
- * Dataset perkiraan di Prediksi, dengan satu unduhan CSV per target. Lisensi sengaja tidak ditulis:
+ * Dataset perkiraan di halaman Ke depan, dengan satu unduhan CSV per target. Lisensi sengaja tidak ditulis:
  * angka olahan Con-Fore tidak mencantumkan lisensi.
  */
 export function jsonLdPerkiraan(ramalan: BarisRamalan[], meta: MetaSeri[]): Objek {
@@ -121,7 +121,7 @@ export function jsonLdPerkiraan(ramalan: BarisRamalan[], meta: MetaSeri[]): Obje
     description:
       "Perkiraan pertumbuhan, inflasi, dan pengangguran Indonesia, lengkap dengan rentang dan catatan seberapa " +
       "sering perkiraan itu meleset. Dihitung Con-Fore dari data resmi BPS. Bukan angka resmi dan bukan nasihat keuangan.",
-    url: `${ALAMAT_SITUS}/prediksi`,
+    url: `${ALAMAT_SITUS}/indonesia/ke-depan`,
     inLanguage: "id",
     isAccessibleForFree: true,
     creator: CON_FORE,

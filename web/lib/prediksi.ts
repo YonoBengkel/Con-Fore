@@ -4,7 +4,16 @@
 import type { BarisRamalan, SkorBacktest, Target, Titik } from "./data";
 import { angka, periode } from "./format.ts";
 import type { KunciKartu } from "./konten.ts";
-import type { NilaiTahun } from "./skor.ts";
+
+/** Angka tahunan ketiga target: pertumbuhan, inflasi akhir tahun, dan pengangguran Agustus. */
+export type NilaiTahun = { pertumbuhan: number; inflasi: number; pengangguran: number };
+
+/** Pengganti rentang bila uji dengan data lama untuk jarak itu belum cukup (PRD 4.1 prinsip 4). */
+export const TANPA_RENTANG = "Rentangnya belum tersedia, karena uji dengan data lama untuk jarak ini masih sedikit.";
+
+/** Arti kata "kemungkinan" di kalimat perkiraan, ditulis sekali di dekatnya (PRD 4.4). */
+export const ARTI_KEMUNGKINAN =
+  'Kata "kemungkinan" berarti: saat cara hitung ini diuji dengan data lama, sekitar 8 dari 10 angka resmi jatuh di dalam rentang selebar itu. Perkiraan bukan janji.';
 
 export type TargetPrediksi = {
   kunci: KunciKartu;

@@ -1,8 +1,8 @@
-Status: plan. Rencana desain ulang dari nol, diputuskan pengelola lewat sesi drill 2026-11-20 sesudah dua uji baca gagal (fase 5c di PRD). Dokumen ini memuat susunan halaman dan aturan isi. Uji konsep lulus pada 2026-11-22, dan gaya visual (warna, huruf, bentuk, gerak) sedang dipilih dari tiga contoh gaya, jadi belum ditulis di sini. Situs yang tayang masih memakai susunan lama, dengan token di `web/app/globals.css`, sampai halaman baru dibangun.
+Status: berlaku sejak 2026-11-22, sesuai kode di `web/`. Desain ulang dari nol (fase 5c di PRD), diputuskan pengelola lewat drill 2026-11-20 sesudah dua uji baca gagal, lalu lewat uji konsep sampai 2026-11-22: halaman Indonesia bentuk C dan gaya visual 3. Tokennya di `web/app/globals.css`. Globe 3D di halaman depan masih menunggu aset, jadi sementara dipakai peta diam.
 
 # Panduan desain Con-Fore
 
-Panduan susunan dan isi tampilan situs Con-Fore untuk desain ulang. Isi halaman per halaman ada di [PRD.md](PRD.md) bagian 4.1, dan dokumen ini menjelaskan aturan yang membentuknya.
+Panduan susunan, isi, dan gaya tampilan situs Con-Fore. Isi halaman per halaman ada di [PRD.md](PRD.md) bagian 4.1, dan dokumen ini menjelaskan aturan yang membentuknya.
 
 ## Arah
 
@@ -26,6 +26,7 @@ Panduan susunan dan isi tampilan situs Con-Fore untuk desain ulang. Isi halaman 
   4. hanya dimuat di halaman depan, sesudah judul tampil,
   5. punya gambar diam pengganti bila perangkat tidak sanggup menampilkan 3D.
 - Lisensi, ukuran, dan kode aset diperiksa sebelum dipakai.
+- **Sampai aset globe tersedia:** halaman depan memakai peta dunia diam yang disederhanakan (`web/lib/peta.ts`), dengan Indonesia menyala dan terangkat saat kursor di atasnya, dan nama Indonesia sebagai tautan. Peta ini juga calon gambar diam pengganti globe.
 
 ## Halaman Indonesia
 
@@ -53,13 +54,17 @@ Panduan susunan dan isi tampilan situs Con-Fore untuk desain ulang. Isi halaman 
 - Format angka, narasi netral, dan contoh sehari-hari mengikuti PRD 4.4.
 - Tulisan sekunder hanya untuk data, waktu, sumber, kunci membaca angka atau grafik, dan pemberitahuan wajib (bukan situs resmi, bukan nasihat keuangan). Kalimat yang mengulang judul, menjelaskan isi halaman, atau sekadar menunjuk ke halaman lain tidak dipakai. Isi kotak penjelas dan bagian penjelasan di Tentang data tidak termasuk aturan ini, karena dibuka pembaca dengan sengaja.
 
-## Konsep kasar dan contoh gaya
+## Gaya visual
 
-- Konsep kasar hitam-putih untuk uji susunan tayang di `/konsep/` sejak 2026-11-20, berisi halaman depan dan halaman Indonesia bentuk A, B, dan C, lalu dihapus sesudah uji selesai pada 2026-11-22.
-- Contoh gaya: halaman depan dan halaman Indonesia bentuk C dalam tiga gaya, di `/konsep/gaya-1.html`, `/konsep/gaya-2.html`, dan `/konsep/gaya-3.html`. Isi, angka, dan susunannya sama persis dengan konsep C, jadi yang dibandingkan hanya warna, huruf, dan bentuk.
-- Keduanya HTML statis di `web/public/konsep/`, dengan angka asli per 20 November 2026 yang tanggalnya ditulis di halaman, dan peta dunia diam yang disederhanakan sampai aset globe tersedia.
-- Contoh gaya memuat huruf dari Google Fonts karena berupa HTML statis. Halaman baru nanti memuat huruf lewat `next/font`, yang menyajikannya dari situs sendiri.
-- Tidak masuk sitemap, ditandai `noindex`, dan dihapus sesudah gaya dipilih.
+Gaya 3, terang dan ramah, dipilih pengelola 2026-11-22 dari tiga contoh gaya: gelap ala Atlas, terang lugas, dan terang ramah.
+
+- **Warna dasar:** latar abu muda `#f4f5f7`, kartu putih `#ffffff`, tinta `#1c2333`, teks sekunder `#4b5563` dan `#5f6b7a`, dan garis `#e3e6eb`. Semua warna teks minimal 4,5:1 terhadap latarnya.
+- **Warna pertanyaan:** Harga `#b93815`, Kerja `#1d5fb8`, Ekonomi `#0b7a5c`, dan Ke depan `#586174`, yang netral karena isinya perkiraan. Ketiga warna pertama lolos pemeriksa palet buta warna. Warnanya hanya untuk penanda: garis pendek di atas judul blok, titik di baris empat pertanyaan, angka besar, angka di ringkasan bercerita, latar contoh sehari-hari, dan garis grafik. Teks biasa tetap bertinta. Warna selalu berpasangan dengan nama pertanyaannya, jadi tidak pernah menjadi satu-satunya penanda.
+- **Huruf:** satu jenis, Plus Jakarta Sans buatan Tokotype dari Indonesia, disajikan dari situs sendiri lewat `next/font`. Teks bacaan 17 px dengan spasi kata ditambah 0,05em, judul halaman 34 px di HP dan 42 px di layar lebar, judul blok 21 px, dan angka besar 48 px dengan angka tabular. Ketebalannya 400 untuk isi, 600 untuk label dan tautan, dan 700 untuk judul dan angka.
+- **Bentuk:** kartu putih tanpa garis tepi dan tanpa bayangan di latar abu, dengan sudut 20 px untuk blok dan panel, 16 px untuk kartu, 14 px untuk lipatan dan contoh, dan 8 px untuk label. Label angka resmi bergaris utuh, dan label perkiraan bergaris putus-putus. Lipatan memakai latar tipis dan tanda panah di kanan.
+- **Tata letak:** halaman Indonesia berupa satu kolom baca selebar sekitar 44rem, dan halaman rinci sekitar 56rem. Halaman Ke depan, Tentang data, dan data per seri memakai lebar penuh untuk kartu, tabel, dan daftar isi.
+- **Grafik:** garis 2,25 px dengan warna pertanyaan halamannya, perkiraan putus-putus, pita rentang berwarna sama dengan kepekatan 16%, dan kisi abu tipis. Di HP, label grafik lebar dibesarkan supaya tetap terbaca.
+- **Gerak:** hanya untuk umpan balik. Indonesia di peta terangkat 1,5 px saat kursor di atasnya, dan tautan berganti warna halus dalam 150 ms. Keduanya mati bagi yang memilih kurangi animasi.
 
 ## Aksesibilitas
 
@@ -71,18 +76,21 @@ Panduan susunan dan isi tampilan situs Con-Fore untuk desain ulang. Isi halaman 
 
 ## Belum diputuskan
 
-- Gaya visual: warna, huruf, bentuk, dan gerak. Pengelola memilih satu dari tiga contoh gaya:
-  - **Gaya 1, gelap ala Atlas:** biru malam, panel instrumen, judul Gelasio, isi Inter, dan angka JetBrains Mono, sama dengan token situs sekarang.
-  - **Gaya 2, terang lugas:** tinta biru tua di latar terang, satu aksen biru, dan satu jenis huruf (Public Sans), dengan arah dari USAFacts.
-  - **Gaya 3, terang ramah:** kartu putih membulat di latar abu muda, satu warna untuk setiap pertanyaan (Harga, Kerja, Ekonomi, dan Ke depan), dan huruf Plus Jakarta Sans buatan Tokotype dari Indonesia. Palet warna pertanyaannya lolos pemeriksa buta warna.
 - Aset globe 3D, dicari pengelola dengan syarat di atas.
 - Logo penuh. Sampai ada logo baru, tanda segitiga dan teks "Con-Fore" tetap dipakai.
 
+## Riwayat uji
+
+- Konsep kasar hitam-putih (halaman depan dan halaman Indonesia bentuk A, B, dan C) tayang di `/konsep/` 2026-11-20 sampai 2026-11-22. Bentuk C dipilih di tahap pilih dan dinyatakan lulus tahap lulus oleh pengelola (PRD 6).
+- Tiga contoh gaya tayang di `/konsep/` pada 2026-11-22, dan gaya 3 dipilih.
+- Keduanya sudah dihapus dari situs, dan isinya ada di riwayat git.
+
 ## Referensi
 
-- atlasgeopo.com (https://atlasgeopo.com/en): susunan peta dunia lalu profil negara, dan halaman pembanding negaranya (`/en/comparateur`) sebagai acuan halaman pembanding fase 7. Gayanya menjadi gaya 1 di contoh gaya. Logo, teks, ilustrasi, dan tata letak persisnya tidak disalin.
-- USAFacts (https://usafacts.org/): waktu data di dekat angka, judul grafik berupa kalimat temuan, dan contoh hitung kecil untuk pembaca awam. Arah gaya 2 di contoh gaya juga diambil dari sini. Kata real-time-nya tidak diambil.
+- atlasgeopo.com (https://atlasgeopo.com/en): susunan peta dunia lalu profil negara, dan halaman pembanding negaranya (`/en/comparateur`) sebagai acuan halaman pembanding fase 7. Gaya gelapnya menjadi gaya 1 di contoh gaya dan tidak dipilih. Logo, teks, ilustrasi, dan tata letak persisnya tidak disalin.
+- USAFacts (https://usafacts.org/): waktu data di dekat angka, judul grafik berupa kalimat temuan, dan contoh hitung kecil untuk pembaca awam. Kata real-time-nya tidak diambil.
 - New York Fed Staff Nowcast (https://www.newyorkfed.org/research/policy/nowcast): rentang yang ditulis dalam kalimat, grafik kipas, dan tabel batas.
 - Ringkasan visual laporan inflasi Bank of England, yang diuji dalam eksperimen Bank of England dan Behavioural Insights Team (https://www.bankofengland.co.uk/working-paper/2018/enhancing-central-bank-communications-with-behavioural-insights): bahasa sederhana dan contoh yang dekat dengan kehidupan sehari-hari, sebagai acuan cara bertutur.
+- Plus Jakarta Sans (https://fonts.google.com/specimen/Plus+Jakarta+Sans): huruf gaya 3, buatan Tokotype.
 
 Sebelum keputusan desain baru (halaman atau layar baru, atau arah visual baru), buka daftar referensi desain yang disebut di aturan agent, kecuali proyek ini punya `.no-vault`, lalu catat referensi yang dipakai di sini. Baris ini tetap di sini.

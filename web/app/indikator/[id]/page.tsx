@@ -1,10 +1,11 @@
-// Detail per seri: riwayat panjang, nilai terakhir, jadwal rilis berikutnya, dan unduhan CSV.
+// Halaman data per seri (PRD 4.1): riwayat panjang, nilai terakhir, jadwal rilis, target, dan unduhan CSV.
+// Ditautkan dari halaman rinci; rincian kelompok harga dan pekerja formal ada di halaman rinci Harga dan Kerja.
 
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Berikutnya } from "@/components/Berikutnya";
-import { GrafikKelompok, GrafikRonde } from "@/components/Grafik";
+import { Berikutnya, type TautanBerikutnya } from "@/components/Berikutnya";
+import { GrafikRonde } from "@/components/Grafik";
 import { JsonLd } from "@/components/JsonLd";
 import { Lencana, Sitasi, TabelTarget } from "@/components/Kartu";
 import { BannerBasi } from "@/components/Klien";
@@ -20,34 +21,22 @@ import {
   bacaTarget,
   titikSeri,
 } from "@/lib/data";
-import { angka, nilaiPendek, nilaiSeri, perubahan, periode, tanggal, waktuWIB } from "@/lib/format";
+import { nilaiPendek, perubahan, periode, tanggal, waktuWIB } from "@/lib/format";
 import { jsonLdSeri } from "@/lib/jsonld";
 import {
-  JUDUL_KARTU,
-  KELOMPOK_INFLASI,
   NAMA_FREKUENSI,
   NAMA_KALENDER,
   SERI_DITAUTKAN,
   SERI_FORMAL,
-  SERI_INFLASI_BULANAN,
   SERI_KARTU,
-  SERI_TPT_RONDE,
   adalahProyeksi,
   artinyaBuatmu,
   kelompokHalaman,
   labelSeri,
-  type KunciKartu,
+  topikSeri,
 } from "@/lib/konten";
-import { kalimatPekerja } from "@/lib/pekerja";
 import { penjelasSeri } from "@/lib/penjelas";
-import { rincianInflasi } from "@/lib/rincian";
 import { barisRiwayat, judulTemuan, kalimatRiwayat } from "@/lib/riwayat";
-
-const SERI_RINCIAN = [
-  SERI_KARTU.inflasi[0],
-  SERI_INFLASI_BULANAN,
-  ...KELOMPOK_INFLASI.flatMap((k) => [k.setahun, k.sebulan]),
-];
 
 // 6 jam; pipeline memanggil /api/revalidate setelah setiap publikasi.
 export const revalidate = 21600;
@@ -76,17 +65,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Indikator({ params }: Props) {
   const { id } = await params;
   if (!POLA_ID.test(id)) notFound();
-  const halamanTpt = SERI_KARTU.pengangguran.includes(id);
-  const halamanInflasi = SERI_KARTU.inflasi.includes(id);
   const [meta, nilai, status, grafik, kalender, target, sumber] = await Promise.all([
     bacaMeta(),
     bacaNilai(),
     bacaStatus(),
-    bacaGrafik([
-      id,
-      ...(halamanTpt ? [SERI_FORMAL, SERI_TPT_RONDE] : []),
-      ...(halamanInflasi ? SERI_RINCIAN : []),
-    ]),
+    bacaGrafik([id]),
     bacaKalender(),
     bacaTarget(),
     bacaSumber(),
@@ -98,12 +81,24 @@ export default async function Indikator({ params }: Props) {
   const rilis = kalender.filter((r) => r.series_id === id);
   const targetSeri = target.filter((t) => t.series_id === id);
   const artinya = n ? artinyaBuatmu(id, n.value, n.previous_value) : null;
-  // Tiga angka utama punya perkiraan di Prediksi, jadi kotak Berikutnya menautkannya.
-  const kunciUtama = (Object.keys(SERI_KARTU) as KunciKartu[]).find((k) => SERI_KARTU[k].includes(id));
   const terbaru = titik.slice(-12).reverse();
-  const formal = halamanTpt ? titikSeri(grafik, SERI_FORMAL) : [];
-  const pekerja = kalimatPekerja(formal, halamanTpt ? titikSeri(grafik, SERI_TPT_RONDE) : []);
-  const rincian = halamanInflasi ? rincianInflasi((s) => titikSeri(grafik, s)) : null;
+  // Pertanyaan pemilik seri ini, untuk remah dan tautan balik; tiga angka utama juga punya perkiraan di Ke depan.
+  const topik = topikSeri(id);
+  const angkaUtama = topik != null && SERI_KARTU[topik.kartu].includes(id);
+  const berikutnya: TautanBerikutnya[] = [
+    topik
+      ? { href: `/indonesia/${topik.kunci}`, tanya: topik.tanya, teks: `Kembali ke ${topik.nama}` }
+      : { href: "/indonesia", tanya: "Kembali ke ringkasan?", teks: "Lihat keempat jawaban di halaman Indonesia" },
+    ...(angkaUtama
+      ? [
+          {
+            href: `/indonesia/ke-depan#perkiraan-${topik.kartu}`,
+            tanya: "Ke depan bagaimana?",
+            teks: "Lihat perkiraannya di Ke depan",
+          },
+        ]
+      : []),
+  ];
 
   const kelompok = kelompokHalaman(id);
   const saudara = kelompok?.seri.filter(([s]) => meta.some((x) => x.series_id === s)) ?? [];
@@ -118,13 +113,18 @@ export default async function Indikator({ params }: Props) {
   const satuanMeta = satuanSudahDisebut ? null : m.unit.replace(/^%/, "persen");
 
   return (
-    <>
+    <div data-topik={topik?.kunci}>
       <JsonLd data={jsonLdSeri(m, titik, n, sumber.find((s) => s.source_id === m.source_id))} />
       <nav aria-label="Letak halaman" className="remah">
         <ol>
           <li>
-            <Link href="/">Data</Link>
+            <Link href="/indonesia">Indonesia</Link>
           </li>
+          {topik && (
+            <li>
+              <Link href={`/indonesia/${topik.kunci}`}>{topik.nama}</Link>
+            </li>
+          )}
           {kelompok && <li>{kelompok.judul}</li>}
         </ol>
       </nav>
@@ -245,95 +245,10 @@ export default async function Indikator({ params }: Props) {
         </section>
       </div>
 
-      {pekerja && (
-        <section aria-labelledby="judul-pekerja">
-          <h2 id="judul-pekerja">Pekerja formal dan informal</h2>
-          <div className="panel">
-            <p>
-              {pekerja.porsi} {pekerja.hubungan}
-            </p>
-            <GrafikRonde titik={formal} nama="porsi pekerja formal" />
-            <p className="catatan">
-              Pekerja formal menurut BPS adalah yang berusaha dibantu buruh tetap dan dibayar, serta
-              buruh, karyawan, atau pegawai. Selebihnya informal. Garisnya dipisah per bulan survei,
-              karena porsinya berbeda antara Februari dan Agustus.
-            </p>
-            <div className="gulir-tabel" role="region" aria-labelledby="judul-pekerja" tabIndex={0}>
-              <table>
-                <thead>
-                  <tr>
-                    <th scope="col">Ronde</th>
-                    <th scope="col">Formal</th>
-                    <th scope="col">Informal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {formal.slice(-6).reverse().map(([p, v]) => (
-                    <tr key={p}>
-                      <th scope="row">{periode(p)}</th>
-                      <td className="angka">{angka(v, 2)}%</td>
-                      <td className="angka">{angka(100 - v, 2)}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p>
-              <Link href={`/indikator/${SERI_FORMAL}`}>Riwayat lengkap porsi pekerja formal</Link>
-            </p>
-          </div>
-        </section>
-      )}
-
-      {rincian && (
-        <section aria-labelledby="judul-rincian">
-          <h2 id="judul-rincian">Rincian inflasi</h2>
-          <div className="panel">
-            <p>{rincian.kalimat}</p>
-            <div className="gulir-tabel" role="region" aria-labelledby="judul-rincian" tabIndex={0}>
-              <table className="kepala-bungkus">
-                <thead>
-                  <tr>
-                    <th scope="col">Kelompok</th>
-                    <th scope="col">Dibanding setahun lalu</th>
-                    <th scope="col">Dibanding bulan lalu</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rincian.baris.map((b) => (
-                    <tr key={b.nama}>
-                      <th scope="row">{b.nama}</th>
-                      <td className="angka">{b.setahun == null ? "-" : nilaiSeri(b.setahun, "%", "yoy")}</td>
-                      <td className="angka">{b.sebulan == null ? "-" : nilaiSeri(b.sebulan, "%", "rate")}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <ul>
-              {KELOMPOK_INFLASI.map((k) => (
-                <li key={k.setahun}>
-                  <strong>{k.nama}:</strong> {k.isi}{" "}
-                  <Link href={`/indikator/${k.setahun}`}>Riwayat {k.nama.toLowerCase()}</Link>
-                </li>
-              ))}
-            </ul>
-            <h3>Dibanding bulan yang sama tahun sebelumnya</h3>
-            <GrafikKelompok
-              kelompok={KELOMPOK_INFLASI.map((k) => ({ nama: k.nama, titik: titikSeri(grafik, k.setahun) }))}
-            />
-            <p className="catatan">
-              Skala ketiga grafik sama. Lonjakan harga diatur pemerintah pada awal 2026 dan penurunannya
-              pada awal 2025 berkaitan dengan diskon tarif listrik 50 persen pada awal 2025, menurut BPS.
-            </p>
-            <p className="catatan">
-              Angka kelompok tidak bisa dijumlahkan menjadi angka umum, karena bobot tiap kelompok berbeda.
-              Angka dibanding bulan lalu dan angka umum adalah data resmi BPS. Angka setahun per kelompok
-              dihitung Con-Fore dari 12 perubahan bulanan, jadi bisa berbeda sekitar 0,02 poin persen dari
-              angka rilis BPS.
-            </p>
-          </div>
-        </section>
+      {topik && !angkaUtama && (
+        <p className="tautan-rinci">
+          Angka ini dibahas di halaman <Link href={`/indonesia/${topik.kunci}`}>{topik.tanya}</Link>
+        </p>
       )}
 
       <div className="dua-kolom">
@@ -401,20 +316,7 @@ export default async function Indikator({ params }: Props) {
         </section>
       )}
 
-      <Berikutnya
-        tautan={[
-          { href: "/", tanya: "Kembali ke ringkasan?", teks: "Lihat semua angka di Data" },
-          ...(kunciUtama
-            ? [
-                {
-                  href: `/prediksi#perkiraan-${kunciUtama}`,
-                  tanya: "Ke mana arahnya?",
-                  teks: `Lihat perkiraan ${JUDUL_KARTU[kunciUtama].toLowerCase()} di Prediksi`,
-                },
-              ]
-            : []),
-        ]}
-      />
-    </>
+      <Berikutnya tautan={berikutnya} />
+    </div>
   );
 }

@@ -2,12 +2,14 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  // Cara kerja dan Sumber data digabung menjadi Metode (PRD 4.1). Pengalihan permanen menjaga tautan lama.
-  // Tujuan /metode tanpa fragmen, supaya fragmen lama seperti #skor tetap dibawa browser.
+  // Alamat lama dialihkan permanen ke susunan baru (PRD 4.1). Tujuan tanpa fragmen, kecuali /sumber, supaya
+  // fragmen lama seperti #perkiraan atau #perkiraan-inflasi tetap dibawa browser ke bagian yang sama.
   async redirects() {
     return [
-      { source: "/cara-kerja", destination: "/metode", permanent: true },
-      { source: "/sumber", destination: "/metode#sumber", permanent: true },
+      { source: "/prediksi", destination: "/indonesia/ke-depan", permanent: true },
+      { source: "/metode", destination: "/tentang-data", permanent: true },
+      { source: "/cara-kerja", destination: "/tentang-data", permanent: true },
+      { source: "/sumber", destination: "/tentang-data#sumber", permanent: true },
     ];
   },
   async headers() {

@@ -48,6 +48,7 @@ export function KartuSeri({
   kalender,
   tambahan,
   utama = false,
+  tingkat,
 }: {
   /** Jangkar kartu, dipakai baris angka terakhir di sampul beranda. */
   id?: string;
@@ -60,10 +61,12 @@ export function KartuSeri({
   /** Satu kalimat konteks di bawah penjelasan, misalnya porsi pekerja formal. */
   tambahan?: string;
   utama?: boolean;
+  /** Tingkat judul kartu, mengikuti judul bagian di atasnya. */
+  tingkat?: "h3" | "h4";
 }) {
   const ubah = perubahan(nilai.value, nilai.previous_value, meta.unit, meta.concept, meta.frequency);
   const artinya = artinyaBuatmu(meta.series_id, nilai.value, nilai.previous_value);
-  const H = utama ? "h3" : "h4";
+  const H = tingkat ?? (utama ? "h3" : "h4");
   const satuanPanjang = meta.unit.startsWith("%") ? meta.unit.replace(/^%\s*/, "") : meta.unit;
   const jadwalPerkiraan = !kalender || kalender.endsWith("-perkiraan");
   const penjelasan = artinya && (

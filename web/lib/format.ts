@@ -69,6 +69,11 @@ export function waktuWIB(iso: string): string {
   return `${d.getUTCDate()} ${BULAN[d.getUTCMonth()]} ${d.getUTCFullYear()} pukul ${jam}.${menit} WIB`;
 }
 
+/** Tanggal di WIB dari timestamp UTC: "30 Oktober 2026". */
+export function tanggalWIB(iso: string): string {
+  return waktuWIB(iso).split(" pukul ")[0];
+}
+
 const PEMBANDING: Record<string, string> = {
   A: "tahun sebelumnya",
   Q: "kuartal sebelumnya",
