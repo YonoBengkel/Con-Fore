@@ -85,6 +85,12 @@ export default async function Indikator({ params }: Props) {
   const artinya = n ? artinyaBuatmu(id, n.value, n.previous_value) : null;
   const terbaru = titik.slice(-12).reverse();
   const olahan = labelSeri(m).startsWith("dihitung");
+  // Revisi per tanggal, supaya tanggalnya tidak diulang di setiap baris dan tabelnya muat di layar HP.
+  const kelompokRevisi = [
+    ...Map.groupBy(revisi, (r) =>
+      r.release_date ? `Dirilis ${tanggal(r.release_date)}` : `Dilihat Con-Fore ${tanggal(r.vintage_date)}`,
+    ),
+  ];
   // Pertanyaan pemilik seri ini, untuk remah dan tautan balik; tiga angka utama juga punya perkiraan di Ke depan.
   const topik = topikSeri(id);
   const angkaUtama = topik != null && SERI_KARTU[topik.kartu].includes(id);
@@ -324,23 +330,24 @@ export default async function Indikator({ params }: Props) {
                     <th scope="col">Periode</th>
                     <th scope="col">Angka lama</th>
                     <th scope="col">Angka baru</th>
-                    <th scope="col">Tanggal</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {revisi.map((r) => (
-                    <tr key={`${r.period}-${r.vintage_date}`}>
-                      <th scope="row">{periode(r.period)}</th>
-                      <td className="angka">{nilaiPendek(r.old_value, m.unit, m.concept)}</td>
-                      <td className="angka">{nilaiPendek(r.new_value, m.unit, m.concept)}</td>
-                      <td>
-                        {r.release_date
-                          ? `Dirilis ${tanggal(r.release_date)}`
-                          : `Dilihat Con-Fore ${tanggal(r.vintage_date)}`}
-                      </td>
+                {kelompokRevisi.map(([waktu, baris]) => (
+                  <tbody key={waktu}>
+                    <tr>
+                      <th scope="rowgroup" colSpan={3} className="kepala-kelompok">
+                        {waktu}
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
+                    {baris.map((r) => (
+                      <tr key={`${r.period}-${r.vintage_date}`}>
+                        <th scope="row">{periode(r.period)}</th>
+                        <td className="angka">{nilaiPendek(r.old_value, m.unit, m.concept)}</td>
+                        <td className="angka">{nilaiPendek(r.new_value, m.unit, m.concept)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                ))}
               </table>
             </div>
           ) : (
