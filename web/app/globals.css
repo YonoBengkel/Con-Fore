@@ -897,6 +897,14 @@ thead th {
   white-space: normal;
 }
 
+/* Judul kelompok baris di dalam tabel, misalnya tanggal pada catatan revisi. */
+th.kepala-kelompok {
+  background: var(--latar);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--redup);
+}
+
 td.angka {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
