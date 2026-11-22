@@ -14,6 +14,8 @@
   --isi-lipat: rgb(28 35 51 / 0.045);
   --fokus: #1d5fb8;
   --darat: #d9dde3;
+  /* Bayangan Indonesia yang terangkat, di peta diam dan di globe (lib/gambar-globe.ts). */
+  --bayang-angkat: rgb(28 35 51 / 0.4);
   /* Satu warna per pertanyaan; ketiganya lolos pemeriksa palet buta warna (DESIGN.md). Ke depan netral. */
   --harga: #b93815;
   --kerja: #1d5fb8;
@@ -387,6 +389,78 @@ main.wadah {
   background: var(--darat);
 }
 
+/* Globe di halaman depan (components/Globe.tsx). Bola kosong tampil lebih dulu, lalu kanvas berisi negara muncul di
+   atasnya. Tanpa JavaScript, yang tampil peta diam di dalam noscript. */
+
+.negara-tersedia {
+  list-style: none;
+  padding: 0;
+  margin: 1.25rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.negara-tersedia li {
+  margin: 0;
+}
+
+.globe {
+  position: relative;
+  width: min(100%, 34rem);
+  aspect-ratio: 1;
+  margin: 0.75rem auto 0;
+}
+
+/* Bola kosong selama kode globe dimuat. Jaraknya dari tepi sama dengan TEPI di lib/gambar-globe.ts. */
+.globe::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: var(--permukaan);
+}
+
+.globe canvas {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+
+.globe[data-keadaan="siap"] canvas {
+  opacity: 1;
+}
+
+/* Legenda dan tombol henti selebar globe, supaya menempel pada globe yang mereka jelaskan. */
+.globe-bawah {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  width: min(100%, 34rem);
+  min-height: 44px;
+  margin: 0.75rem auto 1rem;
+}
+
+.globe-bawah .legenda {
+  margin: 0;
+}
+
+@media (scripting: none) {
+  .negara-tersedia,
+  .globe {
+    display: none;
+  }
+
+  /* Tanpa JavaScript, legenda mengikuti peta diam yang selebar kolom. */
+  .globe-bawah {
+    width: auto;
+  }
+}
+
 /* Ringkasan bercerita dan blok jawaban (halaman Indonesia, bentuk C) */
 
 .cerita {
@@ -419,7 +493,10 @@ main.wadah {
   margin: 1.25rem 0 0;
 }
 
-.baris-tanya a {
+/* Pil yang sama untuk baris empat pertanyaan, nama negara di atas globe, dan tombol henti putaran globe. */
+.baris-tanya a,
+.negara-tersedia a,
+.tombol-putar {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -433,7 +510,8 @@ main.wadah {
   box-shadow: 0 1px 2px rgb(28 35 51 / 0.08);
 }
 
-.baris-tanya a::before {
+.baris-tanya a::before,
+.negara-tersedia a::before {
   content: "";
   flex: none;
   width: 0.625rem;
@@ -442,8 +520,29 @@ main.wadah {
   background: var(--topik);
 }
 
-.baris-tanya a:hover {
+.baris-tanya a:hover,
+.negara-tersedia a:hover,
+.tombol-putar:hover {
   box-shadow: inset 0 0 0 1px var(--pinggir), 0 1px 2px rgb(28 35 51 / 0.08);
+}
+
+.tombol-putar {
+  border: 0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (forced-colors: active) {
+  /* Mode warna paksa menghapus bayangan yang menjadi tepi pil, jadi tombol henti diberi garis tepi. */
+  .tombol-putar {
+    border: 1px solid ButtonText;
+  }
+
+  /* Kanvas globe tetap berwarna asli, jadi kotak legenda juga, supaya keduanya tetap cocok. */
+  .kotak {
+    forced-color-adjust: none;
+  }
 }
 
 .baris-tanya a[aria-current="page"] {
@@ -1564,13 +1663,19 @@ td.angka {
 
   .tautan-indonesia:hover .indonesia {
     transform: translateY(-1.5px);
-    filter: drop-shadow(0 1.5px 1.2px rgb(28 35 51 / 0.4));
+    filter: drop-shadow(0 1.5px 1.2px var(--bayang-angkat));
   }
 
   .nav-utama a,
   .baris-tanya a,
+  .negara-tersedia a,
+  .tombol-putar,
   .berikutnya a,
   .kaki a {
     transition: color 150ms ease-out, box-shadow 150ms ease-out, border-color 150ms ease-out;
+  }
+
+  .globe canvas {
+    transition: opacity 200ms ease-out;
   }
 }

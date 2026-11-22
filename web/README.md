@@ -1,6 +1,6 @@
 # Situs Con-Fore (web)
 
-Situs Next.js (App Router, runtime Node) hasil desain ulang (fase 5c di PRD): halaman depan dengan peta dunia, halaman Indonesia, tiga halaman rinci, Ke depan, Tentang data, dan halaman data per seri. Membaca tabel `public` Supabase lewat Data API di server, lalu menyajikan halaman yang di-cache (ISR 6 jam). Browser pengunjung tidak pernah memanggil Supabase. Rancangannya ada di [ARCHITECTURE.md](../ARCHITECTURE.md) bagian 4.1, 4.2, 4.9, dan 4.10, dan tampilannya di [DESIGN.md](../DESIGN.md).
+Situs Next.js (App Router, runtime Node) hasil desain ulang (fase 5c di PRD): halaman depan dengan globe, halaman Indonesia, tiga halaman rinci, Ke depan, Tentang data, dan halaman data per seri. Membaca tabel `public` Supabase lewat Data API di server, lalu menyajikan halaman yang di-cache (ISR 6 jam). Browser pengunjung tidak pernah memanggil Supabase. Rancangannya ada di [ARCHITECTURE.md](../ARCHITECTURE.md) bagian 4.1, 4.2, 4.9, dan 4.10, dan tampilannya di [DESIGN.md](../DESIGN.md).
 
 ## Menjalankan
 
@@ -21,7 +21,7 @@ npm start              # sajikan hasil build
 
 | Alamat | Isi |
 |---|---|
-| `/` | Judul dan peta dunia diam dengan Indonesia sebagai satu-satunya negara yang tersedia, pengganti sementara globe 3D. Tidak membaca Supabase |
+| `/` | Judul dan globe kanvas dengan Indonesia sebagai satu-satunya negara yang tersedia. Peta dunia diam tampil bila JavaScript mati atau kanvas gagal. Tidak membaca Supabase |
 | `/indonesia` | Ringkasan bercerita, baris empat pertanyaan, lalu blok jawaban Harga, Kerja, Ekonomi, dan Ke depan |
 | `/indonesia/harga`, `/indonesia/kerja`, `/indonesia/ekonomi` | Halaman rinci (route `[topik]`, `dynamicParams = false`): jawaban dan perbandingan, grafik riwayat, rincian khusus, yang ikut memengaruhi, satu kalimat perkiraan, lalu penjelas, sumber, dan waktu data |
 | `/indonesia/ke-depan` | Tiga perkiraan dengan rentang dan grafik kipas, seberapa sering meleset, pembanding proyeksi IMF, dan jangka panjang. Bila `public.forecast_latest` kosong, halamannya menjelaskan bahwa perkiraan belum tersedia |
@@ -37,15 +37,18 @@ npm start              # sajikan hasil build
 
 ```
 app/              halaman dan route API
-components/       Peta (peta dunia), BarisTanya (baris empat pertanyaan), Jawaban (isi jawaban dan ringkasan bercerita),
-                  Rincian (kelompok harga dan pekerja formal), Grafik (garis kecil, riwayat, per ronde, per kelompok,
-                  perkiraan, jangka panjang), Kartu (kartu angka, sitasi, tabel target), RiwayatInteraktif (penggeser
-                  riwayat), Berikutnya, JsonLd, Klien (menu utama dan banner basi)
+components/       Globe (globe halaman depan), Peta (peta dunia diam), BarisTanya (baris empat pertanyaan),
+                  Jawaban (isi jawaban dan ringkasan bercerita), Rincian (kelompok harga dan pekerja formal), Grafik
+                  (garis kecil, riwayat, per ronde, per kelompok, perkiraan, jangka panjang), Kartu (kartu angka, sitasi,
+                  tabel target), RiwayatInteraktif (penggeser riwayat), Berikutnya, JsonLd, Klien (menu utama dan banner
+                  basi)
 lib/data.ts       pembacaan Data API (fetch biasa, melempar error bila gagal atau tabel wajib kosong)
 lib/muat.ts       pemuatan data bersama halaman Indonesia dan halaman rinci
 lib/jawaban.ts    jawaban, label, contoh, perbandingan dalam kalimat, dan ringkasan bercerita (dites di jawaban.test.ts)
 lib/konten.ts     empat pertanyaan (TOPIK), seri angka utama (SERI_KARTU), seri tahunan patokan, label, "artinya buatmu"
-lib/peta.ts       jalur SVG peta dunia sederhana
+lib/peta.ts       jalur SVG peta dunia sederhana, gambar diam pengganti globe
+lib/globe.ts      hitungan globe: memisahkan Indonesia, sudut putar, angkatan, dan uji kena (dites di globe.test.ts)
+lib/gambar-globe.ts  menggambar globe di kanvas dengan d3-geo, dimuat lewat import() hanya di halaman depan
 lib/pekerja.ts    kalimat otomatis pekerja formal dan informal PRD 4.4 (dites di pekerja.test.ts)
 lib/rincian.ts    kalimat dan tabel kelompok harga PRD 4.4 (dites di rincian.test.ts)
 lib/prediksi.ts   angka utama, angka tahunan, dan kalimat perkiraan (dites di prediksi.test.ts)
@@ -54,6 +57,7 @@ lib/riwayat.ts    titik riwayat dengan pembandingnya, kalimat per periode, judul
 lib/format.ts     format angka, periode, dan tanggal Indonesia
 lib/jsonld.ts     data terstruktur schema.org; lib/csv.ts baris kepala CSV; lib/situs.ts alamat produksi
 scripts/          salin-env.mjs
+types/geo.d.ts    deklarasi tipe secukupnya untuk d3-geo dan topojson-client
 vercel.json       region icn1 (Seoul, dekat Supabase) dan build hanya bila web/ berubah sejak deploy terakhir (VERCEL_GIT_PREVIOUS_SHA)
 ```
 
