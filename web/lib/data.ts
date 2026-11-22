@@ -24,6 +24,8 @@ export type MetaSeri = {
   last_period: string | null;
   last_release_date: string | null;
   next_release_date: string | null;
+  /** Hari pertama Con-Fore menyimpan seri ini (migrasi 0006); kosong untuk seri turunan. */
+  versions_since?: string | null;
 };
 
 export type NilaiTerakhir = {
@@ -106,6 +108,19 @@ export type BarisRekam = {
   first_release_actual: number;
   latest_actual: number;
   abs_error: number;
+  /** Batas rentang 80% perkiraan itu (migrasi 0006), kosong bila perkiraannya tanpa rentang. */
+  lo80?: number | null;
+  hi80?: number | null;
+};
+
+/** Versi yang mengubah angka tampil satu periode (PRD 4.4, migrasi 0006). */
+export type Revisi = {
+  series_id: string;
+  period: string;
+  vintage_date: string;
+  old_value: number;
+  new_value: number;
+  release_date: string | null;
 };
 
 /** Sama dengan `export const revalidate` di halaman: 6 jam. */
@@ -124,7 +139,7 @@ export const POLA_ID = /^[a-z0-9_]{1,64}$/;
 async function baca<T>(
   tabel: string,
   query: string,
-  opsi: { wajib?: boolean; revalidate?: number } = {},
+  opsi: { wajib?: boolean; revalidate?: number; bolehTidakAda?: boolean } = {},
 ): Promise<T[]> {
   const alamat = process.env.SUPABASE_URL?.trim().replace(/\/+$/, "");
   const kunci = process.env.SUPABASE_PUBLISHABLE_KEY?.trim();
@@ -140,6 +155,9 @@ async function baca<T>(
   } catch (e) {
     throw new Error(`Gagal menghubungi Supabase saat membaca ${tabel} (${(e as Error).name})`);
   }
+  // Tabel tambahan yang belum dibuat migrasinya terbaca kosong, bukan error, supaya situs tetap bisa
+  // dibangun di antara deploy dan migrasi. Galat lain tetap melempar error.
+  if (opsi.bolehTidakAda && jawaban.status === 404) return [];
   if (!jawaban.ok) {
     throw new Error(`Gagal membaca ${tabel}: HTTP ${jawaban.status}`);
   }
@@ -177,6 +195,12 @@ export const bacaSkorBacktest = () =>
 /** Paling baru dulu, dan dibatasi supaya jawabannya tetap kecil saat rekam jejaknya bertambah. */
 export const bacaRekamJejak = () =>
   baca<BarisRekam>("track_record", "select=*&is_main=eq.true&order=ref_period.desc,series_id&limit=60");
+
+/** Revisi satu seri, paling baru dulu. `seri` sudah dicek dengan POLA_ID di halamannya. */
+export const bacaRevisi = (seri: string) =>
+  baca<Revisi>("revisions", `select=*&series_id=eq.${seri}&order=vintage_date.desc,period.desc&limit=30`, {
+    bolehTidakAda: true,
+  });
 
 export async function bacaStatus(revalidate?: number): Promise<StatusSitus> {
   const [status] = await baca<StatusSitus>("site_status", "select=*&id=eq.1", {

@@ -1,7 +1,7 @@
 // Isi tab Prediksi (PRD 4.1): angka utama, angka tahunan untuk segitiga, dan kalimat penjelasnya.
 // Fungsi murni tanpa waktu sekarang, dites di prediksi.test.ts.
 
-import type { BarisRamalan, SkorBacktest, Target, Titik } from "./data";
+import type { BarisRamalan, BarisRekam, SkorBacktest, Target, Titik } from "./data";
 import { angka, periode } from "./format.ts";
 import type { KunciKartu } from "./konten.ts";
 
@@ -141,6 +141,21 @@ export function nilaiTahunPerkiraan(
   if (kuartal.some((k) => k == null) || inflasi == null || pengangguran == null) return null;
   const pertumbuhan = (kuartal as number[]).reduce((a, b) => a + b, 0) / 4;
   return { pertumbuhan, inflasi, pengangguran };
+}
+
+/**
+ * Berapa perkiraan sungguhan satu seri yang jatuh di dalam rentang 80%-nya, dibanding rilis pertama
+ * (PRD 4.1). Perkiraan tanpa rentang tidak dihitung.
+ */
+export function cakupanRentang(rekam: BarisRekam[], seri: string): { masuk: number; total: number } {
+  const berentang = rekam.filter((r) => r.series_id === seri && r.lo80 != null && r.hi80 != null);
+  const masuk = berentang.filter((r) => r.first_release_actual >= r.lo80! && r.first_release_actual <= r.hi80!);
+  return { masuk: masuk.length, total: berentang.length };
+}
+
+/** "3 dari 4 perkiraan jatuh di dalam rentangnya.": hitungan, bukan persen, karena perkiraannya masih sedikit. */
+export function kalimatCakupan({ masuk, total }: { masuk: number; total: number }): string | null {
+  return total ? `${masuk} dari ${total} perkiraan jatuh di dalam rentangnya.` : null;
 }
 
 /** Rata-rata meleset satu model pada satu horizon dan jendela, null bila belum ada. */

@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { BarisRamalan, SkorBacktest, Target, Titik } from "./data";
+import type { BarisRamalan, BarisRekam, SkorBacktest, Target, Titik } from "./data";
 import {
+  cakupanRentang,
+  kalimatCakupan,
   TARGET_PREDIKSI,
   artinyaPerkiraan,
   barisJangkaPanjang,
@@ -188,4 +190,30 @@ test("panel jangka panjang hanya tahun sesudah angka resmi, dengan target RPJMN 
     "Untuk 2029, proyeksi IMF 5,2% dan target RPJMN 8,0%, selisih 2,8 poin persen. Sejak 2000, pertumbuhan tahunan tertinggi 7,4% pada 2008.",
   );
   assert.equal(kalimatJangkaPanjang([{ tahun: 2030, imf: 5, rpjmn: null }], resmi), null);
+});
+
+test("cakupan rentang: hitungan perkiraan yang jatuh di dalam rentangnya, tanpa perkiraan tanpa rentang", () => {
+  const rekam = (series_id: string, aktual: number, lo80: number | null, hi80: number | null): BarisRekam => ({
+    series_id,
+    ref_period: "2026-11",
+    model: "musiman",
+    origin_date: "2026-11-07",
+    is_main: true,
+    forecast: 3.3,
+    first_release_actual: aktual,
+    latest_actual: aktual,
+    abs_error: Math.abs(3.3 - aktual),
+    lo80,
+    hi80,
+  });
+  const data = [
+    rekam("bps_cpi_yoy_m", 3.1, 2.9, 3.7),
+    rekam("bps_cpi_yoy_m", 3.7, 2.9, 3.7), // tepat di batas atas masih di dalam
+    rekam("bps_cpi_yoy_m", 4.0, 2.9, 3.7),
+    rekam("bps_cpi_yoy_m", 3.2, null, null),
+    rekam("bps_gdp_growth_q", 5.0, 4.8, 5.8),
+  ];
+  assert.deepEqual(cakupanRentang(data, "bps_cpi_yoy_m"), { masuk: 2, total: 3 });
+  assert.equal(kalimatCakupan(cakupanRentang(data, "bps_cpi_yoy_m")), "2 dari 3 perkiraan jatuh di dalam rentangnya.");
+  assert.equal(kalimatCakupan(cakupanRentang(data, "bps_unemp_round")), null);
 });

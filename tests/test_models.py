@@ -591,13 +591,15 @@ class PublishRowsTest(unittest.TestCase):
         self.assertEqual({row[4] for row in published if row[0] == UNEMP}, {3, 6})
 
     def test_record_rows_measure_against_the_first_release(self):
-        finished = [(CPI, "2026-11", "musiman", self.ORIGIN, self.CUTOFF, 3.3, 3.1, 3.15),
-                    (CPI, "2026-11", "sama_terakhir", self.ORIGIN, self.CUTOFF, 3.2, 3.1, 3.15)]
+        finished = [(CPI, "2026-11", "musiman", self.ORIGIN, self.CUTOFF, 3.3, 3.1, 3.15, 2.9, 3.7),
+                    (CPI, "2026-11", "sama_terakhir", self.ORIGIN, self.CUTOFF, 3.2, 3.1, 3.15, None, None)]
         rows = forecast.record_rows(finished, {(CPI, 1): "musiman"})
         by_model = {row[2]: row for row in rows}
         self.assertTrue(by_model["musiman"][4])
         self.assertFalse(by_model["sama_terakhir"][4])
         self.assertAlmostEqual(by_model["musiman"][8], 0.2)
+        self.assertEqual(by_model["musiman"][9:], (2.9, 3.7))         # batas rentang ikut ke rekam jejak
+        self.assertEqual(by_model["sama_terakhir"][9:], (None, None))  # ramalan tanpa rentang
 
     def test_score_rows_cover_every_window_and_model(self):
         rows = backtest.score_rows(CompareTest().frame(), {(CPI, 1): "musiman"})

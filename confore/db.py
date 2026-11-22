@@ -408,11 +408,15 @@ def finished_forecasts(conn):
         )
         select distinct on (f.series_id, f.ref_period, f.model)
                f.series_id, f.ref_period, f.model, f.origin_date, f.data_cutoff, f.value::float8,
-               a.value::float8, l.value::float8
+               a.value::float8, l.value::float8, lo.value::float8, hi.value::float8
         from etl.forecasts f
         join first_seen a on a.series_id = f.series_id and a.period = f.ref_period
                          and f.origin_date < a.vintage_date
         join latest_seen l on l.series_id = f.series_id and l.period = f.ref_period
+        left join etl.forecasts lo on (lo.series_id, lo.ref_period, lo.model, lo.origin_date, lo.stat)
+                                    = (f.series_id, f.ref_period, f.model, f.origin_date, 'lo80')
+        left join etl.forecasts hi on (hi.series_id, hi.ref_period, hi.model, hi.origin_date, hi.stat)
+                                    = (f.series_id, f.ref_period, f.model, f.origin_date, 'hi80')
         where f.stat = 'point'
         order by f.series_id, f.ref_period, f.model, f.origin_date desc
     """).fetchall()
@@ -438,6 +442,26 @@ def replace_backtest(conn, rows, git_sha):
             for row in rows:
                 copy.write_row((*row, git_sha))
     return len(rows)
+
+
+def first_vintages(conn, series_ids):
+    """Hari pertama setiap seri tersimpan: sejak hari itu setiap versinya tercatat."""
+    return dict(conn.execute("""
+        select series_id, min(vintage_date) from etl.observations
+        where series_id = any(%s) group by series_id
+    """, (series_ids,)).fetchall())
+
+
+def vintage_changes(conn, series_ids):
+    """Versi yang mengubah nilai satu periode dari versi sebelumnya: (seri, periode, hari versi, nilai lama,
+    nilai baru, tanggal rilis). Periode yang ditarik sumber lalu kembali tidak dihitung sebagai revisi."""
+    return conn.execute("""
+        select series_id, period, vintage_date, previous, value, release_date from (
+          select series_id, period, vintage_date, value, release_date,
+                 lag(value) over (partition by series_id, period order by vintage_date) as previous
+          from etl.observations where series_id = any(%s)) v
+        where previous is not null and value is not null and value <> previous
+    """, (series_ids,)).fetchall()
 
 
 def latest_points(conn, series_ids):
