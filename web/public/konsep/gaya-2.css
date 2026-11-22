@@ -1,0 +1,39 @@
+/* Gaya 2, terang dan lugas ala lembar data publik (acuan USAFacts): tinta biru tua, satu aksen biru, satu jenis huruf. */
+:root {
+  color-scheme: light;
+  --latar: #fafbfc;
+  --permukaan: #ffffff;
+  --lembut: #eef3fb;
+  --isi-lembut: #f2f4f7;
+  --tinta: #0f1d33;
+  --redup: #475467;
+  --samar: #5b6577;
+  --garis: #dde2ea;
+  --pinggir: #c3cbd8;
+  --aksen: #1a56db;
+  --merek: #0f1d33;
+  --fokus: #1a56db;
+  --darat: #d5dbe4;
+  --huruf: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+h1, h2 { font-weight: 700; letter-spacing: -.015em; }
+h1 { font-size: 2.125rem; line-height: 1.12; }
+.blok h2 { font-size: 1.375rem; line-height: 1.25; letter-spacing: -.005em; }
+.cerita { background: var(--lembut); border-radius: 6px; padding: 1.25rem; }
+.n { font-weight: 700; }
+.baris-tanya a { background: var(--permukaan); border: 1px solid var(--pinggir); border-radius: 6px; font-weight: 600; }
+.baris-tanya a:hover { border-color: var(--tinta); }
+.blok { border-top: 3px solid var(--tinta); padding: 1.25rem 0 1.75rem; }
+.angka { font-weight: 700; font-size: 3rem; letter-spacing: -.02em; }
+.label { border-color: var(--tinta); border-radius: 4px; }
+.contoh { background: var(--isi-lembut); border-radius: 4px; }
+.banding li::marker, .perkiraan li::marker { color: var(--tinta); }
+details.penjelas { background: var(--permukaan); border: 1px solid var(--garis); border-radius: 4px; }
+.darat path { fill: var(--darat); stroke: var(--latar); stroke-width: .3; }
+.indonesia path { fill: var(--aksen); stroke: var(--aksen); stroke-width: .3; }
+.tautan-indonesia:hover .indonesia { filter: drop-shadow(0 1.5px 1px rgba(15, 29, 51, .35)); }
+.penunjuk { stroke: var(--aksen); stroke-width: .6; }
+.label-indonesia { color: var(--aksen); }
+.kotak.tersedia { background: var(--aksen); }
+.kotak.belum { background: var(--darat); }
+@media (min-width: 48rem) { h1 { font-size: 2.625rem; } }

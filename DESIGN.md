@@ -1,4 +1,4 @@
-Status: plan. Rencana desain ulang dari nol, diputuskan pengelola lewat sesi drill 2026-11-20 sesudah dua uji baca gagal (fase 5c di PRD). Dokumen ini memuat susunan halaman dan aturan isi. Gaya visual (warna, huruf, bentuk, gerak) sengaja belum ada dan dipilih sesudah uji konsep lulus. Situs yang tayang masih memakai susunan lama, dengan token di `web/app/globals.css`, sampai halaman baru dibangun.
+Status: plan. Rencana desain ulang dari nol, diputuskan pengelola lewat sesi drill 2026-11-20 sesudah dua uji baca gagal (fase 5c di PRD). Dokumen ini memuat susunan halaman dan aturan isi. Uji konsep lulus pada 2026-11-22, dan gaya visual (warna, huruf, bentuk, gerak) sedang dipilih dari tiga contoh gaya, jadi belum ditulis di sini. Situs yang tayang masih memakai susunan lama, dengan token di `web/app/globals.css`, sampai halaman baru dibangun.
 
 # Panduan desain Con-Fore
 
@@ -31,7 +31,7 @@ Panduan susunan dan isi tampilan situs Con-Fore untuk desain ulang. Isi halaman 
 
 - Menjawab keempat pertanyaan dengan urutan di Arah. Tiga pertanyaan pertama memakai angka resmi terakhir, dan pertanyaan keempat memakai perkiraan ketiganya.
 - Bentuknya ringkasan bercerita: satu paragraf pendek yang menjawab keempat pertanyaan dengan angka di dalam kalimat, lalu blok jawaban di bawahnya.
-- Bentuk ini (C) dipilih di uji tahap pilih pada 2026-11-20 dari tiga calon, dan masih harus lulus uji tahap lulus (PRD 6). Dua calon lain tidak dipakai: satu halaman bergulir berisi empat blok jawaban (A), dan empat kartu pendek yang dibuka dengan diketuk (B).
+- Bentuk ini (C) dipilih di uji tahap pilih pada 2026-11-20 dari tiga calon, lalu dinyatakan lulus uji tahap lulus oleh pengelola pada 2026-11-22 (PRD 6). Dua calon lain tidak dipakai: satu halaman bergulir berisi empat blok jawaban (A), dan empat kartu pendek yang dibuka dengan diketuk (B).
 
 ## Komponen isi
 
@@ -53,13 +53,13 @@ Panduan susunan dan isi tampilan situs Con-Fore untuk desain ulang. Isi halaman 
 - Format angka, narasi netral, dan contoh sehari-hari mengikuti PRD 4.4.
 - Tulisan sekunder hanya untuk data, waktu, sumber, kunci membaca angka atau grafik, dan pemberitahuan wajib (bukan situs resmi, bukan nasihat keuangan). Kalimat yang mengulang judul, menjelaskan isi halaman, atau sekadar menunjuk ke halaman lain tidak dipakai. Isi kotak penjelas dan bagian penjelasan di Tentang data tidak termasuk aturan ini, karena dibuka pembaca dengan sengaja.
 
-## Konsep kasar untuk uji
+## Konsep kasar dan contoh gaya
 
-- Halaman HTML statis di `web/public/konsep/`, tayang di `/konsep/a.html`, `/konsep/b.html`, dan `/konsep/c.html`, masing-masing berlanjut ke halaman Indonesia bentuk A, B, atau C.
-- Hitam-putih dengan huruf bawaan perangkat, karena yang diuji kata dan susunannya.
-- Halaman depannya memakai gambar peta dunia diam yang disederhanakan, dengan Indonesia ditandai, sampai aset globe tersedia.
-- Memakai angka asli terakhir yang dibekukan pada tanggal pembuatannya, dan tanggal itu ditulis di halaman.
-- Tidak masuk sitemap, ditandai `noindex`, dan dihapus sesudah uji selesai.
+- Konsep kasar hitam-putih untuk uji susunan tayang di `/konsep/` sejak 2026-11-20, berisi halaman depan dan halaman Indonesia bentuk A, B, dan C, lalu dihapus sesudah uji selesai pada 2026-11-22.
+- Contoh gaya: halaman depan dan halaman Indonesia bentuk C dalam tiga gaya, di `/konsep/gaya-1.html`, `/konsep/gaya-2.html`, dan `/konsep/gaya-3.html`. Isi, angka, dan susunannya sama persis dengan konsep C, jadi yang dibandingkan hanya warna, huruf, dan bentuk.
+- Keduanya HTML statis di `web/public/konsep/`, dengan angka asli per 20 November 2026 yang tanggalnya ditulis di halaman, dan peta dunia diam yang disederhanakan sampai aset globe tersedia.
+- Contoh gaya memuat huruf dari Google Fonts karena berupa HTML statis. Halaman baru nanti memuat huruf lewat `next/font`, yang menyajikannya dari situs sendiri.
+- Tidak masuk sitemap, ditandai `noindex`, dan dihapus sesudah gaya dipilih.
 
 ## Aksesibilitas
 
@@ -71,14 +71,17 @@ Panduan susunan dan isi tampilan situs Con-Fore untuk desain ulang. Isi halaman 
 
 ## Belum diputuskan
 
-- Gaya visual: warna, huruf, bentuk, dan gerak. Dipilih sesudah uji konsep lulus, dengan gaya gelap Atlas (biru malam, tiga jenis huruf, panel instrumen) sebagai salah satu calon.
+- Gaya visual: warna, huruf, bentuk, dan gerak. Pengelola memilih satu dari tiga contoh gaya:
+  - **Gaya 1, gelap ala Atlas:** biru malam, panel instrumen, judul Gelasio, isi Inter, dan angka JetBrains Mono, sama dengan token situs sekarang.
+  - **Gaya 2, terang lugas:** tinta biru tua di latar terang, satu aksen biru, dan satu jenis huruf (Public Sans), dengan arah dari USAFacts.
+  - **Gaya 3, terang ramah:** kartu putih membulat di latar abu muda, satu warna untuk setiap pertanyaan (Harga, Kerja, Ekonomi, dan Ke depan), dan huruf Plus Jakarta Sans buatan Tokotype dari Indonesia. Palet warna pertanyaannya lolos pemeriksa buta warna.
 - Aset globe 3D, dicari pengelola dengan syarat di atas.
 - Logo penuh. Sampai ada logo baru, tanda segitiga dan teks "Con-Fore" tetap dipakai.
 
 ## Referensi
 
-- atlasgeopo.com (https://atlasgeopo.com/en): susunan peta dunia lalu profil negara, dan halaman pembanding negaranya (`/en/comparateur`) sebagai acuan halaman pembanding fase 7. Gayanya calon untuk tahap gaya visual. Logo, teks, ilustrasi, dan tata letak persisnya tidak disalin.
-- USAFacts (https://usafacts.org/): waktu data di dekat angka, judul grafik berupa kalimat temuan, dan contoh hitung kecil untuk pembaca awam. Kata real-time-nya tidak diambil.
+- atlasgeopo.com (https://atlasgeopo.com/en): susunan peta dunia lalu profil negara, dan halaman pembanding negaranya (`/en/comparateur`) sebagai acuan halaman pembanding fase 7. Gayanya menjadi gaya 1 di contoh gaya. Logo, teks, ilustrasi, dan tata letak persisnya tidak disalin.
+- USAFacts (https://usafacts.org/): waktu data di dekat angka, judul grafik berupa kalimat temuan, dan contoh hitung kecil untuk pembaca awam. Arah gaya 2 di contoh gaya juga diambil dari sini. Kata real-time-nya tidak diambil.
 - New York Fed Staff Nowcast (https://www.newyorkfed.org/research/policy/nowcast): rentang yang ditulis dalam kalimat, grafik kipas, dan tabel batas.
 - Ringkasan visual laporan inflasi Bank of England, yang diuji dalam eksperimen Bank of England dan Behavioural Insights Team (https://www.bankofengland.co.uk/working-paper/2018/enhancing-central-bank-communications-with-behavioural-insights): bahasa sederhana dan contoh yang dekat dengan kehidupan sehari-hari, sebagai acuan cara bertutur.
 
