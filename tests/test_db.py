@@ -243,6 +243,9 @@ class DatabaseTest(unittest.TestCase):
             ("musiman", date(2026, 11, 7), 3.3, 3.1, 3.15),
             ("sama_terakhir", date(2026, 11, 7), 3.2, 3.1, 3.15),
         ])
+        # Batas rentang ikut dinilai: musiman punya batas bawah, sama_terakhir tanpa rentang.
+        self.assertEqual(sorted((r[2], r[8], r[9]) for r in finished),
+                         [("musiman", 2.9, None), ("sama_terakhir", None, None)])
         forecast.publish_tables(self.conn)
         latest = self.conn.execute("""select model, is_main, point from public.forecast_latest""").fetchall()
         self.assertEqual(latest, [("musiman", True, Decimal("9.9"))])  # asal terakhir saja
@@ -254,6 +257,30 @@ class DatabaseTest(unittest.TestCase):
             records = self.conn.execute("""select model, abs_error from public.track_record
                                            where is_main""").fetchall()
             self.assertEqual(records, [("sama_terakhir", Decimal("0.1"))])
+            bounds = self.conn.execute("""select model, lo80, hi80 from public.track_record
+                                          order by model""").fetchall()
+            self.assertEqual(bounds, [("musiman", Decimal("2.9"), None), ("sama_terakhir", None, None)])
+
+    def test_publish_release_dates_revisions_and_versions_since(self):
+        cpi = next(s for s in self.cfg["series"] if s["id"] == "bps_cpi_yoy_m")
+        for value, day in (("3.23", 2), ("3.24", 3), ("3.31", 4)):
+            point = Point(*fetch.period_of("2026-10", "M"), Decimal(value))
+            self.db.save_fetch(self.conn, self.run_id, cpi, [point], None, 200, date(2026, 11, day))
+        self.publish.publish(self.conn, self.cfg, "ok", date(2026, 11, 5))
+        # Kalender BPS (config/release_calendar.csv) mengisi tanggal rilis, karena WebAPI BPS tidak mencatatnya.
+        latest = self.conn.execute("""select release_date, seen_date from public.latest_values
+                                      where series_id = 'bps_cpi_yoy_m'""").fetchone()
+        self.assertEqual(latest, (date(2026, 11, 2), date(2026, 11, 4)))
+        meta = self.conn.execute("""select last_release_date, versions_since from public.series_meta
+                                    where series_id = 'bps_cpi_yoy_m'""").fetchone()
+        self.assertEqual(meta, (date(2026, 11, 2), date(2026, 11, 2)))
+        with self.conn.transaction():
+            self.conn.execute("set local role anon")
+            revisions = self.conn.execute("""select period, vintage_date, old_value, new_value
+                                             from public.revisions""").fetchall()
+        # 3,23 ke 3,24 tetap tampil 3,2, jadi hanya perubahan ke 3,31 yang tercatat.
+        self.assertEqual(revisions, [("2026-10", date(2026, 11, 4), Decimal("3.24"), Decimal("3.31"))])
+        self.assertEqual(self.db.check_access(self.conn), [])
 
     def test_forecasts_keep_other_days_and_backtest_is_replaced(self):
         series, today = "bps_cpi_yoy_m", date(2026, 11, 7)

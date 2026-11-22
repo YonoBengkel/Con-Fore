@@ -35,7 +35,9 @@ import {
   TARGET_PREDIKSI,
   artinyaPerkiraan,
   barisJangkaPanjang,
+  cakupanRentang,
   jalurUtama,
+  kalimatCakupan,
   kalimatCara,
   kalimatEfekBasis,
   kalimatJangkaPanjang,
@@ -349,6 +351,19 @@ export default async function KeDepan() {
 
       <section className="bagian" aria-labelledby="judul-rekam">
         <h2 id="judul-rekam">Seberapa sering meleset</h2>
+        {rekam.length > 0 && (
+          <ul className="banding">
+            {TOPIK.map((topik) => {
+              const t = TARGET_PREDIKSI.find((x) => x.kunci === topik.kartu)!;
+              const kalimat = kalimatCakupan(cakupanRentang(rekam, t.seri));
+              return kalimat ? (
+                <li key={topik.kunci}>
+                  <strong>{topik.nama}:</strong> {kalimat}
+                </li>
+              ) : null;
+            })}
+          </ul>
+        )}
         {rekam.length ? (
           <div className="gulir-tabel" role="region" aria-label="Perkiraan sungguhan dan angka rilisnya" tabIndex={0}>
             <table className="kepala-bungkus">
@@ -360,12 +375,16 @@ export default async function KeDepan() {
                   <th scope="col">Perkiraan</th>
                   <th scope="col">Rilis pertama</th>
                   <th scope="col">Meleset</th>
+                  <th scope="col">Rentang</th>
+                  <th scope="col">Di dalam rentang</th>
                 </tr>
               </thead>
               <tbody>
                 {rekam.map((r) => {
                   const t = TARGET_PREDIKSI.find((x) => x.seri === r.series_id);
                   const d = t?.desimal ?? 2;
+                  const berentang = r.lo80 != null && r.hi80 != null;
+                  const masuk = berentang && r.first_release_actual >= r.lo80! && r.first_release_actual <= r.hi80!;
                   return (
                     <tr key={`${r.series_id}-${r.ref_period}-${r.model}`}>
                       <th scope="row">{t?.judul ?? r.series_id}</th>
@@ -373,6 +392,8 @@ export default async function KeDepan() {
                       <td className="angka">{persen(r.forecast, d)}</td>
                       <td className="angka">{persen(r.first_release_actual, d)}</td>
                       <td className="angka">{angka(r.abs_error, 2)} poin persen</td>
+                      <td className="angka">{berentang ? `${persen(r.lo80!, d)} sampai ${persen(r.hi80!, d)}` : "-"}</td>
+                      <td>{berentang ? (masuk ? "Ya" : "Tidak") : "-"}</td>
                     </tr>
                   );
                 })}

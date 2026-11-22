@@ -1,4 +1,4 @@
-Status: sesuai migrasi `0001`-`0005` (2026-11-07).
+Status: sesuai migrasi `0001`-`0006` (2026-11-22).
 
 # Skema Database Con-Fore
 
@@ -142,6 +142,7 @@ erDiagram
   SERIES_META ||--o{ FORECAST_LATEST : "perkiraan"
   SERIES_META ||--o{ BACKTEST_SCORES : "skor uji"
   SERIES_META ||--o{ TRACK_RECORD : "rekam jejak"
+  SERIES_META ||--o{ REVISIONS : "catatan revisi"
   SOURCES {
     text source_id PK
     text name
@@ -162,6 +163,7 @@ erDiagram
     text last_period
     date last_release_date
     date next_release_date
+    date versions_since
   }
   LATEST_VALUES {
     text series_id PK
@@ -228,6 +230,16 @@ erDiagram
     numeric first_release_actual
     numeric latest_actual
     numeric abs_error
+    numeric lo80
+    numeric hi80
+  }
+  REVISIONS {
+    text series_id PK
+    text period PK
+    date vintage_date PK
+    numeric old_value
+    numeric new_value
+    date release_date
   }
   SITE_STATUS {
     int id PK
@@ -245,7 +257,7 @@ erDiagram
 |---|---|---|
 | `sources` | `source_id` | Nama, URL portal data, URL halaman syarat (`terms_url`), ringkasan lisensi, dan kalimat atribusi wajib per sumber. Dimuat dari `config/sources.csv`. |
 | `series` | `series_id` | FK `source_id`. `frequency` in (`A`,`Q`,`M`,`D`). `concept` in (`level`,`index`,`yoy`,`avg_yoy`,`eop_yoy`,`rate`,`round_rate`), supaya hanya konsep yang sama yang dibandingkan (contoh: sasaran inflasi dengan `eop_yoy`). `country` default `IDN` (`WLD` untuk harga dunia). `source_key` berisi query API, kosong untuk seri turunan (`dataset` = `turunan`). Dimuat dari `config/series.toml`; seri yang dihapus dari registri menjadi `active = false`. |
-| `observations` | (`series_id`, `period`, `vintage_date`) | `period` berformat `YYYY`, `YYYY-Qn`, `YYYY-MM`, atau `YYYY-MM-DD`; `period_start` (date, not null) untuk pengurutan. `vintage_date` = tanggal WIB saat nilai pertama kali terlihat. `value` NULL berarti periode itu ditarik sumber pada `vintage_date` (tidak tampil sampai sumber memuatnya lagi). `source_id` mencatat asal nilai (BPS, IMF, manual) agar rekam jejak hanya dinilai terhadap rilis pertama BPS. `release_date` belum diisi pipeline untuk sumber mana pun: IMF tidak mencantumkan tanggal rilis BPS, dan WebAPI BPS hanya memberi tanggal pembaruan per variabel, bukan per observasi. `source_status` = kode status observasi dari sumber, bila ada. |
+| `observations` | (`series_id`, `period`, `vintage_date`) | `period` berformat `YYYY`, `YYYY-Qn`, `YYYY-MM`, atau `YYYY-MM-DD`; `period_start` (date, not null) untuk pengurutan. `vintage_date` = tanggal WIB saat nilai pertama kali terlihat. `value` NULL berarti periode itu ditarik sumber pada `vintage_date` (tidak tampil sampai sumber memuatnya lagi). `source_id` mencatat asal nilai (BPS, IMF, manual) agar rekam jejak hanya dinilai terhadap rilis pertama BPS. `release_date` belum diisi pipeline untuk sumber mana pun: IMF tidak mencantumkan tanggal rilis BPS, dan WebAPI BPS hanya memberi tanggal pembaruan per variabel, bukan per observasi. Tanggal rilis angka yang tampil diisi saat publikasi dari kalender rilis (lihat `public.latest_values`). `source_status` = kode status observasi dari sumber, bila ada. |
 | `targets` | (`series_id`, `year`, `target_kind`) | `target_kind` in (`apbn`,`pmk`,`rpjmn`): lensa target memakai APBN (pertumbuhan, TPT) dan PMK (inflasi); panel jangka panjang memakai RPJMN. Isi `value`, atau `lower` dan `upper` untuk rentang (TPT hanya rentang). `document`, `url`, `last_verified` wajib diisi; `verification` in (`dokumen`,`berita`) menandai apakah angkanya sudah dicocokkan ke dokumen resmi. Diganti penuh dari `config/targets.csv` setiap run. |
 | `release_calendar` | (`series_id`, `ref_period`, `calendar_source`) | `calendar_source` misalnya `bps`, `oecd`, `bi-rdg`, atau `bps-perkiraan` selama jadwal resmi BPS tahun itu belum terbit. Diganti penuh dari `config/release_calendar.csv` setiap run. |
 | `forecasts` | (`series_id`, `ref_period`, `model`, `origin_date`, `stat`) | Ramalan sungguhan untuk rekam jejak. `model` in (`sama_terakhir`,`ar1`,`dfm`,`musiman`,`arimax`,`regresi`,`regresi_pdb`) tanpa check, supaya model baru tidak butuh migrasi. `stat` in (`point`,`lo80`,`hi80`,`lo95`,`hi95`). Angka hari lain tidak pernah berubah, dan run kedua di hari yang sama mengganti seluruh ramalan hari itu. `data_cutoff` = awal periode angka resmi terakhir target. `input_hash` = sidik data masukan, kalender, backtest terakhir, dan versi kode, supaya model hanya dijalankan ulang bila salah satunya berubah. `git_sha` dan `pkg_versions` mencatat kode dan versi paket yang menghasilkannya. |
@@ -261,15 +273,16 @@ erDiagram
 | Tabel | Kunci | Catatan |
 |---|---|---|
 | `sources` | `source_id` | Untuk halaman Sumber data, termasuk kalimat atribusi wajib |
-| `series_meta` | `series_id` | Nama Indonesia, satuan, sumber, sitasi, periode terakhir, tanggal rilis terakhir dan berikutnya |
-| `latest_values` | `series_id` | Angka terbaru per seri beserta pembandingnya, untuk kartu dan kalimat ringkasan: angka periode sebelumnya, atau untuk TPT per ronde Sakernas (`round_rate`) ronde bulan yang sama tahun sebelumnya. `seen_date` = tanggal nilai itu pertama terlihat; `is_stale` = pengambilan terakhir seri itu (atau inputnya, untuk seri turunan) gagal, atau seri itu belum pernah berhasil diambil |
+| `series_meta` | `series_id` | Nama Indonesia, satuan, sumber, sitasi, periode terakhir, tanggal rilis terakhir dan berikutnya. `versions_since` = `vintage_date` terawal seri itu di `etl.observations`, yaitu sejak kapan setiap versinya tercatat; kosong untuk seri turunan |
+| `latest_values` | `series_id` | Angka terbaru per seri beserta pembandingnya, untuk kartu dan kalimat ringkasan: angka periode sebelumnya, atau untuk TPT per ronde Sakernas (`round_rate`) ronde bulan yang sama tahun sebelumnya. `seen_date` = tanggal nilai itu pertama terlihat; `release_date` dari sumbernya, atau dari kalender rilis milik sumber seri itu sendiri bila tanggalnya sudah lewat dan tidak sesudah `seen_date` (kalender BPS untuk angka BPS, bukan untuk salinan IMF, dan tanpa `bps-perkiraan`); `is_stale` = pengambilan terakhir seri itu (atau inputnya, untuk seri turunan) gagal, atau seri itu belum pernah berhasil diambil |
 | `chart_series` | `chart_id` | Satu baris per grafik. Satu grafik bisa memuat beberapa seri (`series_ids`), dan `points` berupa objek JSON berisi array `[periode, nilai]` per seri. Dipilih karena Data API memotong jawaban di 1.000 baris secara diam-diam. Juga sumber unduhan CSV |
 | `targets` | (`series_id`, `year`, `target_kind`) | Salinan target resmi beserta status `verification`; sebelum rilis publik, baris `berita` dicocokkan dulu ke dokumen resmi |
 | `release_calendar` | (`series_id`, `ref_period`) | Hanya rilis yang belum lewat (tanggal WIB). Bila beberapa kalender mencatat periode yang sama, yang dipakai tanggal paling awal. `calendar_source` ikut tampil, karena selama data berasal dari salinan IMF, tanggal BPS adalah tanggal rilis BPS, bukan tanggal angka itu muncul di situs |
 | `site_status` | `id` (check `id = 1`) | Satu baris: `last_success_at` (waktu publikasi terakhir dari run yang tidak gagal; run gagal tidak memajukannya), `last_run_status` (`ok`, `partial`, atau `failed`; run yang berhenti karena error juga menandai `failed`), dan kode sumber yang terlambat. Hanya kode tetap, bukan teks bebas |
 | `forecast_latest` | (`series_id`, `ref_period`, `model`) | Ramalan asal terakhir, semua model. `is_main` menandai angka utama per seri dan periode, dari hasil backtest, dan selalu tepat satu per periode. `lo80` dan `hi80` kosong bila backtest belum cukup. Proyeksi IMF tidak di sini, tetapi di `chart_series` (seri `idn_*_weo_a`) |
 | `backtest_scores` | (`series_id`, `model`, `horizon`, `window_name`) | Ringkasan `etl.backtest`: MAE, RMSE, dan jumlah baris. `window_name` in (`normal`,`sebelum`,`uji`,`semua`). `is_main` menandai angka utama horizon itu. Untuk bagian Rekam jejak |
-| `track_record` | (`series_id`, `ref_period`, `model`, `origin_date`) | Ramalan sungguhan yang periodenya sudah terbit: satu baris per model, yaitu ramalan terakhir sebelum hari rilis pertama, dibanding rilis pertama (vintage pertama) dan angka terbaru |
+| `track_record` | (`series_id`, `ref_period`, `model`, `origin_date`) | Ramalan sungguhan yang periodenya sudah terbit: satu baris per model, yaitu ramalan terakhir sebelum hari rilis pertama, dibanding rilis pertama (vintage pertama) dan angka terbaru. `lo80` dan `hi80` = batas rentang ramalan itu, kosong bila tanpa rentang, untuk menghitung berapa yang jatuh di dalam rentangnya |
+| `revisions` | (`series_id`, `period`, `vintage_date`) | Versi yang mengubah angka tampil satu periode sesudah dibulatkan seperti di situs (`display_decimals` di `confore/publish.py`, sama dengan `desimalUntuk` di `web/lib/format.ts`): `old_value`, `new_value`, hari versi itu terlihat, dan `release_date` bila sumber mencatatnya. Hanya 24 periode terakhir setiap seri, dan paling banyak 30 baris per seri, paling baru dulu. Periode yang ditarik lalu kembali tidak dihitung |
 
 ## 3. Penulisan dan idempotensi
 
@@ -388,7 +401,7 @@ Pada Postgres 17, `MAINTAIN` ditambahkan ke kedua daftar hak tabel (kode memilih
 
 - Letak: `supabase/migrations/NNNN_nama.sql`, berurutan dan tidak pernah diubah setelah diterapkan.
 - Diterapkan oleh `python -m confore migrate` (lokal atau workflow dengan mode `migrate`), yang mencatat versinya di `etl.schema_migrations`.
-- Yang ada: `0001_skema_dan_akses_dasar` (skema `etl`, `etl.schema_migrations`, penutupan akses bawaan), `0002_tabel_etl`, `0003_tabel_public` (beserta GRANT, RLS, dan kebijakan), `0004_tabel_model` (`etl.forecasts`, `etl.backtest`), dan `0005_tabel_prediksi` (`public.forecast_latest`, `public.backtest_scores`, `public.track_record`, beserta GRANT, RLS, dan kebijakan). Migrasi yang menambah tabel `public` yang dibaca situs harus diterapkan sebelum push, karena build Vercel ikut membacanya.
+- Yang ada: `0001_skema_dan_akses_dasar` (skema `etl`, `etl.schema_migrations`, penutupan akses bawaan), `0002_tabel_etl`, `0003_tabel_public` (beserta GRANT, RLS, dan kebijakan), `0004_tabel_model` (`etl.forecasts`, `etl.backtest`), `0005_tabel_prediksi` (`public.forecast_latest`, `public.backtest_scores`, `public.track_record`, beserta GRANT, RLS, dan kebijakan), dan `0006_revisi_dan_rentang` (`public.series_meta.versions_since`, `public.track_record.lo80` dan `hi80`, dan `public.revisions` beserta GRANT, RLS, dan kebijakan). Migrasi yang menambah tabel `public` yang dibaca situs harus diterapkan sebelum push, karena build Vercel ikut membacanya.
 - `migrate` lalu menjalankan pemeriksaan katalog (bagian 4) dan, bila `SUPABASE_URL` dan `SUPABASE_PUBLISHABLE_KEY` terisi, uji Data API dengan publishable key.
 - Uji lokal: `tests/test_db.py` memasang default privileges lama Supabase (tabel baru terbuka untuk `anon`, `authenticated`, `service_role`), menerapkan semua migrasi ke Postgres lokal sekali pakai (`CONFORE_TEST_DB_URL` sebagai variabel environment; hanya alamat mesin ini dan database berakhiran `_test`), lalu memeriksa bahwa tabel baru tidak lagi terbuka, katalog akses, vintage dan penarikan periode, status run, kunci, publikasi, dan hak `anon`.
 

@@ -16,6 +16,7 @@ import {
   bacaKalender,
   bacaMeta,
   bacaNilai,
+  bacaRevisi,
   bacaStatus,
   bacaSumber,
   bacaTarget,
@@ -65,7 +66,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Indikator({ params }: Props) {
   const { id } = await params;
   if (!POLA_ID.test(id)) notFound();
-  const [meta, nilai, status, grafik, kalender, target, sumber] = await Promise.all([
+  const [meta, nilai, status, grafik, kalender, target, sumber, revisi] = await Promise.all([
     bacaMeta(),
     bacaNilai(),
     bacaStatus(),
@@ -73,6 +74,7 @@ export default async function Indikator({ params }: Props) {
     bacaKalender(),
     bacaTarget(),
     bacaSumber(),
+    bacaRevisi(id),
   ]);
   const m = meta.find((x) => x.series_id === id);
   if (!m) notFound();
@@ -82,6 +84,7 @@ export default async function Indikator({ params }: Props) {
   const targetSeri = target.filter((t) => t.series_id === id);
   const artinya = n ? artinyaBuatmu(id, n.value, n.previous_value) : null;
   const terbaru = titik.slice(-12).reverse();
+  const olahan = labelSeri(m).startsWith("dihitung");
   // Pertanyaan pemilik seri ini, untuk remah dan tautan balik; tiga angka utama juga punya perkiraan di Ke depan.
   const topik = topikSeri(id);
   const angkaUtama = topik != null && SERI_KARTU[topik.kartu].includes(id);
@@ -308,6 +311,48 @@ export default async function Indikator({ params }: Props) {
           )}
         </section>
       </div>
+
+      {/* Catatan revisi (PRD 4.4): hanya bila angka tampil berubah, dengan sejak kapan setiap versi disimpan. */}
+      {(revisi.length > 0 || m.versions_since || olahan) && (
+        <section className="bagian" aria-labelledby="judul-revisi">
+          <h2 id="judul-revisi">Catatan revisi</h2>
+          {revisi.length > 0 ? (
+            <div className="gulir-tabel" role="region" aria-labelledby="judul-revisi" tabIndex={0}>
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Periode</th>
+                    <th scope="col">Angka lama</th>
+                    <th scope="col">Angka baru</th>
+                    <th scope="col">Tanggal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {revisi.map((r) => (
+                    <tr key={`${r.period}-${r.vintage_date}`}>
+                      <th scope="row">{periode(r.period)}</th>
+                      <td className="angka">{nilaiPendek(r.old_value, m.unit, m.concept)}</td>
+                      <td className="angka">{nilaiPendek(r.new_value, m.unit, m.concept)}</td>
+                      <td>
+                        {r.release_date
+                          ? `Dirilis ${tanggal(r.release_date)}`
+                          : `Dilihat Con-Fore ${tanggal(r.vintage_date)}`}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            m.versions_since && <p>Belum ada revisi yang mengubah angka yang tampil.</p>
+          )}
+          <p className="catatan">
+            {m.versions_since
+              ? `Con-Fore menyimpan setiap versi angka ini sejak ${tanggal(m.versions_since)}. Revisi sebelum tanggal itu tidak terekam.`
+              : "Angka ini dihitung Con-Fore dari seri lain, jadi revisinya mengikuti revisi seri asalnya."}
+          </p>
+        </section>
+      )}
 
       {targetSeri.length > 0 && (
         <section aria-labelledby="judul-target-seri">

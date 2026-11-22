@@ -98,14 +98,15 @@ def forecast_rows(stored, chosen):
 
 
 def record_rows(finished, chosen):
-    """Baris untuk public.track_record, dengan galat terhadap rilis pertama."""
+    """Baris untuk public.track_record, dengan galat terhadap rilis pertama dan batas rentang 80%
+    ramalan itu, supaya situs bisa menghitung berapa yang jatuh di dalam rentangnya."""
     available = {}
     for series_id, ref, model, *_ in finished:
         available.setdefault((series_id, ref), set()).add(model)
     return [(series_id, ref, model, origin,
              is_main(chosen, series_id, horizon_of(ref, cutoff), model, available[series_id, ref]),
-             value, first, latest, abs(value - first))
-            for series_id, ref, model, origin, cutoff, value, first, latest in finished]
+             value, first, latest, abs(value - first), lo80, hi80)
+            for series_id, ref, model, origin, cutoff, value, first, latest, lo80, hi80 in finished]
 
 
 def publish_tables(conn):

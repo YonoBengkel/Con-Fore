@@ -14,7 +14,9 @@ from unittest import mock
 from confore import cli, config, db, fetch, revalidate
 from confore.derive import chain, derive_all, ratio, share, yoy
 from confore.fetch import FetchError, Point
-from confore.publish import next_releases, previous_value
+from confore import publish
+from confore.publish import (calendar_releases, display_decimals, next_releases, previous_value, release_of,
+                             revision_rows)
 
 
 def points(*pairs, frequency="Q"):
@@ -346,6 +348,51 @@ class TimeAndSafetyTest(unittest.TestCase):
                     ("s", "2026-11", "bps", date(2026, 12, 1)),
                     ("s", "2026-10", "bps", date(2026, 11, 2))]
         self.assertEqual(next_releases(calendar, date(2026, 10, 31)), {"s": date(2026, 11, 2)})
+
+    def test_calendar_release_only_from_the_series_own_source(self):
+        items = [{"id": "bps_x", "source": "bps"}, {"id": "idn_x", "source": "imf"}]
+        calendar = [("bps_x", "2026-10", "bps", date(2026, 11, 2)),
+                    ("idn_x", "2026-10", "bps", date(2026, 11, 2)),           # salinan IMF terbit belakangan
+                    ("bps_x", "2026-09", "bps-perkiraan", date(2026, 10, 5)),  # perkiraan, bukan rilis
+                    ("bps_x", "2026-11", "bps", date(2026, 12, 1))]            # belum lewat
+        self.assertEqual(calendar_releases(calendar, items, date(2026, 11, 20)),
+                         {("bps_x", "2026-10"): date(2026, 11, 2)})
+
+    def test_release_of_prefers_the_source_and_never_follows_the_day_it_was_seen(self):
+        released = {("s", "2026-10"): date(2026, 11, 2)}
+        point = Point("2026-10", date(2026, 10, 1), Decimal("3.2"), seen=date(2026, 11, 2))
+        self.assertEqual(release_of(point, "s", released), date(2026, 11, 2))
+        self.assertIsNone(release_of(point._replace(seen=date(2026, 11, 1)), "s", released))
+        self.assertEqual(release_of(point._replace(seen=None), "s", released), date(2026, 11, 2))
+        self.assertEqual(release_of(point._replace(release=date(2026, 11, 3)), "s", released), date(2026, 11, 3))
+        self.assertIsNone(release_of(point._replace(period="2026-09"), "s", released))
+
+    def test_display_decimals_match_the_site(self):
+        # Sama dengan desimalUntuk di web/lib/format.ts.
+        self.assertEqual(display_decimals(Decimal("4.75"), "round_rate"), 2)
+        self.assertEqual(display_decimals(Decimal("18143"), "rate"), 0)
+        self.assertEqual(display_decimals(Decimal("3.2"), "yoy"), 1)
+        self.assertEqual(display_decimals(Decimal("0.5"), "level"), 4)
+        self.assertEqual(display_decimals(Decimal("15"), "level"), 1)
+        self.assertEqual(display_decimals(Decimal("18143"), "level"), 0)
+
+    def test_revisions_only_when_the_shown_number_changes(self):
+        concepts = {"s": "yoy", "big": "level"}
+        recent = {"s": {"2026-09", "2026-10"}, "big": {"2026-Q3"}}
+        changes = [
+            ("s", "2026-10", date(2026, 11, 3), Decimal("3.23"), Decimal("3.24"), None),  # tetap 3,2
+            ("s", "2026-10", date(2026, 11, 4), Decimal("3.24"), Decimal("3.31"), None),  # 3,2 jadi 3,3
+            ("s", "2026-09", date(2026, 11, 4), Decimal("2.95"), Decimal("2.84"), None),  # 3,0 jadi 2,8
+            ("s", "2025-01", date(2026, 11, 4), Decimal("1.0"), Decimal("9.0"), None),    # bukan periode terakhir
+            ("big", "2026-Q3", date(2026, 11, 4), Decimal("3.2e15"), Decimal("3.2001e15"), None),  # tetap 3.200 triliun
+            ("other", "2026-10", date(2026, 11, 4), Decimal("1"), Decimal("2"), None),     # seri tidak dikenal
+        ]
+        self.assertEqual(revision_rows(changes, concepts, recent), [
+            ("s", "2026-10", date(2026, 11, 4), Decimal("3.24"), Decimal("3.31"), None),
+            ("s", "2026-09", date(2026, 11, 4), Decimal("2.95"), Decimal("2.84"), None),
+        ])
+        with mock.patch.object(publish, "REVISION_ROWS", 1):
+            self.assertEqual(len(revision_rows(changes, concepts, recent)), 1)
 
 
 if __name__ == "__main__":
