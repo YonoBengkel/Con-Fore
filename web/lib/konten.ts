@@ -22,6 +22,89 @@ export const JUDUL_KARTU: Record<KunciKartu, string> = {
   pengangguran: "Pengangguran",
 };
 
+/** Seri tahunan IMF WEO untuk patokan rata-rata jangka panjang dan target resmi (PRD 4.2). */
+export const SERI_TAHUNAN: Record<KunciKartu, string> = {
+  pertumbuhan: "idn_gdp_growth_a",
+  inflasi: "idn_cpi_eop_a",
+  pengangguran: "idn_unemp_a",
+};
+
+/** Rentang tahun rata-rata jangka panjang (PRD 4.2). */
+export const TAHUN_AWAL = 2000;
+export const TAHUN_AKHIR = 2025;
+
+export type KunciTopik = "harga" | "kerja" | "ekonomi";
+
+/**
+ * Tiga pertanyaan berangka resmi, urut dari yang paling terasa sehari-hari (PRD 4.1). Pertanyaan keempat,
+ * Ke depan, memakai perkiraan ketiganya. `kunci` juga menjadi alamat halaman rincinya: /indonesia/harga.
+ */
+export type Topik = {
+  kunci: KunciTopik;
+  kartu: KunciKartu;
+  nama: string;
+  tanya: string;
+  /** Desimal angka utama, sama dengan angka resminya. */
+  desimal: number;
+  /** Awal kalimat perkiraannya: "Inflasi November 2026 diperkirakan ...". */
+  awalanPerkiraan: string;
+  /** Target resmi tahun itu: jenis baris di tabel target dan frasa sebelum tahunnya. */
+  target: { jenis: "apbn" | "pmk"; frasa: string };
+  judulPenjelas: string;
+  /** Yang ikut memengaruhi, di halaman rinci (PRD 4.1). */
+  penggerak: string[];
+};
+
+export const TOPIK: Topik[] = [
+  {
+    kunci: "harga",
+    kartu: "inflasi",
+    nama: "Harga",
+    tanya: "Harga barang naik berapa?",
+    desimal: 1,
+    awalanPerkiraan: "Inflasi",
+    target: { jenis: "pmk", frasa: "sasaran pemerintah untuk akhir" },
+    judulPenjelas: "Apa itu inflasi?",
+    penggerak: ["wld_brent_m", "usd_idr_d", "idn_policy_rate_m"],
+  },
+  {
+    kunci: "kerja",
+    kartu: "pengangguran",
+    nama: "Kerja",
+    tanya: "Susah cari kerja atau tidak?",
+    desimal: 2,
+    awalanPerkiraan: "Pengangguran",
+    target: { jenis: "apbn", frasa: "target pemerintah untuk" },
+    judulPenjelas: "Siapa yang dihitung menganggur?",
+    penggerak: [],
+  },
+  {
+    kunci: "ekonomi",
+    kartu: "pertumbuhan",
+    nama: "Ekonomi",
+    tanya: "Ekonomi sedang tumbuh cepat atau lambat?",
+    desimal: 1,
+    awalanPerkiraan: "Pertumbuhan",
+    target: { jenis: "apbn", frasa: "target pemerintah untuk seluruh" },
+    judulPenjelas: "Apa yang dihitung?",
+    penggerak: ["wld_coal_m", "wld_cpo_m", "wld_nickel_m", "chn_cli_m"],
+  },
+];
+
+export const topikDari = (kunci: string): Topik | undefined => TOPIK.find((t) => t.kunci === kunci);
+
+/** Pertanyaan yang memuat satu seri, untuk tautan balik dari halaman data per seri. */
+export function topikSeri(seri: string): Topik | undefined {
+  return TOPIK.find(
+    (t) =>
+      SERI_KARTU[t.kartu].includes(seri) ||
+      t.penggerak.includes(seri) ||
+      (t.kunci === "harga" && KELOMPOK_INFLASI.some((k) => k.setahun === seri || k.sebulan === seri)) ||
+      (t.kunci === "harga" && seri === SERI_INFLASI_BULANAN) ||
+      (t.kunci === "kerja" && seri === SERI_FORMAL),
+  );
+}
+
 /** Seri sejenis (termasuk seri BPS yang menyusul) memakai penjelasan yang sama. */
 const JENIS_SERI: Record<string, KunciKartu> = {
   idn_gdp_growth_q: "pertumbuhan",
@@ -172,7 +255,7 @@ function gerakHarga(nilai: number, desimal: number, pembanding: string, awalan =
  * Isi keranjang belanja Rp100.000 setahun lalu sesudah inflasi (PRD 4.4), dari angka yang tampil (satu
  * desimal), dibulatkan ke Rp100 terdekat: "Rp103.200".
  */
-function keranjangKini(nilai: number): string {
+export function keranjangKini(nilai: number): string {
   const tampil = Number(nilai.toFixed(1));
   return `Rp${angka(Math.round((100000 * (1 + tampil / 100)) / 100) * 100, 0)}`;
 }
@@ -252,7 +335,7 @@ export function namaPendek(sumber: string): string {
 }
 
 /**
- * Label kejujuran per seri. "data resmi" hanya untuk seri yang diambil langsung dari BPS; angka
+ * Label kejujuran per seri. "angka resmi" hanya untuk seri yang diambil langsung dari BPS; angka
  * Indonesia dari IMF ditandai sebagai salinan, dan olahan Con-Fore selalu disebut.
  */
 /** Seri proyeksi IMF untuk tab Prediksi: memuat tahun yang belum terjadi, jadi tidak punya halaman detail. */
@@ -261,7 +344,7 @@ export const adalahProyeksi = (seri: string) => seri.endsWith("_weo_a");
 export function labelSeri(m: MetaSeri): string {
   if (adalahProyeksi(m.series_id)) return "proyeksi IMF";
   const olahan = /^(dihitung|kurs silang dihitung)/i.test(m.citation);
-  if (m.source_id === "bps") return olahan ? "dihitung Con-Fore dari data resmi BPS" : "data resmi BPS";
+  if (m.source_id === "bps") return olahan ? "dihitung Con-Fore dari angka resmi BPS" : "angka resmi BPS";
   if (m.source_id === "imf" && m.country === "IDN") {
     return olahan ? "dihitung Con-Fore dari salinan IMF atas data BPS" : "salinan IMF dari data BPS";
   }

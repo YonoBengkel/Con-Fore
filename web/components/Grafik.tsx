@@ -320,7 +320,8 @@ export function GrafikRonde({ titik, nama }: { titik: Titik[]; nama: string }) {
   const H = 260;
   const kiri = 56;
   const atas = 12;
-  const lebar = W - kiri - 104;
+  // Ruang kanan untuk label "Februari 40,58%", yang di HP dibesarkan menjadi 17px (globals.css).
+  const lebar = W - kiri - 152;
   const tinggi = H - atas - 32;
   const tahun = (p: string) => Number(p.slice(0, 4));
   const awal = tahun(titik[0][0]);

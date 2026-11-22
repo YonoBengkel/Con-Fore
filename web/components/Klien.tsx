@@ -1,25 +1,23 @@
 "use client";
 
-// Dua komponen kecil yang butuh browser: banner kesegaran data dan pilihan lensa segitiga.
+// Dua komponen kecil yang butuh browser: menu utama dengan penanda halaman aktif, dan banner kesegaran data.
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { TAHUN_AKHIR, TAHUN_AWAL } from "@/lib/skor";
 
+/** Menu atas hanya Indonesia dan Tentang data; logo kembali ke peta dunia (PRD 4.1). */
 const MENU = [
-  { href: "/", teks: "Data" },
-  { href: "/prediksi", teks: "Prediksi" },
-  { href: "/metode", teks: "Metode" },
+  { href: "/indonesia", teks: "Indonesia", juga: "/indikator" },
+  { href: "/tentang-data", teks: "Tentang data" },
 ];
 
-/** Navigasi utama dengan aria-current pada halaman yang sedang dibuka. */
 export function NavUtama() {
   const jalur = usePathname();
   return (
     <nav aria-label="Utama" className="nav-utama">
       {MENU.map((m) => {
-        const aktif = m.href === "/" ? jalur === "/" || jalur.startsWith("/indikator") : jalur.startsWith(m.href);
+        const aktif = jalur.startsWith(m.href) || (m.juga != null && jalur.startsWith(m.juga));
         return (
           <Link key={m.href} href={m.href} aria-current={aktif ? "page" : undefined}>
             {m.teks}
@@ -49,66 +47,5 @@ export function BannerBasi({ terakhir }: { terakhir: string }) {
       <strong>Data mungkin belum diperbarui.</strong> Pembaruan otomatis terakhir berhasil lebih
       dari {BATAS_JAM} jam lalu, jadi angka di halaman ini bisa tertinggal dari rilis terbaru.
     </div>
-  );
-}
-
-type KunciLensa = "masa-lalu" | "target";
-
-function lensaDariUrl(): KunciLensa {
-  return new URLSearchParams(window.location.search).get("lensa") === "target"
-    ? "target"
-    : "masa-lalu";
-}
-
-function terapkan(lensa: KunciLensa) {
-  if (lensa === "target") document.documentElement.dataset.lensa = "target";
-  else delete document.documentElement.dataset.lensa;
-}
-
-/**
- * Kedua panel lensa sudah ada di HTML. Skrip kecil di <head> memilih panel dari ?lensa=target sebelum
- * halaman tampil, dan komponen ini menggantinya tanpa memuat ulang dan tanpa mengubah alamat, karena
- * peserta uji baca membaca alamat yang berubah sebagai halaman lain (PRD 4.2).
- */
-export function PilihLensa() {
-  const [lensa, setLensa] = useState<KunciLensa>("masa-lalu");
-  useEffect(() => {
-    const sinkron = () => {
-      const l = lensaDariUrl();
-      terapkan(l);
-      setLensa(l);
-    };
-    sinkron();
-    window.addEventListener("popstate", sinkron);
-    return () => window.removeEventListener("popstate", sinkron);
-  }, []);
-
-  function pilih(e: React.MouseEvent<HTMLAnchorElement>, l: KunciLensa) {
-    e.preventDefault();
-    terapkan(l);
-    setLensa(l);
-  }
-
-  return (
-    <nav className="pilih-lensa" aria-label="Pilih lensa skor">
-      <a
-        href="?"
-        aria-current={lensa === "masa-lalu" ? "true" : undefined}
-        onClick={(e) => pilih(e, "masa-lalu")}
-      >
-        Masa lalu
-        <span className="lensa-ket">
-          dibanding {TAHUN_AWAL}-{TAHUN_AKHIR}
-        </span>
-      </a>
-      <a
-        href="?lensa=target"
-        aria-current={lensa === "target" ? "true" : undefined}
-        onClick={(e) => pilih(e, "target")}
-      >
-        Target resmi
-        <span className="lensa-ket">dibanding target pemerintah</span>
-      </a>
-    </nav>
   );
 }

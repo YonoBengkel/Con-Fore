@@ -2,7 +2,7 @@
 
 Website publik berbahasa Indonesia yang menjelaskan kondisi dan arah ekonomi Indonesia lewat tiga angka (pertumbuhan, inflasi, pengangguran), diperbarui otomatis setiap hari.
 
-Status: fase 1 (pipeline data) jalan otomatis setiap hari. Fase 2 (situs tab Data v0.1 di `web/`) tayang di https://con-fore.vercel.app. Fase 3 (model dan backtest) ada di `confore/models/`, dan fase 4 (tab Prediksi v0.2) menampilkan hasilnya di situs. Fase 5 menambah alarm kegagalan dan backup mingguan, dan uji tujuh harinya belum selesai.
+Status: fase 1 (pipeline data) jalan otomatis setiap hari, dan situsnya (`web/`) tayang di https://con-fore.vercel.app. Fase 3 (model dan backtest) ada di `confore/models/`. Fase 5 menambah alarm kegagalan dan backup mingguan, dan uji tujuh harinya lulus 14 November 2026. Sejak 22 November 2026 situsnya memakai desain ulang (fase 5c di PRD): halaman depan dengan peta dunia, halaman Indonesia, tiga halaman rinci, Ke depan, dan Tentang data.
 
 ## Dokumen
 
@@ -47,7 +47,7 @@ Butuh Node 24. Dari folder `web/`:
 ```
 npm ci                 # pasang dependensi persis dari package-lock.json
 npm run salin-env      # salin SUPABASE_URL dan SUPABASE_PUBLISHABLE_KEY dari ../.env ke web/.env.local
-npm test               # tes aturan skor segitiga
+npm test               # tes jawaban, perbandingan, perkiraan, dan isi lain (node --test)
 npm run dev            # situs lokal di http://localhost:3000
 npm run build          # build produksi; ikut membaca Supabase, jadi Supabase harus aktif
 npm start              # sajikan hasil build

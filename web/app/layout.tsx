@@ -1,16 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Gelasio, Inter, JetBrains_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import Link from "next/link";
 import { NavUtama } from "@/components/Klien";
 import { DESKRIPSI_SITUS } from "@/lib/situs";
 import "./globals.css";
 
-// Disajikan dari Vercel sendiri: unduhan dari Google hanya saat build, tanpa panggilan dari browser.
-const sans = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
-const serif = Gelasio({ subsets: ["latin"], style: ["normal"], variable: "--font-serif", display: "swap" });
-const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
+// Plus Jakarta Sans buatan Tokotype (gaya 3, DESIGN.md). Disajikan dari Vercel sendiri: unduhan dari Google
+// hanya saat build, tanpa panggilan dari browser.
+const sans = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
 
-/** Tanda merek: garis luar segitiga keseimbangan. */
+/** Tanda merek: segitiga, satu-satunya sisa segitiga keseimbangan (PRD 4.2). */
 function TandaMerek() {
   return (
     <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
@@ -20,25 +19,18 @@ function TandaMerek() {
 }
 
 export const metadata: Metadata = {
-  title: { default: "Con-Fore: ekonomi Indonesia dalam tiga angka", template: "%s | Con-Fore" },
+  title: { default: "Con-Fore", template: "%s | Con-Fore" },
   description: DESKRIPSI_SITUS,
 };
 
 export const viewport: Viewport = {
-  themeColor: "#070b14",
-  colorScheme: "dark",
+  themeColor: "#f4f5f7",
+  colorScheme: "light",
 };
-
-// Memilih panel lensa sebelum halaman tampil, supaya ?lensa=target tidak berkedip.
-const SKRIP_LENSA =
-  "try{if(new URLSearchParams(location.search).get('lensa')==='target')document.documentElement.dataset.lensa='target'}catch(e){}";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" className={`${sans.variable} ${serif.variable} ${mono.variable}`} suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: SKRIP_LENSA }} />
-      </head>
+    <html lang="id" className={sans.variable}>
       <body>
         <a className="lewati" href="#isi">
           Langsung ke isi
@@ -58,44 +50,29 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <footer className="kaki">
           <div className="wadah kaki-kisi">
             <div>
-              <Link href="/" className="merek">
-                <TandaMerek />
-                Con-Fore
-              </Link>
               <p>
-                Con-Fore adalah situs independen. Bukan situs resmi BPS, Bank Indonesia, Kementerian
-                Keuangan, IMF, atau lembaga lain mana pun, dan tidak didukung oleh lembaga-lembaga itu.
+                Con-Fore adalah situs independen. Bukan situs resmi BPS, Bank Indonesia, Kementerian Keuangan, IMF,
+                atau lembaga lain mana pun, dan tidak didukung oleh lembaga-lembaga itu. Isinya penjelasan angka, bukan
+                nasihat keuangan.
               </p>
               <p>
-                Angka diolah dari data publik dengan menyebut sumbernya. Lihat{" "}
-                <Link href="/metode">Metode</Link> untuk atribusi, syarat penggunaan, dan cara angkanya dihitung.
+                Angka diolah dari data publik dengan menyebut sumbernya. Atribusi, syarat penggunaan, dan cara angkanya
+                dihitung ada di <Link href="/tentang-data">Tentang data</Link>.
               </p>
             </div>
             <nav aria-label="Jelajahi">
-              <p className="kaki-judul">Jelajahi</p>
               <ul>
                 <li>
-                  <Link href="/">Data</Link>
+                  <Link href="/indonesia">Indonesia</Link>
                 </li>
                 <li>
-                  <Link href="/prediksi">Prediksi</Link>
+                  <Link href="/indonesia/ke-depan">Perkiraan ke depan</Link>
                 </li>
                 <li>
-                  <Link href="/metode">Metode</Link>
-                </li>
-              </ul>
-            </nav>
-            <nav aria-label="Tentang data">
-              <p className="kaki-judul">Tentang data</p>
-              <ul>
-                <li>
-                  <Link href="/metode#label">Arti label</Link>
+                  <Link href="/tentang-data#label">Arti label</Link>
                 </li>
                 <li>
-                  <Link href="/metode#pembaruan">Kapan diperbarui</Link>
-                </li>
-                <li>
-                  <Link href="/metode#sumber">Sumber dan syarat</Link>
+                  <Link href="/tentang-data#sumber">Sumber dan syarat</Link>
                 </li>
               </ul>
             </nav>

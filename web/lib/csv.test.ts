@@ -30,7 +30,7 @@ test("kepala CSV memuat seri lalu atribusi dan syarat sumbernya, satu baris per 
     },
   ];
   assert.deepEqual(kepalaSumber(["bps_cpi_yoy_m", "tidak_ada"], meta, sumber), [
-    "# bps_cpi_yoy_m: Inflasi (%); data resmi BPS",
+    "# bps_cpi_yoy_m: Inflasi (%); angka resmi BPS",
     "# Sitasi: BPS, tabel inflasi",
     "# Atribusi BPS: Wajib tampil.",
     "# Syarat penggunaan: Ketentuan WebAPI https://webapi.bps.go.id/developer/",

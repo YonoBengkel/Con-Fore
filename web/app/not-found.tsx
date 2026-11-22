@@ -10,8 +10,8 @@ export default function TidakDitemukan() {
     <section className="pembuka">
       <h1>Halaman tidak ditemukan</h1>
       <p>
-        Alamat ini tidak ada di Con-Fore. Coba mulai dari <Link href="/">tab Data</Link> atau{" "}
-        <Link href="/prediksi">tab Prediksi</Link>.
+        Alamat ini tidak ada di Con-Fore. Coba mulai dari halaman <Link href="/indonesia">Indonesia</Link> atau{" "}
+        <Link href="/">peta dunia</Link>.
       </p>
     </section>
   );

@@ -18,7 +18,7 @@ const INFLASI: Penjelas = {
 };
 
 const PENGANGGURAN: Penjelas = {
-  ukur: "Persentase angkatan kerja yang menganggur, yaitu tidak bekerja tetapi sedang mencari kerja, bersiap membuka usaha, merasa tidak mungkin mendapat kerja, atau sudah diterima tetapi belum mulai. Angkatan kerja adalah penduduk usia 15 tahun ke atas yang bekerja atau menganggur.",
+  ukur: "Persentase angkatan kerja yang menganggur, yaitu tidak bekerja tetapi sedang mencari kerja, bersiap membuka usaha, merasa tidak mungkin mendapat kerja, atau sudah diterima tetapi belum mulai. Angkatan kerja adalah penduduk usia 15 tahun ke atas yang bekerja atau menganggur. Di rilis BPS angka ini disebut tingkat pengangguran terbuka (TPT).",
   cara: "BPS mengukurnya lewat Survei Angkatan Kerja Nasional (Sakernas). Ronde Februari dan Agustus tersedia sejak lama, ronde November sejak 2025, dan ronde Mei sejak 2026.",
   baca: "Bandingkan dengan ronde bulan yang sama tahun lalu, karena angkanya berbeda menurut bulan survei. Orang yang bekerja paling sedikit satu jam dalam seminggu sudah dihitung bekerja, jadi angka ini tidak menunjukkan kualitas pekerjaan.",
 };
