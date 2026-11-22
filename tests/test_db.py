@@ -53,7 +53,7 @@ class DatabaseTest(unittest.TestCase):
         for table in publish.TABLES + publish.MODEL_TABLES + ("baru",):
             self.conn.execute(f"drop table if exists public.{table}")
         self.conn.execute(SUPABASE_DEFAULTS)
-        self.assertEqual(len(db.migrate(self.conn)), 5)
+        self.assertEqual(len(db.migrate(self.conn)), 6)
         self.cfg = config.load()
         db.sync_config(self.conn, self.cfg)
         self.run_id = db.start_run(self.conn, "laptop", None)
