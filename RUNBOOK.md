@@ -241,7 +241,7 @@ Pemeriksaan yang sama membuka issue berlabel `pengingat` untuk tabel `config/` y
 | `Pengingat: kalender rilis` | Tanggal berakhiran `-perkiraan` tinggal 60 hari lagi, kalender sebuah seri habis dalam 30 hari, atau angka terbaru di situs masih "Dilihat Con-Fore" padahal seri itu memakai kalender | Ambil tanggal dari jadwal resmi: Rencana Terbit BPS (https://www.bps.go.id/id/arc), jadwal rilis OECD, dan jadwal Rapat Dewan Gubernur Bank Indonesia. Tanggal yang sudah resmi memakai `calendar_source` tanpa akhiran `-perkiraan`. Bila jadwalnya belum terbit, tambahkan tanggal perkiraan berakhiran `-perkiraan` |
 | `Pengingat: tanggal Lebaran` | Lebaran berbaris `perkiraan` sudah lewat, mulai September Lebaran tahun depan belum dicocokkan dengan SKB 3 Menteri, atau tabel belum sampai dua tahun ke depan | Catat tanggal hasil sidang isbat atau SKB di `config/holidays.csv` (bagian 4a) |
 
-**Uji pengingat:** **Actions > Pemeriksaan bulanan > Run workflow**, mode `uji_pengingat`. Run itu membuka satu issue `[Uji] ...` untuk setiap jenis issue di bagian 9 dan 9b, lalu langsung menutupnya, tanpa membaca database. Pastikan keempatnya ada di daftar issue tertutup dan email dari GitHub masuk. Ulangi sesudah mengubah `checkup.yml`.
+**Uji pengingat:** **Actions > Pemeriksaan bulanan > Run workflow**, mode `uji_pengingat`. Run itu membuka satu issue `[Uji] ...` untuk setiap jenis issue di bagian 9 dan 9b, lalu langsung menutupnya, tanpa membaca database. Pastikan keempatnya ada di daftar issue tertutup dan email dari GitHub masuk. Ulangi sesudah mengubah `checkup.yml`. Diuji 2026-11-22: run #1 selesai dalam 47 detik dan membuka lalu menutup issue #2 sampai #5.
 
 ## 9a. Uji tujuh hari (fase 5)
 
