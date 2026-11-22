@@ -1,4 +1,4 @@
-Status: pipeline data, situs hasil desain ulang (halaman depan, Indonesia, halaman rinci, Ke depan, Tentang data, dan data per seri), panggilan revalidasi, model, alarm, dan backup sesuai kode di repo (2026-11-22). Situs tayang di Vercel, dan pipeline jalan dengan jadwal harian.
+Status: pipeline data, situs hasil desain ulang (halaman depan, Indonesia, halaman rinci, Ke depan, Tentang data, dan data per seri), panggilan revalidasi, model, alarm, backup, dan pemeriksaan bulanan sesuai kode di repo (2026-11-22). Situs tayang di Vercel, dan pipeline jalan dengan jadwal harian.
 
 # Arsitektur Con-Fore
 
@@ -25,6 +25,7 @@ public.* -> server Vercel (ISR, cache) -> pengunjung
 publikasi selesai -> POST /api/revalidate -> satu GET per alamat -> render baru di latar
 etl.* -> backup mingguan -> aset GitHub Release
 run gagal -> workflow Alarm kegagalan -> issue pipeline-failure
+tanggal 9 sesudah backtest -> pemeriksaan bulanan -> issue Pemeriksaan bulanan, dan issue pengingat per tabel config/
 ```
 
 Semua logika ada di satu paket Python, `confore`, yang bisa dijalankan sama persis di GitHub Actions, di laptop, atau di runner cadangan.
@@ -50,7 +51,8 @@ Con-Fore/
     revalidate.py        segarkan situs sesudah publikasi: tandai cache basi, lalu picu render baru   [ada]
     backup.py            arsip mingguan dari satu snapshot, dan pemulihan ke database kosong   [ada]
     availability.py      aturan uji tujuh hari dari riwayat etl.runs   [ada]
-    cli.py               perintah: migrate, run (--dry-run, --source, --trigger, --full-refresh), backtest (--dry-run), backup, restore, status (--since, --days)   [ada]
+    checkup.py           pemeriksaan bulanan dan pengingat tabel kurasi, hasilnya daftar issue untuk checkup.yml   [ada]
+    cli.py               perintah: migrate, run (--dry-run, --source, --trigger, --full-refresh), backtest (--dry-run), backup, restore, status (--since, --days), checkup (--state-dir, --out, --test)   [ada]
     models/              model fase 3, hanya diimpor perintah yang memakainya   [ada]
       data.py            seri pipeline menjadi pandas, dan jadwal rilis per asal backtest
       baseline.py        sama dengan angka terakhir, dan AR(1)
@@ -73,10 +75,10 @@ Con-Fore/
     scripts/             salin-env.mjs: salin dua baris Supabase dari ../.env ke web/.env.local   [ada]
     vercel.json          region icn1 dan Ignored Build Step   [ada]
     .env.example         daftar variabel environment situs   [ada]
-  tests/                 test_smoke.py, test_pipeline.py, test_bps.py, test_models.py, test_ops.py, test_db.py (Postgres lokal)   [ada]
+  tests/                 test_smoke.py, test_pipeline.py, test_bps.py, test_models.py, test_ops.py, test_checkup.py, test_db.py (Postgres lokal)   [ada]
   .github/
     dependabot.yml       pembaruan bulanan untuk action yang dipin   [ada]
-    workflows/           smoke.yml, pipeline.yml, ci.yml, notify.yml, backup.yml   [ada]
+    workflows/           smoke.yml, pipeline.yml, ci.yml, notify.yml, backup.yml, checkup.yml   [ada]
   docs/                  catatan metodologi (tanpa data asli)
 ```
 
@@ -97,6 +99,7 @@ python -m confore backtest         # uji model dari database, lalu ganti isi etl
 python -m confore backup <berkas>  # tulis arsip tabel yang tidak bisa dibangun ulang, hanya membaca
 python -m confore restore <berkas> # isi database kosong dari arsip, lalu lanjut dengan run
 python -m confore status --since YYYY-MM-DD   # hasil uji tujuh hari per hari, hanya membaca
+python -m confore checkup          # pemeriksaan bulanan dan pengingat, hanya membaca, butir data repo dilewati tanpa --state-dir
 ```
 
 Seri BPS butuh `BPS_API_KEY`; tanpa key, semua seri BPS gagal dengan kode "BPS_API_KEY belum diisi" dan seri lain tetap jalan.
@@ -212,14 +215,15 @@ Cron di GitHub Actions ditulis dalam **UTC** (bawaan; kunci `timezone` juga ters
 | Harian | `17 23 * * *` | 06.17, **tanggal WIB = tanggal UTC + 1** | Cek perubahan semua sumber; ambil yang berubah; model bila input berubah; publikasi |
 | Hari rilis BPS | `17 8,11 1-8 * *` | 15.17 dan 18.17, tanggal 1-8 (tanggal UTC = tanggal WIB) | `run --source bps --trigger release`: ambil hanya seri BPS, beberapa jam setelah rilis sekitar 11.00 WIB, lalu publikasi semua seri. Ada di `pipeline.yml` di `main` sejak penggabungan v0.1 (2026-10-31) |
 | Push `config/**` | - | Saat tabel manual diubah | Muat ulang tabel manual dan publikasi |
-| Manual | `workflow_dispatch` | Kapan saja | Mode `run`, `full_refresh`, `migrate` |
+| Backtest dan pemeriksaan bulanan | `47 9 9 * *` | Tanggal 9, 16.47 | Backtest, lalu pemeriksaan bulanan dan pengingat tabel kurasi (`checkup.yml`, lihat 4.7) |
+| Manual | `workflow_dispatch` | Kapan saja | **Pipeline data** mode `run`, `full_refresh`, `migrate`, `backtest`, `uji_alarm`, dan **Pemeriksaan bulanan** mode `periksa`, `uji_pengingat` |
 | Backup | `47 23 * * 0` | Senin 06.47 | Ekspor mingguan (lihat 4.13) |
 | Kesehatan (cron-job.org) | - | 09.17 setiap hari | `GET /api/health`; email ke pengelola bila 503 |
 | Penyalaan ulang (cron-job.org) | - | Setiap hari | `PUT .../actions/workflows/<pipeline.yml, backup.yml>/enable` |
 
 Menit 17 dan 47 dipilih karena awal jam adalah waktu tersibuk GitHub, dan saat beban tinggi job terjadwal bisa tertunda atau dibatalkan. Tes otomatis memeriksa konversi ini di batas tengah malam. Yang teramati 1-5 November 2026: run harian mulai 09.16 sampai 10.56 WIB, dan run hari rilis BPS tampak hanya sekali sehari, sekitar 22.15 sampai 01.29 WIB. Keterlambatan ini masih memenuhi ukuran Kesegaran di PRD 6.
 
-Jadwal tabel manual: target diperiksa saat UU APBN baru disahkan (akhir September); kalender BPS dan jadwal RDG BI saat terbit (Desember-Januari); hari libur saat SKB tiga menteri terbit (September). Sampai kalender BPS tahun berikutnya terbit, rilis PDB dan TPT berikutnya dicatat sebagai `bps-perkiraan`, mengikuti pola 2026 (tanggal 5 Februari, Mei, Agustus, dan November), dan situs melabelinya perkiraan.
+Jadwal tabel manual: target diperiksa saat UU APBN baru disahkan (akhir September); kalender BPS dan jadwal RDG BI saat terbit (Desember-Januari); hari libur saat SKB tiga menteri terbit (September). Sampai kalender BPS tahun berikutnya terbit, rilis PDB dan TPT berikutnya dicatat sebagai `bps-perkiraan`, mengikuti pola 2026 (tanggal 5 Februari, Mei, Agustus, dan November), dan situs melabelinya perkiraan. Pemeriksaan bulanan membuka issue pengingat untuk ketiga tabel ini (aturannya di RUNBOOK 9b).
 
 **Aturan inti**
 
@@ -246,6 +250,7 @@ Jadwal tabel manual: target diperiksa saat UU APBN baru disahkan (akhir Septembe
 | cron-job.org ke GitHub | Token khusus repo ini, izin Actions: write | Menyalakan ulang workflow |
 | Workflow `notify.yml` | `GITHUB_TOKEN` dengan `issues: write` | Membuka issue kegagalan |
 | Workflow `backup.yml` | `SUPABASE_DB_URL` di langkah ekspor, `GITHUB_TOKEN` dengan `contents: write` di langkah rilis | Membaca database, membuat rilis |
+| Workflow `checkup.yml` | `SUPABASE_DB_URL` di langkah Periksa, `GITHUB_TOKEN` dengan `issues: write` dan `pull-requests: read` di langkah `gh` | Membaca database dan keadaan repo, membuka issue pemeriksaan dan pengingat |
 
 - **Wajib session pooler:** runner GitHub hanya mendukung IPv4, sedangkan host langsung database Supabase memakai IPv6.
 - **Wajib TLS:** bila berkas `config/supabase-ca.crt` (sertifikat CA Supabase dari dashboard, publik) ada, koneksi pipeline memakai `sslmode=verify-full` sehingga identitas server ikut diverifikasi; tanpa berkas itu, `sslmode=require` (terenkripsi, tetapi tidak tahan penyadap yang memalsukan server). `sslmode` di string koneksi selalu menang, misalnya `disable` untuk Postgres lokal.
@@ -309,10 +314,15 @@ Jadwal tabel manual: target diperiksa saat UU APBN baru disahkan (akhir Septembe
   - Secret per langkah: langkah `Tes` tidak menerima Secret apa pun; langkah `Pipeline` menerima `SUPABASE_DB_URL`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `BPS_API_KEY`, `REVALIDATE_SECRET`, dan `SITE_URL`.
   - Job `run`, batas 60 menit: tes (tanpa tes model, supaya tes model yang merah tidak menahan pengambilan data), ambil data, cek awal (koneksi, ukuran database, katalog akses), simpan, turunan, publikasi, catat run, revalidasi, model.
   - Job `backtest`, batas 120 menit: berjalan pada jadwal backtest atau mode `backtest`, sesudah rilis target bulan itu. Menerima Secret `SUPABASE_DB_URL` saja, menulis `etl.backtest`, dan laporannya muncul di ringkasan job.
+  - Job `checkup`: hanya pada jadwal backtest, sesudah job `backtest` walau backtest gagal. Memanggil `checkup.yml` dengan Secret `SUPABASE_DB_URL` saja, dan hanya job ini yang mendapat izin `issues: write` dan `pull-requests: read`.
   - Mode `uji_alarm` membuat job `run` gagal di langkah pertama, sebelum checkout dan tanpa Secret, untuk membuktikan alarm tanpa menyentuh data.
   - `concurrency: con-fore-pipeline` dengan `queue: max` dan tanpa `cancel-in-progress`. Tanpa `queue: max`, run tertunda (misalnya `migrate` manual) bisa digantikan run berikutnya.
 - **`notify.yml`**: dipicu `workflow_run` sesudah **Pipeline data** atau **Backup mingguan** selesai. Hanya berjalan bila hasilnya `failure`, `timed_out`, `startup_failure`, atau `cancelled`, jadi run yang dibatalkan manual ikut membuka issue. Run dari pull request diabaikan, karena pull request dari fork bisa memakai nama workflow yang sama. Tanpa checkout dan tanpa Secret, dengan izin `issues: write` saja. Membuka satu issue `pipeline-failure`, atau mengomentari yang masih terbuka, berisi nama workflow, pemicu, hasil, dan tautan run, lalu menyebut pemilik repo supaya GitHub mengirim email. Rincian per seri ada di ringkasan run.
 - **`backup.yml`**: lihat 4.13. Memakai grup concurrency yang sama supaya ekspor tidak terjadi di tengah publikasi.
+- **`checkup.yml`** (sejak fase 6): cek bulanan RUNBOOK 9 yang bisa dikerjakan script, dan pengingat tabel kurasi, tanpa model AI. Dipanggil job `checkup` di `pipeline.yml`, atau manual dengan mode `periksa` atau `uji_pengingat`. Tidak punya jadwal sendiri, jadi tidak butuh job penyalaan cron-job.org.
+  - Langkah berurutan. Pertama, `gh` membaca rilis `backup-*`, issue `pipeline-failure`, dan pull request Dependabot. Kedua, `npm audit --omit=dev` berjalan di `web/` tanpa token. Ketiga, `python -m confore checkup` (`confore/checkup.py`) dengan `SUPABASE_DB_URL` saja membaca ukuran database, waktu backtest, dan tanggal rilis angka terbaru, menanyakan versi paket Python di `requirements.txt` ke basis data kerentanan OSV, membaca tanggal kedaluwarsa token di RUNBOOK, dan menilai tabel `config/`. Terakhir, `gh` membuka atau mengomentari issue `Pemeriksaan bulanan` dan issue berlabel `pengingat` per tabel, lalu menyebut pemilik repo supaya GitHub mengirim email.
+  - Temuan tidak membuat job merah. Job merah berarti pemeriksaannya sendiri gagal, dan karena job itu bagian dari **Pipeline data**, `notify.yml` ikut membuka issue `pipeline-failure`.
+  - Mode `uji_pengingat` membuka lalu langsung menutup satu issue `[Uji]` per jenis issue, tanpa membaca database, untuk membuktikan jalur pembuka issue.
 - **`smoke.yml`** (ada sejak fase 0): dijalankan manual; menjalankan `tests.test_smoke` lalu uji akses setiap sumber dari runner, dan menulis hasilnya ke ringkasan job. Tes lain butuh psycopg, jadi dijalankan di `pipeline.yml`. Di workflow ini, hanya langkah uji akses yang menerima Secret key BPS dan FRED. Permintaan yang membawa key menolak pengalihan alamat, dan catatan hasil hanya memuat kode HTTP atau jenis error.
 - **`ci.yml`** (sejak fase 3): setiap push ke `main` dan pull request yang menyentuh selain `web/` dan dokumen, menjalankan seluruh tes termasuk tes model dan uji migrasi terhadap Postgres lokal (`tests/test_db.py` dengan `CONFORE_TEST_DB_URL`, service container `postgres:15`). Tanpa Secret. Uji akses ke proyek Supabase sungguhan berjalan di `pipeline.yml` mode `migrate`.
 - Keamanan workflow: izin bawaan `contents: read`; setiap action dipin ke commit SHA dan diperbarui Dependabot; input manual dibaca lewat `env`; tidak pernah memakai `pull_request_target`.
@@ -366,7 +376,8 @@ Semua permintaan diberi jeda 1 detik dari permintaan sebelumnya, hanya mengikuti
 
 - `etl.runs` (satu baris per run: pemicu, status ok/sebagian/gagal, commit) dan `etl.fetch_log` (per seri per run: status HTTP, kode error, hash, jumlah baris, periode terakhir, berubah atau tidak; tanpa URL).
 - `public.site_status` hanya berisi kode tetap, bukan teks bebas.
-- Issue `pipeline-failure` dari `notify.yml` menjadi notifikasi utama ke pengelola untuk run yang gagal. Email cron-job.org menjadi notifikasi untuk jadwal yang tidak berjalan, karena saat itu tidak ada run yang bisa gagal.
+- Issue `pipeline-failure` dari `notify.yml` menjadi notifikasi utama ke pengelola untuk run yang gagal. Email cron-job.org menjadi notifikasi untuk jadwal yang tidak berjalan, karena saat itu tidak ada run yang bisa gagal. Issue dari `checkup.yml` menjadi pengingat perawatan bulanan, bukan alarm.
+- Isi issue `checkup.yml` hanya isi `config/`, nama paket dan id kerentanan, nomor issue, tag rilis, dan jenis error. Pesan error hanya ditulis untuk `db.Stop` dan kode `FetchError`, yang ditulis sendiri oleh kode ini (`checkup.describe`).
 - Pipeline tidak pernah mencetak atau menyimpan teks error bebas, karena pesan error bisa memuat URL ber-key, host, atau user database. `fetch_log` dan ringkasan job hanya memuat kode HTTP, kode tetap (misalnya "tanpa data"), atau nama jenis error plus SQLSTATE. Error tak terduga dicetak sebagai baris kode traceback tanpa pesannya, dan logger psycopg dimatikan. GitHub memang menyamarkan Secret di log, tetapi tidak di isi issue atau database, dan tidak bila nilainya berubah bentuk. Karena tidak ada teks bebas, dan issue hanya memuat nama workflow, pemicu, hasil, dan tautan run, `redact()` tidak dibuat.
 - Kode tetap khusus pengambil BPS: "BPS_API_KEY belum diisi" dan "format BPS_API_KEY tidak valid" (key tidak pernah ikut di pesan); "bukan JSON", "status bukan OK", "kolom berubah", "kode tidak dikenal", "kode ganda", "periode ganda", "periode tidak valid", dan "nilai tidak valid" (bentuk jawaban berubah); "dimensi berubah" (variabel atau baris vervar dan turvar hilang, bertambah, atau diberi nomor baru); dan "tanpa data" bila satu variabel dalam seri gabungan ` + ` tidak menghasilkan data sama sekali. Dengan dua kode terakhir, variabel yang hilang menggagalkan seluruh seri, bukan diam-diam menghapus rondenya dari seri gabungan. Khusus tabel statis 908: "bulan tidak lengkap" (bulan bolong di tahun yang dipakai) dan "y-to-d tidak cocok" (rangkaian m-to-m setahun menyimpang lebih dari 0,1 poin persen dari baris y-to-d). Galat HTTP dicatat sebagai `HTTP <kode>` tanpa URL, karena URL BPS memuat key.
 - Log runtime Vercel di paket Hobby hanya disimpan 1 jam, jadi riwayat operasional tidak bergantung padanya.

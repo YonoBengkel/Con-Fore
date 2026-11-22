@@ -1,0 +1,91 @@
+name: Pemeriksaan bulanan
+
+# Cek bulanan RUNBOOK bagian 9 yang bisa dikerjakan script, dan pengingat untuk tabel kurasi di config/
+# (target resmi, kalender rilis, tanggal Lebaran), tanpa model AI. Temuan menjadi issue berlabel
+# pengingat. Issue terbuka dengan judul yang sama dikomentari, bukan dibuka lagi (RUNBOOK bagian 9b).
+# Dipanggil job checkup di pipeline.yml sesudah backtest tanggal 9, jadi tidak butuh jadwal sendiri
+# dan tidak butuh job cron-job.org tambahan. Dari tab Actions: mode periksa menjalankan pemeriksaan
+# yang sama, mode uji_pengingat membuka satu issue uji per jenis pengingat lalu langsung menutupnya.
+# Secret database hanya ada di langkah Periksa, dan token yang bisa menulis issue hanya di langkah gh.
+on:
+  workflow_call:
+    secrets:
+      SUPABASE_DB_URL:
+        required: true
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "periksa untuk pemeriksaan bulanan sungguhan, atau uji_pengingat untuk membuka lalu menutup satu issue uji per jenis pengingat"
+        type: choice
+        options: [periksa, uji_pengingat]
+        default: periksa
+
+permissions:
+  contents: read
+
+jobs:
+  checkup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+      - name: Pasang dependensi dari lockfile berhash
+        run: python -m pip install --require-hashes -r requirements.txt
+      - name: Baca keadaan repo
+        if: inputs.mode != 'uji_pengingat'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          mkdir -p keadaan
+          gh api "repos/$GH_REPO/releases?per_page=30" \
+            --jq '[.[] | select(.tag_name | startswith("backup-")) | {tag: .tag_name, created_at}]' > keadaan/backups.json
+          gh issue list --label pipeline-failure --state open --json number,title > keadaan/alarms.json
+          gh pr list --author app/dependabot --state open --json number,title > keadaan/dependabot.json
+      # Tanpa token: npm audit hanya membaca package-lock.json dan bertanya ke registry npm. Kode keluarnya 1
+      # bila ada kerentanan, jadi hasilnya dinilai dari JSON-nya di langkah Periksa.
+      - name: Audit paket situs
+        if: inputs.mode != 'uji_pengingat'
+        working-directory: web
+        run: npm audit --omit=dev --json > ../keadaan/npm-audit.json || true
+      - name: Periksa
+        if: inputs.mode != 'uji_pengingat'
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: python -m confore checkup --state-dir keadaan --out issues.json
+      - name: Siapkan issue uji
+        if: inputs.mode == 'uji_pengingat'
+        run: python -m confore checkup --test --out issues.json
+      - name: Buka atau komentari issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PEMILIK: ${{ github.repository_owner }}
+        run: |
+          gh label create pengingat --color FBCA04 --description "Perawatan dari workflow Pemeriksaan bulanan" --force
+          gh issue list --state open --limit 200 --json number,title > terbuka.json
+          for i in $(seq 0 $(( $(jq length issues.json) - 1 ))); do
+            judul=$(jq -r ".[$i].title" issues.json)
+            jq -r ".[$i].body" issues.json > isi.md
+            printf '\n\n@%s\n' "$PEMILIK" >> isi.md
+            nomor=$(jq -r --arg judul "$judul" 'map(select(.title == $judul))[0].number // empty' terbuka.json)
+            if [ -n "$nomor" ]; then
+              gh issue comment "$nomor" --body-file isi.md > /dev/null
+            else
+              alamat=$(gh issue create --title "$judul" --label pengingat --body-file isi.md)
+              nomor=${alamat##*/}
+            fi
+            if [ "$(jq -r ".[$i].close" issues.json)" = "true" ]; then
+              gh issue close "$nomor" --reason completed
+            fi
+            echo "- #$nomor $judul" >> "$GITHUB_STEP_SUMMARY"
+          done

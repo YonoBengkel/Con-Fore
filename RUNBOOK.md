@@ -1,4 +1,4 @@
-Status: langkah fase 0, fase 1, dan penayangan situs (bagian 5) sudah dijalankan. Pemeriksaan kesehatan cron-job.org belum dipasang (bagian 5a), dan uji tujuh hari belum selesai (bagian 9a). Langkah untuk komponen yang belum ada dicek ulang saat komponennya jadi.
+Status: langkah fase 0 sampai fase 5 sudah dijalankan. Pemeriksaan cron-job.org terpasang (bagian 5a), dan uji tujuh hari lulus 8 sampai 14 November 2026 (bagian 9a). Pemeriksaan bulanan otomatis dan pengingat tabel kurasi (bagian 9 dan 9b) ditambahkan di fase 6. Langkah untuk komponen yang belum ada dicek ulang saat komponennya jadi.
 
 # Runbook Con-Fore
 
@@ -66,7 +66,7 @@ Sesudah itu backtest berjalan sendiri tanggal 9 setiap bulan. Baca laporannya se
 - "Asal tanpa hasil model" di laporan: jumlah asal saat model gagal, meledak, atau belum cukup data. Regresi TPT memang kosong di awal riwayat. Bila jumlah DFM melonjak, periksa versi paket di `etl.forecasts.pkg_versions`.
 - Bila BPS mengganti tahun dasar PDB, galat di sekitar pergantian bisa melonjak. Baca lagi laporan backtest sesudah seri baru masuk.
 
-`config/holidays.csv` diperbarui saat Keputusan Menteri Agama atau SKB tiga menteri terbit (September). Baris `perkiraan` diganti dengan tanggal resminya, dan tahun baru ditambahkan bila tanggalnya mendekati ujung tabel.
+`config/holidays.csv` diperbarui saat Keputusan Menteri Agama atau SKB tiga menteri terbit (September). Baris `perkiraan` diganti dengan tanggal resminya, dan tahun baru ditambahkan bila tanggalnya mendekati ujung tabel. Issue `Pengingat: tanggal Lebaran` mengingatkannya (bagian 9b).
 
 ## 4b. Menyalakan tab Prediksi (fase 4)
 
@@ -155,6 +155,7 @@ Workflow **Alarm kegagalan** membuka satu issue berlabel `pipeline-failure` bila
    - Tabel run dengan kode per seri: bagian 4 langkah 8 dan 10.
    - Run sebagai `failed` tanpa tabel, atau `Gagal: <jenis error>`: database tidak terjangkau, jadi cek bagian 7.
    - Di **Backup mingguan**: bagian 7a.
+   - Job `checkup` merah di run tanggal 9: hanya pemeriksaan bulanan yang gagal, sedangkan data, situs, dan backtest aman. Sesudah penyebabnya dibetulkan, jalankan ulang lewat **Actions > Pemeriksaan bulanan > Run workflow** mode `periksa` (bagian 9).
 3. Tutup issue sesudah run berikutnya hijau.
 
 **Uji alarm:** **Actions > Pipeline data > Run workflow**, mode `uji_alarm`. Run itu gagal dengan sengaja tanpa menyentuh data, dan beberapa menit kemudian issue muncul. Tutup issue-nya. Pastikan email dari GitHub benar-benar masuk, karena itu tergantung pengaturan notifikasi akun ("Participating and @mentions"). Ulangi sesudah mengubah `notify.yml`. Workflow ini hanya berjalan dari `main`.
@@ -207,17 +208,40 @@ Lakukan bila kredensial bocor atau terpapar (tertempel di chat, log, atau commit
 
 ## 9. Pemeriksaan bulanan
 
-- [ ] Ada pull request Dependabot untuk action yang perlu diperbarui.
-- [ ] Perbarui lockfile Python bila ada rilis keamanan: `uv pip compile requirements.in --universal --python-version 3.12 --generate-hashes -o requirements.txt`, lalu jalankan tes.
-- [ ] (Fase 1) Job cron-job.org masih aktif dan notifikasi email kegagalan menyala.
-- [ ] (Fase 1) Tanggal kedaluwarsa token GitHub untuk cron-job.org: `2027-11-07`. Perbarui sebelum lewat.
-- [ ] (Fase 1) Ukuran database Supabase di bawah 300 MB.
-- [ ] (Fase 5) Ada rilis `backup-*` baru setiap minggu, dan tidak ada issue `pipeline-failure` yang masih terbuka tanpa alasan.
-- [ ] (Fase 2) Pemakaian Vercel Hobby masih jauh dari batas.
-- [ ] (Fase 2) `npm audit --omit=dev` di folder `web/` bersih, atau rilis keamanannya sudah dipasang.
-- [ ] (Fase 2) Rencana Terbit BPS (https://www.bps.go.id/id/arc) sudah memuat tahun berikutnya: ganti baris `bps-perkiraan` di `config/release_calendar.csv` dengan tanggal resminya, dan tambahkan rilis yang belum tercatat.
-- [ ] (Fase 2) Naskah UU APBN 2027 sudah ada di JDIH: cocokkan dua baris `berita` di `config/targets.csv`.
-- [ ] (Fase 3) Laporan backtest tanggal 9 lulus dan angka utamanya masih masuk akal (bagian 4a).
+Workflow **Pemeriksaan bulanan** (`checkup.yml`) berjalan sendiri setiap tanggal 9 sesudah backtest, sebagai job `checkup` di **Pipeline data**. Hasilnya satu issue `Pemeriksaan bulanan` berisi daftar centang: butir yang dicentang sudah beres, butir yang belum dicentang perlu ditindaklanjuti, dan butir manual di bawahnya dicek sendiri. Selama issue itu terbuka, hasil bulan berikutnya menjadi komentar di issue yang sama. Tutup issue sesudah semua butir beres. Pemeriksaan juga bisa dijalankan kapan saja lewat **Actions > Pemeriksaan bulanan > Run workflow** mode `periksa`, atau `python -m confore checkup` dari laptop (hanya membaca database, dan butir yang butuh data repo tertulis "dilewati").
+
+Diperiksa otomatis:
+
+| Butir | Beres bila | Bila belum |
+|---|---|---|
+| Ukuran database | Di bawah 300 MB dari kuota 500 MB | Cari tabel terbesar di dashboard Supabase |
+| Backtest bulanan | Sudah berjalan sejak tanggal 9 terakhir | Bagian 4a |
+| Backup mingguan | Rilis `backup-*` terakhir paling lama 8 hari lalu | Bagian 7a |
+| Issue alarm kegagalan | Tidak ada issue `pipeline-failure` yang terbuka | Tutup bila run sesudahnya sudah hijau (bagian 6a) |
+| Pull request Dependabot | Tidak ada yang terbuka | Gabungkan sesudah CI hijau |
+| Kerentanan paket situs | `npm audit --omit=dev` di folder `web/` bersih | Pasang rilis keamanannya, lalu tes dan build situs |
+| Kerentanan paket Python | Basis data kerentanan OSV tidak punya catatan untuk versi di `requirements.txt` | Jalankan `uv pip compile requirements.in --universal --python-version 3.12 --generate-hashes -o requirements.txt`, lalu tes |
+| Token GitHub untuk cron-job.org | Kedaluwarsanya lebih dari 60 hari lagi | Buat token baru (bagian 5a dan 8), lalu ganti tanggal di baris di bawah |
+
+- Tanggal kedaluwarsa token GitHub untuk cron-job.org: `2027-11-07`. Pemeriksaan membaca tanggal dari baris ini, jadi pertahankan bentuknya.
+
+Masih dicek manual, karena butuh akses akun yang tidak dimiliki workflow:
+
+- [ ] Job cron-job.org masih aktif dan notifikasi email kegagalannya menyala (bagian 5a).
+- [ ] Pemakaian Vercel Hobby masih jauh dari batas.
+- [ ] Angka utama di laporan backtest tanggal 9 masih masuk akal (bagian 4a).
+
+## 9b. Pengingat tabel kurasi (fase 6)
+
+Pemeriksaan yang sama membuka issue berlabel `pengingat` untuk tabel `config/` yang diisi tangan: satu issue per tabel, hanya bila ada yang perlu dikerjakan. Issue yang masih terbuka dengan judul yang sama dikomentari, bukan dibuka lagi. Issue tidak tertutup sendiri, jadi tutup sesudah tabelnya diperbarui dan di-push ke `main` (push ke `config/**` langsung memicu run pipeline).
+
+| Issue | Muncul bila | Yang dikerjakan |
+|---|---|---|
+| `Pengingat: target resmi` | Ada baris `berita` di `config/targets.csv`, atau mulai Oktober target APBN dan PMK tahun depan belum ada (RPJMN cukup sampai tahun ini) | Cari naskah resminya di JDIH BPK (https://peraturan.bpk.go.id), cocokkan angkanya, isi `document`, `url`, dan `last_verified`, lalu ubah `verification` menjadi `dokumen`. Sebelum naskahnya terbit, berita boleh dipakai dengan `verification` `berita` |
+| `Pengingat: kalender rilis` | Tanggal berakhiran `-perkiraan` tinggal 60 hari lagi, kalender sebuah seri habis dalam 30 hari, atau angka terbaru di situs masih "Dilihat Con-Fore" padahal seri itu memakai kalender | Ambil tanggal dari jadwal resmi: Rencana Terbit BPS (https://www.bps.go.id/id/arc), jadwal rilis OECD, dan jadwal Rapat Dewan Gubernur Bank Indonesia. Tanggal yang sudah resmi memakai `calendar_source` tanpa akhiran `-perkiraan`. Bila jadwalnya belum terbit, tambahkan tanggal perkiraan berakhiran `-perkiraan` |
+| `Pengingat: tanggal Lebaran` | Lebaran berbaris `perkiraan` sudah lewat, mulai September Lebaran tahun depan belum dicocokkan dengan SKB 3 Menteri, atau tabel belum sampai dua tahun ke depan | Catat tanggal hasil sidang isbat atau SKB di `config/holidays.csv` (bagian 4a) |
+
+**Uji pengingat:** **Actions > Pemeriksaan bulanan > Run workflow**, mode `uji_pengingat`. Run itu membuka satu issue `[Uji] ...` untuk setiap jenis issue di bagian 9 dan 9b, lalu langsung menutupnya, tanpa membaca database. Pastikan keempatnya ada di daftar issue tertutup dan email dari GitHub masuk. Ulangi sesudah mengubah `checkup.yml`.
 
 ## 9a. Uji tujuh hari (fase 5)
 
