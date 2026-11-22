@@ -33,11 +33,12 @@ export type PengaturGlobe = {
 const melambat = (t: number) => 1 - (1 - t) ** 3;
 const halus = (t: number) => (t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2);
 
+/** `keIndonesia(true)` berarti halaman Indonesia dibuka di tab baru. */
 export function pasangGlobe(
   kanvas: HTMLCanvasElement,
   mode: Mode,
   kurangiGerak: boolean,
-  keIndonesia: () => void,
+  keIndonesia: (tabBaru: boolean) => void,
 ): PengaturGlobe {
   const konteks = kanvas.getContext("2d");
   if (!konteks) throw new Error("Kanvas 2D tidak tersedia");
@@ -188,7 +189,21 @@ export function pasangGlobe(
     // Ketukan jari sudah disaring browser. Untuk mouse, tekan di satu tempat lalu lepas di tempat lain adalah seretan.
     if (awal && !awal.jari && Math.hypot(e.clientX - awal.x, e.clientY - awal.y) > GESER_KLIK_MAKS) return;
     const jari = awal ? awal.jari : mode.angkatAwal;
-    if (diIndonesia(e, jari ? TOLERANSI_JARI : TOLERANSI_KURSOR)) keIndonesia();
+    // Seperti tautan biasa, Ctrl, Cmd, atau Shift dengan klik, dan klik tengah, membuka tab baru.
+    if (diIndonesia(e, jari ? TOLERANSI_JARI : TOLERANSI_KURSOR)) {
+      keIndonesia(e.button === 1 || e.ctrlKey || e.metaKey || e.shiftKey);
+    }
+  }
+
+  /** Klik tengah tidak mengirim event click, hanya auxclick. */
+  function saatKlikLain(e: MouseEvent) {
+    if (e.button === 1) saatKlik(e);
+  }
+
+  /** Di Windows, klik tengah di halaman yang bisa digulir memulai gulir otomatis. Di atas Indonesia klik tengah
+   *  membuka tab baru, jadi gulir otomatis dicegah di sana saja. */
+  function saatTekanMouse(e: MouseEvent) {
+    if (e.button === 1 && diIndonesia(e, TOLERANSI_KURSOR)) e.preventDefault();
   }
 
   /** Zoom browser dan pindah monitor mengubah rasio piksel tanpa mengubah ukuran CSS kanvas, jadi ResizeObserver
@@ -209,6 +224,8 @@ export function pasangGlobe(
   kanvas.addEventListener("pointermove", saatGerak);
   kanvas.addEventListener("pointerleave", saatKeluar);
   kanvas.addEventListener("click", saatKlik);
+  kanvas.addEventListener("auxclick", saatKlikLain);
+  kanvas.addEventListener("mousedown", saatTekanMouse);
   // Konteks 2D bisa hilang lalu pulih dalam keadaan kosong, misalnya saat GPU dimulai ulang.
   kanvas.addEventListener("contextrestored", gambar);
   pantauRasio();
@@ -257,6 +274,8 @@ export function pasangGlobe(
       kanvas.removeEventListener("pointermove", saatGerak);
       kanvas.removeEventListener("pointerleave", saatKeluar);
       kanvas.removeEventListener("click", saatKlik);
+      kanvas.removeEventListener("auxclick", saatKlikLain);
+      kanvas.removeEventListener("mousedown", saatTekanMouse);
       kanvas.removeEventListener("contextrestored", gambar);
     },
   };

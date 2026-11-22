@@ -13,6 +13,14 @@ import type { PengaturGlobe } from "@/lib/gambar-globe";
 
 type Keadaan = "memuat" | "siap" | "gagal";
 
+const KUERI_KURANGI_GERAK = "(prefers-reduced-motion: reduce)";
+const KUERI_KURSOR = "(hover: hover) and (pointer: fine)";
+
+/** Tanpa JavaScript, globe dan tautan di atasnya disembunyikan, dan legenda mengikuti peta diam yang selebar kolom.
+ *  Gaya ini ditulis di noscript, bukan di @media (scripting: none), supaya berlaku juga di browser lama yang belum
+ *  mengenal fitur media itu. Dengan JavaScript, React tidak pernah membuat isi noscript, jadi gaya ini tidak dipakai. */
+const GAYA_TANPA_JS = ".negara-tersedia, .globe { display: none } .globe-bawah { width: auto }";
+
 function Legenda() {
   return (
     <p className="legenda">
@@ -38,16 +46,28 @@ export function GlobeDepan() {
   const [keadaan, setKeadaan] = useState<Keadaan>("memuat");
   const [bisaBerputar, setBisaBerputar] = useState(false);
   const [dihentikan, setDihentikan] = useState(false);
+  /** Naik setiap kali preferensi gerak atau jenis kursor berubah, supaya globe dipasang ulang dengan mode baru. */
+  const [versiMode, setVersiMode] = useState(0);
 
   useEffect(() => {
     let batal = false;
+    // Kurangi animasi bisa dinyalakan, atau mouse dicolokkan ke tablet, selagi halaman terbuka. Globe lalu dipasang
+    // ulang dengan mode yang baru, tanpa memuat ulang halaman.
+    const kueriGerak = window.matchMedia(KUERI_KURANGI_GERAK);
+    const kueriKursor = window.matchMedia(KUERI_KURSOR);
+    const pasangUlang = () => setVersiMode((versi) => versi + 1);
+    kueriGerak.addEventListener("change", pasangUlang);
+    kueriKursor.addEventListener("change", pasangUlang);
     import("@/lib/gambar-globe")
       .then(({ pasangGlobe, pilihMode }) => {
         if (batal || !kanvas.current) return;
-        const kurangiGerak = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        const adaKursor = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-        const mode = pilihMode(adaKursor, kurangiGerak);
-        pengatur.current = pasangGlobe(kanvas.current, mode, kurangiGerak, () => router.push("/indonesia"));
+        const kurangiGerak = kueriGerak.matches;
+        const mode = pilihMode(kueriKursor.matches, kurangiGerak);
+        pengatur.current = pasangGlobe(kanvas.current, mode, kurangiGerak, (tabBaru) => {
+          // Alamatnya di situs sendiri, jadi tab baru tidak perlu diputus dari tab ini (noopener).
+          if (tabBaru) window.open("/indonesia", "_blank");
+          else router.push("/indonesia");
+        });
         // Tautan nama bisa sudah disorot atau difokus sebelum kode globe selesai dimuat.
         if (sorotan.current.kursor || sorotan.current.fokus) pengatur.current.sorotTautan(true);
         if (henti.current) pengatur.current.aturPutar(false);
@@ -59,10 +79,12 @@ export function GlobeDepan() {
       });
     return () => {
       batal = true;
+      kueriGerak.removeEventListener("change", pasangUlang);
+      kueriKursor.removeEventListener("change", pasangUlang);
       pengatur.current?.lepas();
       pengatur.current = null;
     };
-  }, [router]);
+  }, [router, versiMode]);
 
   /** Kursor dan fokus dicatat terpisah, supaya globe tidak berputar lagi selama salah satunya masih di tautan. */
   function sorot(asal: "kursor" | "fokus", ya: boolean) {
@@ -74,15 +96,6 @@ export function GlobeDepan() {
     henti.current = !henti.current;
     setDihentikan(henti.current);
     pengatur.current?.aturPutar(!henti.current);
-  }
-
-  if (keadaan === "gagal") {
-    return (
-      <>
-        <PetaDunia />
-        <Legenda />
-      </>
-    );
   }
 
   return (
@@ -100,20 +113,32 @@ export function GlobeDepan() {
           </Link>
         </li>
       </ul>
-      <div className="globe" data-keadaan={keadaan}>
-        <canvas ref={kanvas} aria-hidden="true" />
-      </div>
+      {/* Bila globe gagal dimuat, hanya kanvasnya yang diganti peta diam. Tautan nama di atas tetap elemen yang sama,
+          jadi fokus keyboard yang sedang ada di sana tidak hilang. */}
+      {keadaan === "gagal" ? (
+        <>
+          <PetaDunia tanpaNama />
+          <Legenda />
+        </>
+      ) : (
+        <div className="globe" data-keadaan={keadaan}>
+          <canvas ref={kanvas} aria-hidden="true" />
+        </div>
+      )}
       <noscript>
+        <style>{GAYA_TANPA_JS}</style>
         <PetaDunia />
       </noscript>
-      <div className="globe-bawah">
-        <Legenda />
-        {bisaBerputar && (
-          <button type="button" className="tombol-putar" onClick={gantiPutar}>
-            {dihentikan ? "Putar lagi" : "Hentikan putaran"}
-          </button>
-        )}
-      </div>
+      {keadaan !== "gagal" && (
+        <div className="globe-bawah">
+          <Legenda />
+          {bisaBerputar && (
+            <button type="button" className="tombol-putar" onClick={gantiPutar}>
+              {dihentikan ? "Putar lagi" : "Hentikan putaran"}
+            </button>
+          )}
+        </div>
+      )}
     </>
   );
 }

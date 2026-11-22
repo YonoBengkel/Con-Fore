@@ -390,7 +390,8 @@ main.wadah {
 }
 
 /* Globe di halaman depan (components/Globe.tsx). Bola kosong tampil lebih dulu, lalu kanvas berisi negara muncul di
-   atasnya. Tanpa JavaScript, yang tampil peta diam di dalam noscript. */
+   atasnya. Tanpa JavaScript, yang tampil peta diam di dalam noscript, dan gaya yang menyembunyikan globe ikut ditulis
+   di noscript itu (GAYA_TANPA_JS), supaya berlaku juga di browser yang belum mengenal @media (scripting: none). */
 
 .negara-tersedia {
   list-style: none;
@@ -447,18 +448,6 @@ main.wadah {
 
 .globe-bawah .legenda {
   margin: 0;
-}
-
-@media (scripting: none) {
-  .negara-tersedia,
-  .globe {
-    display: none;
-  }
-
-  /* Tanpa JavaScript, legenda mengikuti peta diam yang selebar kolom. */
-  .globe-bawah {
-    width: auto;
-  }
 }
 
 /* Ringkasan bercerita dan blok jawaban (halaman Indonesia, bentuk C) */

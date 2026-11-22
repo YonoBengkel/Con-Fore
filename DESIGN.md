@@ -16,16 +16,16 @@ Panduan susunan, isi, dan gaya tampilan situs Con-Fore. Isi halaman per halaman 
 
 - Judul: "Penasaran bagaimana kondisi ekonomi tiap negara? Mari cari tahu". Judul ini yang memberi tahu topik situs di layar pertama.
 - Globe memperlihatkan semua negara. Negara yang tersedia menyala, dan negara lain abu-abu, dengan legenda "Tersedia" dan "Belum tersedia" di bawah globe. Globe belum membawa data per negara.
-- **Di komputer:** globe berputar pelan dan berhenti saat kursor ada di atas bola. Negara yang tersedia terangkat dari permukaan globe dan disorot saat kursor di atasnya, dan klik membuka halamannya. Saat tautan nama negara disorot kursor atau fokus keyboard, globe berhenti, berputar menghadap negara itu, dan negaranya terangkat. Tombol "Hentikan putaran" di bawah globe menghentikan putaran sampai ditekan lagi.
+- **Di komputer:** globe berputar pelan dan berhenti saat kursor ada di atas bola. Negara yang tersedia terangkat dari permukaan globe dan disorot saat kursor di atasnya, dan klik membuka halamannya. Saat tautan nama negara disorot kursor atau fokus keyboard, globe berhenti, berputar menghadap negara itu, dan negaranya terangkat. Tombol "Hentikan putaran" di bawah globe menghentikan putaran sampai ditekan lagi. Klik dengan Ctrl, Cmd, atau Shift, atau klik tengah, membuka halaman negaranya di tab baru, seperti tautan biasa.
 - **Di HP:** globe diam menghadap Indonesia, yang sudah terangkat dan disorot sejak awal, dan sekali ketuk membuka halaman Indonesia. Alasannya, HP tidak punya kursor, dan negara di globe yang berputar sulit diketuk. Komputer dan HP dibedakan dari ada tidaknya kursor (media query `hover: hover` dan `pointer: fine`), bukan dari lebar layar.
-- **Di semua perangkat:** nama negara yang tersedia ditulis di atas globe sebagai tautan biasa, supaya bisa dibuka dengan keyboard dan pembaca layar. Kanvas globe disembunyikan dari pembaca layar. Bagi yang memilih kurangi animasi di perangkatnya, globe diam menghadap Indonesia dan tombol henti tidak ditampilkan.
+- **Di semua perangkat:** nama negara yang tersedia ditulis di atas globe sebagai tautan biasa, supaya bisa dibuka dengan keyboard dan pembaca layar. Kanvas globe disembunyikan dari pembaca layar. Bagi yang memilih kurangi animasi di perangkatnya, globe diam menghadap Indonesia dan tombol henti tidak ditampilkan. Pilihan kurangi animasi dan ada tidaknya kursor dibaca ulang saat berubah, jadi langsung berlaku tanpa memuat ulang halaman.
 - **Aset globe:** globe digambar sendiri di kanvas dengan proyeksi ortografis d3-geo, dari batas negara Natural Earth skala 1:110m lewat paket world-atlas dan topojson-client (`web/lib/gambar-globe.ts` dan `web/lib/globe.ts`). Pengelola memilihnya 2026-11-22. Kelima syarat aset terpenuhi:
   1. bisa mengangkat dan menyorot satu negara saat kursor di atasnya: Indonesia digambar paling akhir, terangkat dengan bayangan,
   2. lisensinya membolehkan dipakai di situs publik: d3-geo dan topojson-client berlisensi ISC, dan Natural Earth domain publik,
   3. jalan di browser tanpa layanan luar atau kunci API: data petanya ikut di kode situs,
   4. hanya dimuat di halaman depan, sesudah judul tampil: kode dan data peta diunduh sesudah halaman tampil, dan bola kosong tampil lebih dulu,
   5. punya gambar diam pengganti: peta dunia diam di poin berikut.
-- **Gambar diam pengganti:** peta dunia diam yang disederhanakan (`web/lib/peta.ts`), dengan Indonesia menyala dan terangkat saat kursor di atasnya, dan nama Indonesia sebagai tautan. Peta ini tampil bila JavaScript mati atau kanvas gagal digambar.
+- **Gambar diam pengganti:** peta dunia diam yang disederhanakan (`web/lib/peta.ts`), dengan Indonesia menyala dan terangkat saat kursor di atasnya, dan nama Indonesia sebagai tautan. Peta ini tampil bila JavaScript mati atau kanvas gagal digambar. Bila kanvas gagal, nama Indonesia tetap berupa tautan di atas globe, jadi peta tampil tanpa nama keduanya. Gaya tampilan tanpa JavaScript ditulis di dalam `noscript`, jadi berlaku juga di browser lama yang belum mengenal `@media (scripting: none)`.
 - Lisensi, ukuran, dan kode paketnya diperiksa 2026-11-22 sebelum dipakai. Kode dan data globe sekitar 50 KB gzip. Calon lain, globe.gl, tidak dipakai karena ukurannya sekitar 559 KB gzip.
 
 ## Halaman Indonesia
@@ -72,7 +72,7 @@ Gaya 3, terang dan ramah, dipilih pengelola 2026-11-22 dari tiga contoh gaya: ge
 - Fokus keyboard selalu terlihat, dan tidak tertutup kepala yang menempel.
 - Kontras teks minimal 4,5:1.
 - Tidak ada geser horizontal halaman di lebar 320 px, dan tabel lebar digulir di wadahnya sendiri.
-- Globe punya tautan teks di atasnya, dan kanvasnya disembunyikan dari pembaca layar. Globe berhenti saat kursor ada di atas bola atau saat tautan namanya disorot kursor atau fokus keyboard, dan tidak berputar bagi yang memilih kurangi animasi. Karena putarannya mulai sendiri dan berlangsung lebih dari lima detik, ada tombol "Hentikan putaran" (WCAG 2.2.2). Di mode warna paksa, tombol henti diberi garis tepi, dan kotak legenda tetap berwarna asli seperti kanvas globe.
+- Globe punya tautan teks di atasnya, dan kanvasnya disembunyikan dari pembaca layar. Globe berhenti saat kursor ada di atas bola atau saat tautan namanya disorot kursor atau fokus keyboard, dan tidak berputar bagi yang memilih kurangi animasi. Karena putarannya mulai sendiri dan berlangsung lebih dari lima detik, ada tombol "Hentikan putaran" (WCAG 2.2.2). Di mode warna paksa, tombol henti diberi garis tepi, dan kotak legenda tetap berwarna asli seperti kanvas globe. Bila globe gagal dimuat, tautan nama di atasnya tetap di tempatnya, jadi fokus keyboard tidak hilang.
 
 ## Belum diputuskan
 
