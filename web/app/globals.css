@@ -11,6 +11,8 @@
   --samar: #5f6b7a;
   --garis: #e3e6eb;
   --pinggir: #c9ced6;
+  /* Garis nol dan batas resmi di grafik, minimal 3:1 di latar putih maupun abu. */
+  --acuan: #7f8896;
   --isi-lipat: rgb(28 35 51 / 0.045);
   --fokus: #1d5fb8;
   --darat: #d9dde3;
@@ -1141,10 +1143,12 @@ td.angka {
 
 /* Grafik (SVG digambar di server). Garisnya memakai warna pertanyaan halaman itu. */
 
+/* Label yang lebih panjang daripada ruangnya boleh keluar dari gambar, supaya tidak terpotong. */
 .grafik-riwayat {
   display: block;
   width: 100%;
   height: auto;
+  overflow: visible;
 }
 
 .grafik-riwayat .garis {
@@ -1163,7 +1167,7 @@ td.angka {
 }
 
 .grafik-riwayat .kisi-nol {
-  stroke: var(--pinggir);
+  stroke: var(--acuan);
 }
 
 .grafik-riwayat .sumbu {
@@ -1190,7 +1194,7 @@ td.angka {
 }
 
 .grafik-riwayat .batas-resmi {
-  stroke: var(--pinggir);
+  stroke: var(--acuan);
   stroke-width: 1;
 }
 
@@ -1296,11 +1300,6 @@ td.angka {
 
 /* Grafik lebar mengecil hampir setengahnya di HP, jadi labelnya dibesarkan supaya tetap terbaca. */
 @media (max-width: 719px) {
-  .grafik-lebar,
-  .grafik-ronde {
-    overflow: visible;
-  }
-
   .grafik-lebar .sumbu,
   .grafik-lebar .sumbu-nilai {
     font-size: 21px;
