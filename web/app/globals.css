@@ -31,6 +31,17 @@
   --r-kartu: 16px;
   --r-blok: 20px;
   --huruf: var(--font-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  /* Skala huruf (DESIGN.md, Huruf): 13, 14, 15, 17, 20, 28, dan 36 px di HP. Teks bacaan 15 px, teks sekunder 14 px,
+     label dan keterangan 13 px. Di layar lebar, ringkasan dan tiga ukuran terbesar naik satu langkah (media query di
+     bawah). */
+  --t-label: 0.8125rem;
+  --t-kecil: 0.875rem;
+  --t-isi: 0.9375rem;
+  --t-cerita: 0.9375rem;
+  --t-sedang: 1.0625rem;
+  --t-bagian: 1.25rem;
+  --t-judul: 1.75rem;
+  --t-angka: 2.25rem;
 }
 
 [data-topik="harga"] {
@@ -65,7 +76,7 @@ body {
   background: var(--latar);
   color: var(--tinta);
   font-family: var(--huruf);
-  font-size: 1.0625rem;
+  font-size: var(--t-isi);
   line-height: 1.6;
   /* Spasi kata bawaan Plus Jakarta Sans sempit, jadi dilonggarkan sedikit untuk teks bacaan. */
   word-spacing: 0.05em;
@@ -82,23 +93,20 @@ h4 {
 }
 
 h1 {
-  font-size: 2.125rem;
+  font-size: var(--t-judul);
   line-height: 1.12;
   letter-spacing: -0.02em;
   margin: 1.5rem 0 0.5rem;
 }
 
 h2 {
-  font-size: 1.5rem;
+  font-size: var(--t-bagian);
   letter-spacing: -0.015em;
 }
 
-h3 {
-  font-size: 1.125rem;
-}
-
+h3,
 h4 {
-  font-size: 1rem;
+  font-size: var(--t-isi);
 }
 
 p {
@@ -113,6 +121,34 @@ ol {
 
 li {
   margin: 0.3rem 0;
+}
+
+/* Teks bacaan rata kiri kanan, pilihan pengelola 2026-11-24. Judul, tabel, dan teks pendek (kalimat jawaban dan
+   perkiraan, label, baris status, tautan, jadwal, sitasi sumber) tetap rata kiri: barisnya sedikit, jadi celah
+   antarkatanya akan renggang. Begitu juga kolom yang lebih sempit daripada layar HP (media query di bawah). Kata tidak
+   dipenggal, karena Chrome dan Edge tidak punya kamus pemenggal bahasa Indonesia, dan tanda hubung lunak membuat
+   pembaca layar NVDA memotong katanya. */
+:where(main p, main li, .kaki p):not(
+    .rata-kiri,
+    .rata-kiri li,
+    .jawaban,
+    .perkiraan li,
+    .prediksi-kalimat,
+    .prediksi-lanjut,
+    .sitasi,
+    .label-angka,
+    .waktu,
+    .kalimat-periode,
+    .meta-seri,
+    .kartu-nama,
+    .kartu-periode,
+    .tautan-rinci,
+    .daftar-label li,
+    .daftar-sumber li,
+    .daftar-sumber p,
+    .berikutnya li
+  ) {
+  text-align: justify;
 }
 
 a {
@@ -158,8 +194,10 @@ a:hover {
   top: 0.5rem;
 }
 
+/* Isi halaman mengisi layar sampai ke samping. Batasnya 120rem, supaya di layar yang sangat lebar isinya tidak
+   terpencar. */
 .wadah {
-  max-width: 77.5rem;
+  max-width: 120rem;
   margin: 0 auto;
   padding: 0 16px;
 }
@@ -168,15 +206,74 @@ main.wadah {
   padding-bottom: 4rem;
 }
 
-/* Kolom baca di tengah: halaman Indonesia sempit supaya baris kalimat tidak terlalu panjang, halaman rinci
-   sedikit lebih lebar untuk grafik dan kartu. */
-.kolom {
-  max-width: 44rem;
-  margin: 0 auto;
+/* Susunan berdampingan. Di HP semuanya bertumpuk sesuai urutan di HTML, dan di layar lebar mengisi ke samping (media
+   query di bawah). */
+
+.kisi-jawaban {
+  display: grid;
+  gap: 1rem;
 }
 
-.kolom-lebar {
-  max-width: 56rem;
+.kisi-rinci {
+  display: grid;
+  gap: 2.5rem;
+}
+
+.dua-bagian {
+  display: grid;
+  gap: 2.5rem 1.5rem;
+  margin-top: 2.5rem;
+}
+
+.dua-kolom {
+  display: grid;
+  gap: 1rem 1.5rem;
+}
+
+.kisi-jawaban > *,
+.kisi-rinci > *,
+.dua-bagian > *,
+.dua-kolom > * {
+  min-width: 0;
+}
+
+.kisi-jawaban > .blok,
+.kisi-rinci > .blok,
+.dua-kolom > p {
+  margin: 0;
+}
+
+/* Jarak di bawah kolom berasal dari kisinya, jadi anak terakhirnya tidak menambah lagi. */
+.dua-bagian-kotak > section > :last-child,
+.dua-kolom > * > :last-child,
+.detail-lain > section > :last-child {
+  margin-bottom: 0;
+}
+
+.detail-lain > .dua-bagian h2 {
+  font-size: var(--t-sedang);
+}
+
+.detail-lain > .tautan-rinci {
+  margin-top: 0;
+}
+
+.detail-lain > .dua-bagian {
+  row-gap: 1.5rem;
+}
+
+.detail-lain > .dua-bagian:where(:first-child) {
+  margin-top: 1.5rem;
+}
+
+/* Judul bagian, isi kartunya, dan catatan di bawah tabel atau grafik. */
+.bagian > h2 + .kisi-kartu,
+.gulir-tabel + p {
+  margin-top: 0.75rem;
+}
+
+.wadah-grafik + p {
+  margin-top: 0.5rem;
 }
 
 /* Kepala dan navigasi */
@@ -202,7 +299,7 @@ main.wadah {
   min-height: 44px;
   color: var(--tinta);
   text-decoration: none;
-  font-size: 1.125rem;
+  font-size: var(--t-sedang);
   font-weight: 700;
   letter-spacing: -0.01em;
 }
@@ -233,7 +330,7 @@ main.wadah {
   min-height: 44px;
   color: var(--redup);
   text-decoration: none;
-  font-size: 0.9375rem;
+  font-size: var(--t-kecil);
   font-weight: 600;
   border-bottom: 2px solid transparent;
 }
@@ -251,7 +348,7 @@ main.wadah {
 
 .data-per {
   color: var(--samar);
-  font-size: 0.9375rem;
+  font-size: var(--t-kecil);
   margin: 0 0 1.25rem;
 }
 
@@ -266,7 +363,7 @@ main.wadah {
 
 .catatan {
   color: var(--redup);
-  font-size: 0.875rem;
+  font-size: var(--t-kecil);
 }
 
 .bagian {
@@ -296,27 +393,24 @@ main.wadah {
   margin-bottom: 0.75rem;
 }
 
+/* Area ketuknya 44 px, dan margin negatif menjaga tinggi barisnya. */
 .panel-kepala a {
-  font-size: 0.875rem;
+  padding: 0.6875rem 0;
+  margin: -0.6875rem 0;
+  font-size: var(--t-kecil);
   color: var(--redup);
 }
 
 /* Judul grafik berupa kalimat temuan (PRD 4.4). */
 .judul-grafik {
-  font-size: 1.25rem;
+  font-size: var(--t-sedang);
   line-height: 1.3;
   margin: 0;
 }
 
 /* Halaman depan dan peta */
 
-.depan {
-  max-width: 60rem;
-  margin: 0 auto;
-}
-
 .depan h1 {
-  max-width: 40rem;
   margin-top: 2rem;
 }
 
@@ -367,7 +461,7 @@ main.wadah {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem 1.25rem;
-  font-size: 0.9375rem;
+  font-size: var(--t-kecil);
   color: var(--redup);
   margin: 0 0 1rem;
 }
@@ -413,6 +507,12 @@ main.wadah {
   margin: 0.75rem auto 0;
 }
 
+/* Legenda selebar globe. Di bawah peta diam, legendanya selebar peta. */
+:where(.depan > .globe) ~ .legenda {
+  width: min(100%, 34rem);
+  margin: 1rem auto;
+}
+
 /* Bola kosong selama kode globe dimuat. Jaraknya dari tepi sama dengan TEPI di lib/gambar-globe.ts. */
 .globe::before {
   content: "";
@@ -422,32 +522,20 @@ main.wadah {
   background: var(--permukaan);
 }
 
+/* Usapan mendatar memutar globe, sedangkan usapan tegak tetap menggulir halaman dan cubitan tetap memperbesar. */
 .globe canvas {
   position: relative;
   display: block;
   width: 100%;
   height: 100%;
   opacity: 0;
+  touch-action: pan-y pinch-zoom;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .globe[data-keadaan="siap"] canvas {
   opacity: 1;
-}
-
-/* Legenda dan tombol henti selebar globe, supaya menempel pada globe yang mereka jelaskan. */
-.globe-bawah {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem 1rem;
-  width: min(100%, 34rem);
-  min-height: 44px;
-  margin: 0.75rem auto 1rem;
-}
-
-.globe-bawah .legenda {
-  margin: 0;
 }
 
 /* Ringkasan bercerita dan blok jawaban (halaman Indonesia, bentuk C) */
@@ -460,7 +548,7 @@ main.wadah {
 }
 
 .cerita-isi {
-  font-size: 1.1875rem;
+  font-size: var(--t-cerita);
   line-height: 1.65;
   margin: 0 0 0.875rem;
 }
@@ -482,10 +570,9 @@ main.wadah {
   margin: 1.25rem 0 0;
 }
 
-/* Pil yang sama untuk baris empat pertanyaan, nama negara di atas globe, dan tombol henti putaran globe. */
+/* Pil yang sama untuk baris empat pertanyaan dan nama negara di dekat globe. */
 .baris-tanya a,
-.negara-tersedia a,
-.tombol-putar {
+.negara-tersedia a {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -494,6 +581,7 @@ main.wadah {
   border-radius: 999px;
   background: var(--permukaan);
   color: var(--tinta);
+  font-size: var(--t-kecil);
   font-weight: 600;
   text-decoration: none;
   box-shadow: 0 1px 2px rgb(28 35 51 / 0.08);
@@ -510,24 +598,11 @@ main.wadah {
 }
 
 .baris-tanya a:hover,
-.negara-tersedia a:hover,
-.tombol-putar:hover {
+.negara-tersedia a:hover {
   box-shadow: inset 0 0 0 1px var(--pinggir), 0 1px 2px rgb(28 35 51 / 0.08);
 }
 
-.tombol-putar {
-  border: 0;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
 @media (forced-colors: active) {
-  /* Mode warna paksa menghapus bayangan yang menjadi tepi pil, jadi tombol henti diberi garis tepi. */
-  .tombol-putar {
-    border: 1px solid ButtonText;
-  }
-
   /* Kanvas globe tetap berwarna asli, jadi kotak legenda juga, supaya keduanya tetap cocok. */
   .kotak {
     forced-color-adjust: none;
@@ -547,7 +622,7 @@ main.wadah {
 }
 
 .blok > h2 {
-  font-size: 1.3125rem;
+  font-size: var(--t-sedang);
   line-height: 1.25;
   letter-spacing: -0.01em;
 }
@@ -564,12 +639,11 @@ main.wadah {
 }
 
 .jawaban {
-  font-size: 1.125rem;
   margin: 0 0 0.75rem;
 }
 
 .angka-besar {
-  font-size: 3rem;
+  font-size: var(--t-angka);
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.03em;
@@ -580,13 +654,14 @@ main.wadah {
 
 .label-angka {
   display: inline-block;
-  font-size: 0.8125rem;
+  font-size: var(--t-label);
   line-height: 1.45;
   padding: 0.25rem 0.5rem;
   margin: 0 0 1rem;
   border: 1px solid var(--pinggir);
   border-radius: var(--r-kecil);
   color: var(--redup);
+  text-wrap: pretty;
 }
 
 .label-perkiraan {
@@ -616,6 +691,16 @@ main.wadah {
   margin: 0.375rem 0;
 }
 
+.banding li:first-child,
+.perkiraan li:first-child {
+  margin-top: 0;
+}
+
+.banding li:last-child,
+.perkiraan li:last-child {
+  margin-bottom: 0;
+}
+
 .banding li::marker,
 .perkiraan li::marker {
   color: var(--topik);
@@ -623,16 +708,12 @@ main.wadah {
 
 .waktu {
   color: var(--samar);
-  font-size: 0.9375rem;
+  font-size: var(--t-kecil);
   margin: 0 0 1rem;
 }
 
 .arti {
   margin: 0 0 1rem;
-}
-
-.kalimat-perkiraan {
-  font-size: 1.125rem;
 }
 
 .tautan-rinci {
@@ -694,13 +775,13 @@ main.wadah {
 }
 
 .lipat h3 {
-  font-size: 0.9375rem;
+  font-size: var(--t-kecil);
   margin-top: 0.75rem;
   margin-bottom: 0.25rem;
 }
 
 .rincian-kartu {
-  font-size: 0.9375rem;
+  font-size: var(--t-kecil);
 }
 
 .lipat-isi {
@@ -709,7 +790,7 @@ main.wadah {
 
 .rincian {
   margin: 0.5rem 0 0.75rem;
-  font-size: 0.875rem;
+  font-size: var(--t-label);
   color: var(--redup);
 }
 
@@ -741,7 +822,7 @@ main.wadah {
 }
 
 .berikutnya-judul {
-  font-size: 0.875rem;
+  font-size: var(--t-label);
   color: var(--samar);
   margin: 0 0 0.5rem;
 }
@@ -775,12 +856,12 @@ main.wadah {
 }
 
 .berikutnya-tanya {
-  font-size: 1.125rem;
+  font-size: var(--t-isi);
   font-weight: 700;
 }
 
 .berikutnya-teks {
-  font-size: 0.9375rem;
+  font-size: var(--t-kecil);
   color: var(--redup);
 }
 
@@ -805,7 +886,7 @@ main.wadah {
 }
 
 .kartu-utama .kartu-judul {
-  font-size: 1.25rem;
+  font-size: var(--t-sedang);
 }
 
 .kartu-utama .kartu-judul::before {
@@ -820,12 +901,12 @@ main.wadah {
 
 .kartu-nama {
   color: var(--redup);
-  font-size: 0.875rem;
+  font-size: var(--t-label);
   margin-bottom: 0.5rem;
 }
 
 .kartu-angka {
-  font-size: 2.5rem;
+  font-size: var(--t-judul);
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.03em;
@@ -836,7 +917,7 @@ main.wadah {
 }
 
 .kartu:not(.kartu-utama) .kartu-angka {
-  font-size: 1.625rem;
+  font-size: var(--t-bagian);
   color: var(--tinta);
 }
 
@@ -845,14 +926,14 @@ main.wadah {
 }
 
 .kartu-satuan {
-  font-size: 0.875rem;
+  font-size: var(--t-label);
   font-weight: 400;
   letter-spacing: 0;
   color: var(--redup);
 }
 
 .kartu-periode {
-  font-size: 0.9375rem;
+  font-size: var(--t-kecil);
 }
 
 .kartu-ubah {
@@ -861,7 +942,7 @@ main.wadah {
 
 .kartu-waktu {
   margin: 0.1rem 0 0.5rem;
-  font-size: 0.8125rem;
+  font-size: var(--t-label);
 }
 
 .garis-kecil {
@@ -883,7 +964,7 @@ main.wadah {
 }
 
 .garis-kecil figcaption {
-  font-size: 0.8125rem;
+  font-size: var(--t-label);
   color: var(--samar);
 }
 
@@ -895,7 +976,7 @@ main.wadah {
 
 .lencana {
   display: inline-block;
-  font-size: 0.8125rem;
+  font-size: var(--t-label);
   padding: 0.1rem 0.55rem;
   border: 1px solid var(--pinggir);
   border-radius: var(--r-kecil);
@@ -916,7 +997,7 @@ main.wadah {
   padding: 0.65rem 0.8rem;
   border-radius: var(--r-tombol);
   background: color-mix(in srgb, var(--topik) 8%, #ffffff);
-  font-size: 0.9375rem;
+  font-size: var(--t-kecil);
 }
 
 .kartu-aksi {
@@ -924,11 +1005,11 @@ main.wadah {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem 1.25rem;
-  font-size: 0.9375rem;
+  font-size: var(--t-kecil);
 }
 
 .kartu-aksi a {
-  padding: 0.5rem 0;
+  padding: 0.6875rem 0;
 }
 
 .kartu-kosong p {
@@ -936,13 +1017,13 @@ main.wadah {
 }
 
 .prediksi-kalimat {
-  font-size: 0.9375rem;
+  font-size: var(--t-kecil);
   margin-bottom: 0.25rem;
 }
 
 .prediksi-lanjut {
   color: var(--redup);
-  font-size: 0.875rem;
+  font-size: var(--t-label);
 }
 
 /* Tabel */
@@ -957,7 +1038,7 @@ main.wadah {
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9375rem;
+  font-size: var(--t-kecil);
 }
 
 caption {
@@ -975,7 +1056,7 @@ td {
 }
 
 thead th {
-  font-size: 0.8125rem;
+  font-size: var(--t-label);
   color: var(--samar);
   font-weight: 600;
   white-space: nowrap;
@@ -988,7 +1069,7 @@ thead th {
 /* Judul kelompok baris di dalam tabel, misalnya tanggal pada catatan revisi. */
 th.kepala-kelompok {
   background: var(--latar);
-  font-size: 0.8125rem;
+  font-size: var(--t-label);
   font-weight: 600;
   color: var(--redup);
 }
@@ -1016,7 +1097,7 @@ td.angka {
 
 .status-tanggal {
   display: block;
-  font-size: 0.8125rem;
+  font-size: var(--t-label);
   color: var(--samar);
 }
 
@@ -1050,7 +1131,7 @@ td.angka {
   .tabel-tumpuk td::before {
     content: attr(data-label) ": ";
     color: var(--samar);
-    font-size: 0.8125rem;
+    font-size: var(--t-label);
   }
 
   .tabel-tumpuk .status {
@@ -1131,7 +1212,12 @@ td.angka {
 }
 
 .grafik-sedang {
-  max-width: 34rem;
+  max-width: 40rem;
+}
+
+/* Ukuran label grafik dihitung dari lebar wadah ini (@supports di bawah). */
+.wadah-grafik {
+  container-type: inline-size;
 }
 
 .kisi-kelompok {
@@ -1146,6 +1232,7 @@ td.angka {
 }
 
 .grafik-kelompok figcaption {
+  font-size: var(--t-kecil);
   font-weight: 700;
   margin-bottom: 0.25rem;
 }
@@ -1184,7 +1271,7 @@ td.angka {
   background: var(--permukaan);
   color: var(--tinta);
   font: inherit;
-  font-size: 1.25rem;
+  font-size: var(--t-sedang);
   line-height: 1;
   cursor: pointer;
 }
@@ -1197,7 +1284,7 @@ td.angka {
 
 .penggeser-periode {
   flex: 1 0 100%;
-  font-size: 0.875rem;
+  font-size: var(--t-kecil);
   color: var(--redup);
   text-align: center;
   font-variant-numeric: tabular-nums;
@@ -1225,6 +1312,36 @@ td.angka {
   }
 }
 
+/* Di layar lebar, label ikut membesar bersama gambarnya. Supaya tetap sekitar 13 px, ukurannya dikali lebar gambar
+   asli (viewBox di Grafik.tsx) dan dibagi lebar wadahnya. Browser yang belum bisa membagi dua panjang memakai ukuran
+   di atas. */
+@supports (font-size: calc(1px * (1px / 1cqw))) {
+  .grafik-lebar .sumbu,
+  .grafik-lebar .sumbu-nilai {
+    font-size: min(21px, calc(13px * (640px / 100cqw)));
+  }
+
+  .grafik-ronde .sumbu,
+  .grafik-ronde .sumbu-nilai {
+    font-size: min(17px, calc(13px * (640px / 100cqw)));
+  }
+
+  .grafik-perkiraan .sumbu,
+  .grafik-perkiraan .sumbu-nilai {
+    font-size: min(13px, calc(13px * (360px / 100cqw)));
+  }
+
+  .grafik-sedang .sumbu,
+  .grafik-sedang .sumbu-nilai {
+    font-size: min(13px, calc(13px * (420px / min(100cqw, 40rem))));
+  }
+
+  .grafik-kelompok .sumbu,
+  .grafik-kelompok .sumbu-nilai {
+    font-size: min(13px, calc(13px * (320px / 100cqw)));
+  }
+}
+
 /* Halaman data per seri */
 
 .remah ol {
@@ -1234,7 +1351,7 @@ td.angka {
   gap: 0.15rem 0.5rem;
   padding: 0;
   margin: 1.5rem 0 0.25rem;
-  font-size: 0.875rem;
+  font-size: var(--t-label);
   color: var(--samar);
 }
 
@@ -1257,7 +1374,7 @@ td.angka {
 
 .meta-seri {
   color: var(--redup);
-  font-size: 0.9375rem;
+  font-size: var(--t-kecil);
   margin-bottom: 0.75rem;
 }
 
@@ -1277,7 +1394,7 @@ td.angka {
   background: var(--permukaan);
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.9375rem;
+  font-size: var(--t-kecil);
 }
 
 .penjelas > summary::-webkit-details-marker {
@@ -1286,7 +1403,7 @@ td.angka {
 
 .penjelas > summary::before {
   content: "+";
-  font-size: 1.125rem;
+  font-size: var(--t-sedang);
   line-height: 1;
 }
 
@@ -1304,14 +1421,14 @@ td.angka {
 }
 
 .penjelas-isi h2 {
-  font-size: 0.9375rem;
+  font-size: var(--t-kecil);
   margin: 0 0 0.25rem;
 }
 
 .penjelas-isi p {
   margin: 0;
   color: var(--redup);
-  font-size: 0.9375rem;
+  font-size: var(--t-kecil);
 }
 
 .pil-baris {
@@ -1332,7 +1449,7 @@ td.angka {
   padding: 0 0.85rem;
   border-radius: var(--r-tombol);
   color: var(--redup);
-  font-size: 0.9375rem;
+  font-size: var(--t-kecil);
   text-decoration: none;
 }
 
@@ -1363,24 +1480,10 @@ td.angka {
 }
 
 .alis {
-  font-size: 0.875rem;
+  font-size: var(--t-label);
   font-weight: 600;
   color: var(--redup);
   margin: 0 0 0.5rem;
-}
-
-.dua-kolom {
-  display: grid;
-  gap: 1.5rem;
-  margin-top: 2.5rem;
-}
-
-.dua-kolom > * {
-  min-width: 0;
-}
-
-.dua-kolom h2 {
-  font-size: 1.25rem;
 }
 
 /* Tentang data */
@@ -1395,7 +1498,7 @@ td.angka {
 }
 
 .daftar-isi {
-  font-size: 0.9375rem;
+  font-size: var(--t-kecil);
   margin-top: 1.5rem;
 }
 
@@ -1477,7 +1580,7 @@ td.angka {
 .kaki {
   border-top: 1px solid var(--garis);
   color: var(--redup);
-  font-size: 0.875rem;
+  font-size: var(--t-label);
   padding: 2rem 0;
 }
 
@@ -1518,6 +1621,13 @@ td.angka {
 /* Layar lebar */
 
 @media (min-width: 720px) {
+  :root {
+    --t-cerita: 1rem;
+    --t-bagian: 1.375rem;
+    --t-judul: 2.125rem;
+    --t-angka: 2.5rem;
+  }
+
   html {
     scroll-padding-top: 4.5rem;
   }
@@ -1527,7 +1637,6 @@ td.angka {
   }
 
   h1 {
-    font-size: 2.625rem;
     margin-top: 2rem;
   }
 
@@ -1554,12 +1663,25 @@ td.angka {
     grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
   }
 
-  .kisi-penggerak {
-    grid-template-columns: repeat(2, 1fr);
+  .kisi-jawaban,
+  .kisi-penggerak,
+  .detail-lain > .dua-bagian {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .dua-kolom {
-    grid-template-columns: 1fr 1fr;
+  /* Tautan rincian di dasar blok, supaya sejajar di antara blok yang bersebelahan. */
+  .kisi-jawaban > .blok {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .kisi-jawaban > .blok > .label-angka {
+    align-self: flex-start;
+  }
+
+  .kisi-jawaban > .blok > .tautan-rinci {
+    margin-top: auto;
+    padding-top: 0.25rem;
   }
 
   .kaki-kisi {
@@ -1581,40 +1703,192 @@ td.angka {
 }
 
 @media (min-width: 960px) {
-  .kisi-utama {
-    grid-template-columns: repeat(3, 1fr);
+  .wadah {
+    padding: 0 clamp(24px, 3vw, 56px);
   }
 
-  .kolom-lebar .kisi-penggerak {
-    grid-template-columns: repeat(2, 1fr);
+  /* Halaman depan: judul, nama negara, dan legenda di kiri, globe setinggi layar di kanan. */
+  .depan {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    grid-template-rows: 1fr repeat(3, auto) 1fr;
+    column-gap: clamp(2rem, 4vw, 5rem);
   }
 
-  .kisi-kelompok {
-    grid-template-columns: repeat(3, 1fr);
+  .depan > h1 {
+    grid-row: 2;
+    margin-top: 0;
   }
 
-  .kisi-detail {
-    grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
+  .depan > .negara-tersedia {
+    grid-row: 3;
+  }
+
+  .depan > .legenda {
+    grid-row: 4;
+    width: auto;
+    margin: 1.5rem 0 0;
+  }
+
+  .depan > .globe,
+  .depan > .peta,
+  .depan > noscript {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    align-self: center;
+  }
+
+  .globe {
+    width: min(100%, calc(100vh - 7rem));
+    width: min(100%, calc(100svh - 7rem));
+    margin: 1.5rem auto;
+  }
+
+  /* Judul halaman di kiri, baris empat pertanyaan di kanannya. */
+  .kepala-halaman {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    column-gap: 2rem;
+  }
+
+  .kepala-halaman > .baris-atas {
+    grid-column: 2;
+    grid-row: 1;
+    margin-top: 1.875rem;
+  }
+
+  .kisi-rinci {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 1.5rem;
+  }
+
+  .dua-bagian,
+  .dua-kolom {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dua-kolom {
     align-items: start;
   }
 
-  .kisi-detail .detail-angka {
+  .dua-kolom + h3 {
+    margin-top: 1.5rem;
+  }
+
+  .dua-bagian-kotak > section {
+    padding: 1.5rem;
+    border-radius: var(--r-blok);
+    background: var(--permukaan);
+  }
+
+  .dua-bagian-kotak h2 {
+    font-size: var(--t-sedang);
+  }
+
+  .kisi-utama,
+  .kisi-kelompok {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* Delapan baris setiap kartu perkiraan memakai baris yang sama, supaya angka, grafik, dan lipatannya sejajar. */
+  .kisi-utama {
+    row-gap: 0;
+  }
+
+  .kisi-utama > .kartu {
+    display: grid;
+    grid-row: span 8;
+    grid-template-rows: subgrid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .kisi-utama > .kartu > .label-angka {
+    justify-self: start;
+  }
+
+  /* Data per seri: pintu penjelas dan pilihan seri sebaris, kecuali saat penjelasnya dibuka. */
+  .baris-penjelas {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 1rem;
+  }
+
+  .penjelas {
+    flex: 1 1 22rem;
+  }
+
+  .penjelas[open] {
+    flex-basis: 100%;
+  }
+
+  .penjelas > summary {
+    min-height: calc(44px + 0.6rem);
+  }
+
+  .pil-baris {
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    max-width: 100%;
+  }
+
+  /* Data per seri: grafik dan keterangannya di kiri, angka terakhir dan tabelnya di kanan. Baris tengah yang lentur
+     menyerap selisih tinggi kedua sisi. */
+  .kisi-detail {
+    grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
+    gap: 1rem 1.5rem;
+    align-items: start;
+  }
+
+  .kisi-detail > .detail-angka {
     grid-column: 2;
     grid-row: 1;
   }
 
-  .kisi-detail .detail-grafik {
+  .kisi-detail > .detail-grafik {
     grid-column: 1;
     grid-row: 1 / span 2;
   }
 
-  .kisi-detail .detail-tabel {
+  .kisi-detail > .detail-tabel {
     grid-column: 2;
-    grid-row: 2;
+    grid-row: 2 / span 2;
   }
 
+  .kisi-detail > .detail-lain {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .detail-lain > .dua-bagian {
+    margin-top: 1.25rem;
+  }
+
+  /* Tentang data: kalimat tetap selebar bacaan, daftarnya mengalir dua kolom, dan tabelnya selebar halaman. */
   .halaman-bacaan {
-    grid-template-columns: 13rem minmax(0, 46rem);
+    grid-template-columns: 13rem minmax(0, 1fr);
+  }
+
+  .prosa {
+    max-width: none;
+  }
+
+  .prosa > p,
+  .prosa > ul:not(.daftar-sumber) {
+    max-width: 46rem;
+  }
+
+  .kaki-kisi {
+    grid-template-columns: minmax(0, 42rem) minmax(0, 1fr);
+    column-gap: 4rem;
+  }
+
+  .kaki-kisi ul {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    column-gap: 1.75rem;
   }
 
   .daftar-isi {
@@ -1636,11 +1910,107 @@ td.angka {
     grid-template-columns: 1fr 1fr;
   }
 
+  .daftar-sumber h3 {
+    margin-top: 0;
+  }
+
   .jangka-panjang {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 1.5rem;
     align-items: start;
+  }
+}
+
+/* Kolom yang lebih sempit daripada layar HP: blok jawaban dan kartu yang ikut memengaruhi di lebar tablet, lalu tiga
+   kartu perkiraan dan panel angka terakhir, lalu ringkasan halaman Indonesia. */
+@media (min-width: 720px) and (max-width: 959px) {
+  .kisi-jawaban p,
+  .kisi-jawaban li,
+  .kisi-penggerak p {
+    text-align: left;
+  }
+}
+
+@media (min-width: 960px) and (max-width: 1199px) {
+  .kisi-utama p,
+  .detail-angka p {
+    text-align: left;
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .cerita p {
+    text-align: left;
+  }
+}
+
+@media (min-width: 1200px) {
+  /* Halaman Indonesia: ringkasan di kiri, keempat blok jawaban di sampingnya. */
+  .negara {
+    display: grid;
+    grid-template-columns: clamp(21rem, 27vw, 30rem) minmax(0, 1fr);
+    column-gap: 1.5rem;
+    align-items: start;
+  }
+
+  .negara-jawaban > .baris-tanya {
+    margin: 1.875rem 0 1rem;
+  }
+
+  .kisi-penggerak {
+    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  }
+
+  /* Empat kartu atau lebih sebaris bisa lebih sempit daripada layar HP. */
+  .kisi-penggerak p {
+    text-align: left;
+  }
+
+  /* Judul bagian di kiri dan tabelnya di kanan, sejajar dengan ketiga kartu perkiraan. Di layar yang lebih sempit
+     tabelnya perlu selebar halaman, supaya tidak harus digulir ke samping. */
+  .bagian-sisi {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 1rem;
+  }
+
+  .bagian-sisi > :last-child {
+    grid-column: span 2;
+  }
+
+  .prosa > ul:not(.daftar-sumber) {
+    max-width: calc(2 * 46rem + 3rem);
+    columns: 2;
+    column-gap: 3rem;
+  }
+
+  .prosa > ul:not(.daftar-sumber) > li {
+    break-inside: avoid;
+    margin-top: 0;
+  }
+
+  .kelompok-uji {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 1.5rem;
+    align-items: start;
+  }
+
+  .kelompok-uji > h3 {
+    grid-column: 1 / -1;
+  }
+
+  .daftar-sumber {
+    grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+  }
+}
+
+/* Ringkasan tetap terlihat selama blok jawaban digulir, bila layarnya cukup tinggi untuk menampungnya. Dengan
+   pemberitahuan data terlambat di atasnya, ringkasannya lebih tinggi, jadi ikut digulir. */
+@media (min-width: 1200px) and (min-height: 43rem) {
+  .negara-awal:not(:has(.banner)) {
+    position: sticky;
+    top: calc(3.5rem + 1px);
   }
 }
 
@@ -1658,7 +2028,6 @@ td.angka {
   .nav-utama a,
   .baris-tanya a,
   .negara-tersedia a,
-  .tombol-putar,
   .berikutnya a,
   .kaki a {
     transition: color 150ms ease-out, box-shadow 150ms ease-out, border-color 150ms ease-out;

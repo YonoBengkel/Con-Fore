@@ -143,40 +143,42 @@ export default async function Indikator({ params }: Props) {
           .filter(Boolean)
           .join(" · ")}
       </p>
-      {penjelas && (
-        <details className="penjelas">
-          <summary>Baru kenal angka ini? Mulai dari penjelasan singkatnya.</summary>
-          <div className="penjelas-isi">
-            <div>
-              <h2>Apa yang diukur</h2>
-              <p>{penjelas.ukur}</p>
-            </div>
-            <div>
-              <h2>Cara dan sumber</h2>
-              <p>{penjelas.cara}</p>
-            </div>
-            <div>
-              <h2>Cara membacanya</h2>
-              <p>{penjelas.baca}</p>
-            </div>
-            {simpulan && (
+      <div className="baris-penjelas">
+        {penjelas && (
+          <details className="penjelas">
+            <summary>Baru kenal angka ini? Mulai dari penjelasan singkatnya.</summary>
+            <div className="penjelas-isi">
               <div>
-                <h2>Yang bisa diambil</h2>
-                <p>{simpulan}</p>
+                <h2>Apa yang diukur</h2>
+                <p>{penjelas.ukur}</p>
               </div>
-            )}
-          </div>
-        </details>
-      )}
-      {saudara.length > 1 && (
-        <nav aria-label={kelompok?.judul} className="pil-baris">
-          {saudara.map(([s, nama]) => (
-            <Link key={s} href={`/indikator/${s}`} aria-current={s === id ? "page" : undefined}>
-              {nama}
-            </Link>
-          ))}
-        </nav>
-      )}
+              <div>
+                <h2>Cara dan sumber</h2>
+                <p>{penjelas.cara}</p>
+              </div>
+              <div>
+                <h2>Cara membacanya</h2>
+                <p>{penjelas.baca}</p>
+              </div>
+              {simpulan && (
+                <div>
+                  <h2>Yang bisa diambil</h2>
+                  <p>{simpulan}</p>
+                </div>
+              )}
+            </div>
+          </details>
+        )}
+        {saudara.length > 1 && (
+          <nav aria-label={kelompok?.judul} className="pil-baris">
+            {saudara.map(([s, nama]) => (
+              <Link key={s} href={`/indikator/${s}`} aria-current={s === id ? "page" : undefined}>
+                {nama}
+              </Link>
+            ))}
+          </nav>
+        )}
+      </div>
       <BannerBasi terakhir={status.last_success_at} />
 
       <div className="kisi-detail">
@@ -252,117 +254,119 @@ export default async function Indikator({ params }: Props) {
             </table>
           </div>
         </section>
-      </div>
 
-      {topik && !angkaUtama && (
-        <p className="tautan-rinci">
-          Angka ini dibahas di halaman <Link href={`/indonesia/${topik.kunci}`}>{topik.tanya}</Link>
-        </p>
-      )}
-
-      <div className="dua-kolom">
-        <section aria-labelledby="judul-tentang">
-          <h2 id="judul-tentang">Tentang angka ini</h2>
-          <dl className="rincian">
-            <div>
-              <dt>Label</dt>
-              <dd>{labelSeri(m)}</dd>
-            </div>
-            <div>
-              <dt>Satuan</dt>
-              <dd>{m.unit}</dd>
-            </div>
-            <div>
-              <dt>Sumber</dt>
-              <dd>
-                <Sitasi teks={m.citation} />
-              </dd>
-            </div>
-            {n?.release_date && (
-              <div>
-                <dt>Tanggal rilis</dt>
-                <dd>{tanggal(n.release_date)}</dd>
-              </div>
-            )}
-            <div>
-              <dt>Dilihat Con-Fore</dt>
-              <dd>{tanggal(n?.seen_date ?? null)}</dd>
-            </div>
-            <div>
-              <dt>Pembaruan otomatis terakhir</dt>
-              <dd>{waktuWIB(status.last_success_at)}</dd>
-            </div>
-          </dl>
-        </section>
-
-        <section aria-labelledby="judul-jadwal">
-          <h2 id="judul-jadwal">Jadwal rilis berikutnya</h2>
-          {rilis.length ? (
-            <ul>
-              {rilis.map((r) => (
-                <li key={r.ref_period}>
-                  Data {periode(r.ref_period)}: {tanggal(r.release_date)} (
-                  {NAMA_KALENDER[r.calendar_source] ?? r.calendar_source})
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>Belum ada jadwal rilis yang tercatat untuk angka ini.</p>
-          )}
-          {m.source_id === "imf" && m.country === "IDN" && (
-            <p className="catatan">
-              Salinan IMF biasanya terbit beberapa minggu setelah BPS merilis angkanya, jadi angka di
-              sini bisa tertinggal dari berita hari rilis.
+        <div className="detail-lain">
+          {topik && !angkaUtama && (
+            <p className="tautan-rinci">
+              Angka ini dibahas di halaman <Link href={`/indonesia/${topik.kunci}`}>{topik.tanya}</Link>
             </p>
           )}
-        </section>
+
+          <div className="dua-bagian">
+            <section aria-labelledby="judul-tentang">
+              <h2 id="judul-tentang">Tentang angka ini</h2>
+              <dl className="rincian">
+                <div>
+                  <dt>Label</dt>
+                  <dd>{labelSeri(m)}</dd>
+                </div>
+                <div>
+                  <dt>Satuan</dt>
+                  <dd>{m.unit}</dd>
+                </div>
+                <div>
+                  <dt>Sumber</dt>
+                  <dd>
+                    <Sitasi teks={m.citation} />
+                  </dd>
+                </div>
+                {n?.release_date && (
+                  <div>
+                    <dt>Tanggal rilis</dt>
+                    <dd>{tanggal(n.release_date)}</dd>
+                  </div>
+                )}
+                <div>
+                  <dt>Dilihat Con-Fore</dt>
+                  <dd>{tanggal(n?.seen_date ?? null)}</dd>
+                </div>
+                <div>
+                  <dt>Pembaruan otomatis terakhir</dt>
+                  <dd>{waktuWIB(status.last_success_at)}</dd>
+                </div>
+              </dl>
+            </section>
+
+            <section aria-labelledby="judul-jadwal">
+              <h2 id="judul-jadwal">Jadwal rilis berikutnya</h2>
+              {rilis.length ? (
+                <ul className="rata-kiri">
+                  {rilis.map((r) => (
+                    <li key={r.ref_period}>
+                      Data {periode(r.ref_period)}: {tanggal(r.release_date)} (
+                      {NAMA_KALENDER[r.calendar_source] ?? r.calendar_source})
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>Belum ada jadwal rilis yang tercatat untuk angka ini.</p>
+              )}
+              {m.source_id === "imf" && m.country === "IDN" && (
+                <p className="catatan rata-kiri">
+                  Salinan IMF biasanya terbit beberapa minggu setelah BPS merilis angkanya, jadi angka di
+                  sini bisa tertinggal dari berita hari rilis.
+                </p>
+              )}
+            </section>
+          </div>
+
+          {/* Catatan revisi (PRD 4.4): hanya bila angka tampil berubah, dengan sejak kapan setiap versi disimpan. */}
+          {(revisi.length > 0 || m.versions_since || olahan) && (
+            <section className="bagian" aria-labelledby="judul-revisi">
+              <h2 id="judul-revisi">Catatan revisi</h2>
+              {revisi.length > 0 ? (
+                <div className="gulir-tabel" role="region" aria-labelledby="judul-revisi" tabIndex={0}>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Periode</th>
+                        <th scope="col">Angka lama</th>
+                        <th scope="col">Angka baru</th>
+                      </tr>
+                    </thead>
+                    {kelompokRevisi.map(([waktu, baris]) => (
+                      <tbody key={waktu}>
+                        <tr>
+                          <th scope="rowgroup" colSpan={3} className="kepala-kelompok">
+                            {waktu}
+                          </th>
+                        </tr>
+                        {baris.map((r) => (
+                          <tr key={`${r.period}-${r.vintage_date}`}>
+                            <th scope="row">{periode(r.period)}</th>
+                            <td className="angka">{nilaiPendek(r.old_value, m.unit, m.concept)}</td>
+                            <td className="angka">{nilaiPendek(r.new_value, m.unit, m.concept)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    ))}
+                  </table>
+                </div>
+              ) : (
+                m.versions_since && <p>Belum ada revisi yang mengubah angka yang tampil.</p>
+              )}
+              <p className="catatan">
+                {m.versions_since
+                  ? `Con-Fore menyimpan setiap versi angka ini sejak ${tanggal(m.versions_since)}. Revisi sebelum tanggal itu tidak terekam.`
+                  : "Angka ini dihitung Con-Fore dari seri lain, jadi revisinya mengikuti revisi seri asalnya."}
+              </p>
+            </section>
+          )}
+        </div>
       </div>
 
-      {/* Catatan revisi (PRD 4.4): hanya bila angka tampil berubah, dengan sejak kapan setiap versi disimpan. */}
-      {(revisi.length > 0 || m.versions_since || olahan) && (
-        <section className="bagian" aria-labelledby="judul-revisi">
-          <h2 id="judul-revisi">Catatan revisi</h2>
-          {revisi.length > 0 ? (
-            <div className="gulir-tabel" role="region" aria-labelledby="judul-revisi" tabIndex={0}>
-              <table>
-                <thead>
-                  <tr>
-                    <th scope="col">Periode</th>
-                    <th scope="col">Angka lama</th>
-                    <th scope="col">Angka baru</th>
-                  </tr>
-                </thead>
-                {kelompokRevisi.map(([waktu, baris]) => (
-                  <tbody key={waktu}>
-                    <tr>
-                      <th scope="rowgroup" colSpan={3} className="kepala-kelompok">
-                        {waktu}
-                      </th>
-                    </tr>
-                    {baris.map((r) => (
-                      <tr key={`${r.period}-${r.vintage_date}`}>
-                        <th scope="row">{periode(r.period)}</th>
-                        <td className="angka">{nilaiPendek(r.old_value, m.unit, m.concept)}</td>
-                        <td className="angka">{nilaiPendek(r.new_value, m.unit, m.concept)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                ))}
-              </table>
-            </div>
-          ) : (
-            m.versions_since && <p>Belum ada revisi yang mengubah angka yang tampil.</p>
-          )}
-          <p className="catatan">
-            {m.versions_since
-              ? `Con-Fore menyimpan setiap versi angka ini sejak ${tanggal(m.versions_since)}. Revisi sebelum tanggal itu tidak terekam.`
-              : "Angka ini dihitung Con-Fore dari seri lain, jadi revisinya mengikuti revisi seri asalnya."}
-          </p>
-        </section>
-      )}
-
       {targetSeri.length > 0 && (
-        <section aria-labelledby="judul-target-seri">
+        <section className="bagian" aria-labelledby="judul-target-seri">
           <h2 id="judul-target-seri">Target resmi untuk angka ini</h2>
           <TabelTarget target={targetSeri} judul={`Target resmi: ${m.name_id}`} />
         </section>

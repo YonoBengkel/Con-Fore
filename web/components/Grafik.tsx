@@ -1,4 +1,5 @@
 // Grafik garis sederhana sebagai SVG, digambar di server (browser hanya menerima SVG jadi).
+// Setiap grafik dibungkus .wadah-grafik, karena ukuran labelnya dihitung dari lebar wadahnya (globals.css).
 
 import type { Titik } from "@/lib/data";
 import { angka, desimalUntuk, periode } from "@/lib/format";
@@ -82,27 +83,29 @@ export function GrafikRiwayat({
   // Label 0 dilewati bila menimpa label nilai terendah atau tertinggi.
   const labelNol = garisNol != null && garisNol - atas > 16 && atas + tinggi - garisNol > 16;
   return (
-    <svg className="grafik-riwayat grafik-lebar" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={alt}>
-      <line x1={kiri} x2={kiri + lebar} y1={atas} y2={atas} className="kisi" />
-      <line x1={kiri} x2={kiri + lebar} y1={atas + tinggi} y2={atas + tinggi} className="kisi" />
-      {garisNol != null && (
-        <line x1={kiri} x2={kiri + lebar} y1={garisNol} y2={garisNol} className="kisi-nol" />
-      )}
-      <text x={kiri - 8} y={atas + 4} textAnchor="end" className="sumbu">{label(max)}</text>
-      <text x={kiri - 8} y={atas + tinggi + 4} textAnchor="end" className="sumbu">{label(min)}</text>
-      {labelNol && (
-        <text x={kiri - 8} y={garisNol + 4} textAnchor="end" className="sumbu">0</text>
-      )}
-      <text x={kiri} y={H - 8} className="sumbu">{periode(awal)}</text>
-      <text x={kiri + lebar} y={H - 8} textAnchor="end" className="sumbu">{periode(akhir)}</text>
-      <path d={d} className="garis" />
-      {sorot != null && data[sorot] && (
-        <>
-          <line x1={x(sorot)} x2={x(sorot)} y1={atas} y2={atas + tinggi} className="sorot-garis" />
-          <circle cx={x(sorot)} cy={y(data[sorot][1])} r="5" className="sorot-titik" />
-        </>
-      )}
-    </svg>
+    <div className="wadah-grafik">
+      <svg className="grafik-riwayat grafik-lebar" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={alt}>
+        <line x1={kiri} x2={kiri + lebar} y1={atas} y2={atas} className="kisi" />
+        <line x1={kiri} x2={kiri + lebar} y1={atas + tinggi} y2={atas + tinggi} className="kisi" />
+        {garisNol != null && (
+          <line x1={kiri} x2={kiri + lebar} y1={garisNol} y2={garisNol} className="kisi-nol" />
+        )}
+        <text x={kiri - 8} y={atas + 4} textAnchor="end" className="sumbu">{label(max)}</text>
+        <text x={kiri - 8} y={atas + tinggi + 4} textAnchor="end" className="sumbu">{label(min)}</text>
+        {labelNol && (
+          <text x={kiri - 8} y={garisNol + 4} textAnchor="end" className="sumbu">0</text>
+        )}
+        <text x={kiri} y={H - 8} className="sumbu">{periode(awal)}</text>
+        <text x={kiri + lebar} y={H - 8} textAnchor="end" className="sumbu">{periode(akhir)}</text>
+        <path d={d} className="garis" />
+        {sorot != null && data[sorot] && (
+          <>
+            <line x1={x(sorot)} x2={x(sorot)} y1={atas} y2={atas + tinggi} className="sorot-garis" />
+            <circle cx={x(sorot)} cy={y(data[sorot][1])} r="5" className="sorot-titik" />
+          </>
+        )}
+      </svg>
+    </div>
   );
 }
 
@@ -136,7 +139,7 @@ export function GrafikKelompok({ kelompok }: { kelompok: { nama: string; titik: 
           `Terendah ${persen(rendah[1])} pada ${periode(rendah[0])}, tertinggi ${persen(puncak[1])} pada ${periode(puncak[0])}, ` +
           `terakhir ${persen(akhir[1])}.`;
         return (
-          <figure key={nama} className="grafik-kelompok">
+          <figure key={nama} className="grafik-kelompok wadah-grafik">
             <figcaption>{nama}</figcaption>
             <svg className="grafik-riwayat" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={alt}>
               <line x1={kiri} x2={kiri + lebar} y1={y(max)} y2={y(max)} className="kisi" />
@@ -227,25 +230,27 @@ export function GrafikPerkiraan({
       : ".");
   const xBatas = x(terakhir[0]);
   return (
-    <svg className="grafik-riwayat" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={alt}>
-      <line x1={kiri} x2={kiri + lebar} y1={atas} y2={atas} className="kisi" />
-      <line x1={kiri} x2={kiri + lebar} y1={atas + tinggi} y2={atas + tinggi} className="kisi" />
-      <text x={kiri - 6} y={atas + 4} textAnchor="end" className="sumbu">{angka(max, 1)}%</text>
-      <text x={kiri - 6} y={atas + tinggi + 4} textAnchor="end" className="sumbu">{angka(min, 1)}%</text>
-      <line x1={xBatas} x2={xBatas} y1={atas} y2={atas + tinggi} className="batas-resmi" />
-      <text x={xBatas - 5} y={atas - 9} textAnchor="end" className="sumbu kata">Resmi</text>
-      <text x={xBatas + 5} y={atas - 9} className="sumbu kata">Perkiraan</text>
-      {pita && <path d={pita} className="pita-rentang" />}
-      <path d={garis(riwayat)} className="garis" />
-      <path
-        d={garis([terakhir, ...ramalan.map((r): [string, number] => [r.periode, r.titik])])}
-        className="garis garis-putus"
-      />
-      <circle cx={x(akhir.periode)} cy={y(akhir.titik)} r={4} className="titik-akhir" />
-      <text x={x(akhir.periode) + 8} y={y(akhir.titik) + 4} className="sumbu-nilai">{teks(akhir.titik)}</text>
-      <text x={kiri} y={H - 6} className="sumbu">{periode(riwayat[0][0])}</text>
-      <text x={kiri + lebar} y={H - 6} textAnchor="end" className="sumbu">{periode(akhir.periode)}</text>
-    </svg>
+    <div className="wadah-grafik">
+      <svg className="grafik-riwayat grafik-perkiraan" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={alt}>
+        <line x1={kiri} x2={kiri + lebar} y1={atas} y2={atas} className="kisi" />
+        <line x1={kiri} x2={kiri + lebar} y1={atas + tinggi} y2={atas + tinggi} className="kisi" />
+        <text x={kiri - 6} y={atas + 4} textAnchor="end" className="sumbu">{angka(max, 1)}%</text>
+        <text x={kiri - 6} y={atas + tinggi + 4} textAnchor="end" className="sumbu">{angka(min, 1)}%</text>
+        <line x1={xBatas} x2={xBatas} y1={atas} y2={atas + tinggi} className="batas-resmi" />
+        <text x={xBatas - 5} y={atas - 9} textAnchor="end" className="sumbu kata">Resmi</text>
+        <text x={xBatas + 5} y={atas - 9} className="sumbu kata">Perkiraan</text>
+        {pita && <path d={pita} className="pita-rentang" />}
+        <path d={garis(riwayat)} className="garis" />
+        <path
+          d={garis([terakhir, ...ramalan.map((r): [string, number] => [r.periode, r.titik])])}
+          className="garis garis-putus"
+        />
+        <circle cx={x(akhir.periode)} cy={y(akhir.titik)} r={4} className="titik-akhir" />
+        <text x={x(akhir.periode) + 8} y={y(akhir.titik) + 4} className="sumbu-nilai">{teks(akhir.titik)}</text>
+        <text x={kiri} y={H - 6} className="sumbu">{periode(riwayat[0][0])}</text>
+        <text x={kiri + lebar} y={H - 6} textAnchor="end" className="sumbu">{periode(akhir.periode)}</text>
+      </svg>
+    </div>
   );
 }
 
@@ -287,29 +292,31 @@ export function GrafikJangkaPanjang({
     `Proyeksi IMF sampai ${akhirImf[0]} sebesar ${teks(akhirImf[1])}.` +
     (akhirTarget ? ` Target RPJMN ${akhirTarget[0]} sebesar ${teks(akhirTarget[1])}.` : "");
   return (
-    <svg className="grafik-riwayat grafik-sedang" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={alt}>
-      <line x1={kiri} x2={kiri + lebar} y1={atas} y2={atas} className="kisi" />
-      <line x1={kiri} x2={kiri + lebar} y1={y(min)} y2={y(min)} className="kisi" />
-      <line x1={kiri} x2={kiri + lebar} y1={y(0)} y2={y(0)} className="kisi-nol" />
-      <text x={kiri - 6} y={atas + 4} textAnchor="end" className="sumbu">{angka(max, 1)}%</text>
-      {min < 0 && <text x={kiri - 6} y={y(min) + 4} textAnchor="end" className="sumbu">{angka(min, 1)}%</text>}
-      <text x={kiri - 6} y={y(0) + 4} textAnchor="end" className="sumbu">0</text>
-      <path d={garis(resmi)} className="garis" />
-      <path d={garis([akhirResmi, ...imf])} className="garis garis-putus" />
-      {target.map(([p, v]) => (
-        <circle key={p} cx={x(p)} cy={y(v)} r={4.5} className="target-titik" />
-      ))}
-      <text x={x(akhirImf[0]) + 8} y={y(akhirImf[1]) + 4} className="sumbu-nilai">
-        <tspan className="kata">IMF</tspan> {teks(akhirImf[1])}
-      </text>
-      {akhirTarget && (
-        <text x={x(akhirTarget[0]) + 9} y={y(akhirTarget[1]) + 4} className="sumbu-nilai">
-          <tspan className="kata">RPJMN</tspan> {teks(akhirTarget[1])}
+    <div className="wadah-grafik">
+      <svg className="grafik-riwayat grafik-sedang" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={alt}>
+        <line x1={kiri} x2={kiri + lebar} y1={atas} y2={atas} className="kisi" />
+        <line x1={kiri} x2={kiri + lebar} y1={y(min)} y2={y(min)} className="kisi" />
+        <line x1={kiri} x2={kiri + lebar} y1={y(0)} y2={y(0)} className="kisi-nol" />
+        <text x={kiri - 6} y={atas + 4} textAnchor="end" className="sumbu">{angka(max, 1)}%</text>
+        {min < 0 && <text x={kiri - 6} y={y(min) + 4} textAnchor="end" className="sumbu">{angka(min, 1)}%</text>}
+        <text x={kiri - 6} y={y(0) + 4} textAnchor="end" className="sumbu">0</text>
+        <path d={garis(resmi)} className="garis" />
+        <path d={garis([akhirResmi, ...imf])} className="garis garis-putus" />
+        {target.map(([p, v]) => (
+          <circle key={p} cx={x(p)} cy={y(v)} r={4.5} className="target-titik" />
+        ))}
+        <text x={x(akhirImf[0]) + 8} y={y(akhirImf[1]) + 4} className="sumbu-nilai">
+          <tspan className="kata">IMF</tspan> {teks(akhirImf[1])}
         </text>
-      )}
-      <text x={kiri} y={H - 6} className="sumbu">{resmi[0][0]}</text>
-      <text x={kiri + lebar} y={H - 6} textAnchor="end" className="sumbu">{akhirImf[0]}</text>
-    </svg>
+        {akhirTarget && (
+          <text x={x(akhirTarget[0]) + 9} y={y(akhirTarget[1]) + 4} className="sumbu-nilai">
+            <tspan className="kata">RPJMN</tspan> {teks(akhirTarget[1])}
+          </text>
+        )}
+        <text x={kiri} y={H - 6} className="sumbu">{resmi[0][0]}</text>
+        <text x={kiri + lebar} y={H - 6} textAnchor="end" className="sumbu">{akhirImf[0]}</text>
+      </svg>
+    </div>
   );
 }
 
@@ -318,9 +325,10 @@ export function GrafikRonde({ titik, nama }: { titik: Titik[]; nama: string }) {
   if (titik.length < 2) return <p>Riwayat belum cukup untuk digambar.</p>;
   const W = 640;
   const H = 260;
-  const kiri = 56;
+  // Ruang kiri untuk label "44,3%" dan ruang kanan untuk "Februari 40,58%", yang di gambar kecil dibesarkan menjadi
+  // 17px (globals.css).
+  const kiri = 62;
   const atas = 12;
-  // Ruang kanan untuk label "Februari 40,58%", yang di HP dibesarkan menjadi 17px (globals.css).
   const lebar = W - kiri - 152;
   const tinggi = H - atas - 32;
   const tahun = (p: string) => Number(p.slice(0, 4));
@@ -339,24 +347,26 @@ export function GrafikRonde({ titik, nama }: { titik: Titik[]; nama: string }) {
     `Grafik ${nama}, satu garis per bulan survei, ${awal} sampai ${akhir}. ` +
     garis.map((g) => `${g.nama} ${tahun(g.terakhir[0])}: ${angka(g.terakhir[1], 2)}%.`).join(" ");
   return (
-    <svg className="grafik-riwayat grafik-ronde" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={alt}>
-      <line x1={kiri} x2={kiri + lebar} y1={atas} y2={atas} className="kisi" />
-      <line x1={kiri} x2={kiri + lebar} y1={atas + tinggi} y2={atas + tinggi} className="kisi" />
-      <text x={kiri - 8} y={atas + 4} textAnchor="end" className="sumbu">{angka(max, 1)}%</text>
-      <text x={kiri - 8} y={atas + tinggi + 4} textAnchor="end" className="sumbu">{angka(min, 1)}%</text>
-      <text x={kiri} y={H - 8} className="sumbu">{awal}</text>
-      <text x={kiri + lebar} y={H - 8} textAnchor="end" className="sumbu">{akhir}</text>
-      {garis.map((g, i) => (
-        <g key={g.nama}>
-          <path
-            d={g.isi.map(([p, v], j) => `${j ? "L" : "M"}${x(p).toFixed(1)} ${y(v).toFixed(1)}`).join("")}
-            className={i ? "garis garis-putus" : "garis"}
-          />
-          <text x={x(g.terakhir[0]) + 8} y={y(g.terakhir[1]) + 4} className="sumbu">
-            {g.nama} {angka(g.terakhir[1], 2)}%
-          </text>
-        </g>
-      ))}
-    </svg>
+    <div className="wadah-grafik">
+      <svg className="grafik-riwayat grafik-ronde" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={alt}>
+        <line x1={kiri} x2={kiri + lebar} y1={atas} y2={atas} className="kisi" />
+        <line x1={kiri} x2={kiri + lebar} y1={atas + tinggi} y2={atas + tinggi} className="kisi" />
+        <text x={kiri - 8} y={atas + 4} textAnchor="end" className="sumbu">{angka(max, 1)}%</text>
+        <text x={kiri - 8} y={atas + tinggi + 4} textAnchor="end" className="sumbu">{angka(min, 1)}%</text>
+        <text x={kiri} y={H - 8} className="sumbu">{awal}</text>
+        <text x={kiri + lebar} y={H - 8} textAnchor="end" className="sumbu">{akhir}</text>
+        {garis.map((g, i) => (
+          <g key={g.nama}>
+            <path
+              d={g.isi.map(([p, v], j) => `${j ? "L" : "M"}${x(p).toFixed(1)} ${y(v).toFixed(1)}`).join("")}
+              className={i ? "garis garis-putus" : "garis"}
+            />
+            <text x={x(g.terakhir[0]) + 8} y={y(g.terakhir[1]) + 4} className="sumbu">
+              {g.nama} {angka(g.terakhir[1], 2)}%
+            </text>
+          </g>
+        ))}
+      </svg>
+    </div>
   );
 }

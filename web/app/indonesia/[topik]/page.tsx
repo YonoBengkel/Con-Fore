@@ -1,5 +1,6 @@
 // Halaman rinci Harga, Kerja, dan Ekonomi (PRD 4.1), dengan urutan isi yang sama: jawaban, perbandingan, grafik
 // riwayat, rincian khusus, yang ikut memengaruhi, satu kalimat perkiraan, lalu penjelas, sumber, dan waktu data.
+// Di layar lebar, jawaban bersebelahan dengan grafiknya, dan perkiraan dengan penjelasannya (DESIGN.md, Tata letak).
 
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -73,43 +74,49 @@ export default async function HalamanRinci({ params }: Props) {
   const tanyaLanjut = TOPIK.find((x) => `/indonesia/${x.kunci}` === lanjut?.href)?.tanya ?? "Ke depan bagaimana?";
 
   return (
-    <div className="kolom kolom-lebar" data-topik={t.kunci}>
-      <BarisTanya kini={t.kunci} />
-      <h1>{t.tanya}</h1>
-      <p className="data-per">Angka per {tanggalWIB(status.last_success_at)}</p>
+    <div data-topik={t.kunci}>
+      <div className="kepala-halaman">
+        <BarisTanya kini={t.kunci} />
+        <div>
+          <h1>{t.tanya}</h1>
+          <p className="data-per">Angka per {tanggalWIB(status.last_success_at)}</p>
+        </div>
+      </div>
       <BannerBasi terakhir={status.last_success_at} />
 
-      {j ? (
-        <section className="blok blok-utama" aria-label="Jawaban">
-          <IsiJawaban j={j} />
-        </section>
-      ) : (
-        <p>Angka ini belum tersedia. Halaman ini terisi setelah pembaruan otomatis berikutnya berhasil.</p>
-      )}
+      <div className="kisi-rinci">
+        {j ? (
+          <section className="blok" aria-label="Jawaban">
+            <IsiJawaban j={j} />
+          </section>
+        ) : (
+          <p>Angka ini belum tersedia. Halaman ini terisi setelah pembaruan otomatis berikutnya berhasil.</p>
+        )}
 
-      {m && (
-        <section className="bagian panel" aria-labelledby="judul-riwayat">
-          <div className="panel-kepala">
-            <h2 id="judul-riwayat" className="judul-grafik">
-              {judulTemuan(titik, m.unit, m.concept) ?? "Riwayat"}
-            </h2>
-            <a href={`/api/csv/${m.series_id}`} download>
-              Unduh riwayat (CSV)
-            </a>
-          </div>
-          {titik.length < 2 ? (
-            <p>Riwayat belum cukup untuk digambar.</p>
-          ) : (
-            <RiwayatInteraktif
-              baris={barisRiwayat(titik, m.concept)}
-              nama={m.name_id}
-              satuan={m.unit}
-              konsep={m.concept}
-              frekuensi={m.frequency}
-            />
-          )}
-        </section>
-      )}
+        {m && (
+          <section className="panel" aria-labelledby="judul-riwayat">
+            <div className="panel-kepala">
+              <h2 id="judul-riwayat" className="judul-grafik">
+                {judulTemuan(titik, m.unit, m.concept) ?? "Riwayat"}
+              </h2>
+              <a href={`/api/csv/${m.series_id}`} download>
+                Unduh riwayat (CSV)
+              </a>
+            </div>
+            {titik.length < 2 ? (
+              <p>Riwayat belum cukup untuk digambar.</p>
+            ) : (
+              <RiwayatInteraktif
+                baris={barisRiwayat(titik, m.concept)}
+                nama={m.name_id}
+                satuan={m.unit}
+                konsep={m.concept}
+                frekuensi={m.frequency}
+              />
+            )}
+          </section>
+        )}
+      </div>
 
       {t.kunci === "harga" && <RincianInflasi grafik={grafik} />}
       {t.kunci === "kerja" && <RincianPekerja grafik={grafik} />}
@@ -132,76 +139,82 @@ export default async function HalamanRinci({ params }: Props) {
         </section>
       )}
 
-      <section className="bagian" data-topik="ke-depan" aria-labelledby="judul-ke-depan">
-        <h2 id="judul-ke-depan">Ke depan</h2>
-        {b ? (
-          <>
-            <p className="kalimat-perkiraan">{kalimatPerkiraan(t.awalanPerkiraan, b, t.desimal)}</p>
-            {kalimatRentang(b.lo80, b.hi80, t.desimal) == null && <p className="catatan">{TANPA_RENTANG}</p>}
-            <p className="label-angka label-perkiraan">
-              Perkiraan Con-Fore, bukan angka resmi. Dihitung {tanggal(b.origin_date)}.
-            </p>
-            <p className="arti">{ARTI_KEMUNGKINAN}</p>
-          </>
-        ) : (
-          <p>Perkiraan belum tersedia. Bagian ini terisi setelah pembaruan otomatis berikutnya berhasil.</p>
-        )}
-        <p>
-          <Link href={`/indonesia/ke-depan#perkiraan-${t.kartu}`}>Lihat perkiraan lengkap dan seberapa sering meleset</Link>
-        </p>
-      </section>
-
-      {m && n && (
-        <section className="bagian" aria-labelledby="judul-penjelas">
-          <h2 id="judul-penjelas">Penjelasan dan sumber</h2>
-          {penjelas && (
-            <details className="lipat">
-              <summary>{t.judulPenjelas}</summary>
-              <h3>Apa yang diukur</h3>
-              <p>{penjelas.ukur}</p>
-              <h3>Cara dan sumber</h3>
-              <p>{penjelas.cara}</p>
-              <h3>Cara membacanya</h3>
-              <p>{penjelas.baca}</p>
-              {simpulan && (
-                <>
-                  <h3>Yang bisa diambil</h3>
-                  <p>{simpulan}</p>
-                </>
+      <div className="dua-bagian dua-bagian-kotak">
+        <section data-topik="ke-depan" aria-labelledby="judul-ke-depan">
+          <h2 id="judul-ke-depan">Ke depan</h2>
+          {b ? (
+            <>
+              <p className="rata-kiri">{kalimatPerkiraan(t.awalanPerkiraan, b, t.desimal)}</p>
+              {kalimatRentang(b.lo80, b.hi80, t.desimal) == null && (
+                <p className="catatan rata-kiri">{TANPA_RENTANG}</p>
               )}
-            </details>
+              <p className="label-angka label-perkiraan">
+                Perkiraan Con-Fore, bukan angka resmi. Dihitung {tanggal(b.origin_date)}.
+              </p>
+              <p className="arti">{ARTI_KEMUNGKINAN}</p>
+            </>
+          ) : (
+            <p>Perkiraan belum tersedia. Bagian ini terisi setelah pembaruan otomatis berikutnya berhasil.</p>
           )}
-          <dl className="rincian">
-            <div>
-              <dt>Sumber</dt>
-              <dd>
-                <Sitasi teks={m.citation} />
-              </dd>
-            </div>
-            {n.release_date && (
-              <div>
-                <dt>Dirilis</dt>
-                <dd>{tanggal(n.release_date)}</dd>
-              </div>
-            )}
-            <div>
-              <dt>Dilihat Con-Fore</dt>
-              <dd>{tanggal(n.seen_date)}</dd>
-            </div>
-            {m.next_release_date && (
-              <div>
-                <dt>Rilis berikutnya</dt>
-                <dd>
-                  {tanggal(m.next_release_date)}, {keteranganJadwal(m, jadwal(m.series_id))}
-                </dd>
-              </div>
-            )}
-          </dl>
-          <p>
-            <Link href={`/indikator/${m.series_id}`}>Data lengkap angka ini dan unduhan CSV</Link>
+          <p className="rata-kiri">
+            <Link href={`/indonesia/ke-depan#perkiraan-${t.kartu}`}>
+              Lihat perkiraan lengkap dan seberapa sering meleset
+            </Link>
           </p>
         </section>
-      )}
+
+        {m && n && (
+          <section aria-labelledby="judul-penjelas">
+            <h2 id="judul-penjelas">Penjelasan dan sumber</h2>
+            {penjelas && (
+              <details className="lipat">
+                <summary>{t.judulPenjelas}</summary>
+                <h3>Apa yang diukur</h3>
+                <p>{penjelas.ukur}</p>
+                <h3>Cara dan sumber</h3>
+                <p>{penjelas.cara}</p>
+                <h3>Cara membacanya</h3>
+                <p>{penjelas.baca}</p>
+                {simpulan && (
+                  <>
+                    <h3>Yang bisa diambil</h3>
+                    <p>{simpulan}</p>
+                  </>
+                )}
+              </details>
+            )}
+            <dl className="rincian">
+              <div>
+                <dt>Sumber</dt>
+                <dd>
+                  <Sitasi teks={m.citation} />
+                </dd>
+              </div>
+              {n.release_date && (
+                <div>
+                  <dt>Dirilis</dt>
+                  <dd>{tanggal(n.release_date)}</dd>
+                </div>
+              )}
+              <div>
+                <dt>Dilihat Con-Fore</dt>
+                <dd>{tanggal(n.seen_date)}</dd>
+              </div>
+              {m.next_release_date && (
+                <div>
+                  <dt>Rilis berikutnya</dt>
+                  <dd>
+                    {tanggal(m.next_release_date)}, {keteranganJadwal(m, jadwal(m.series_id))}
+                  </dd>
+                </div>
+              )}
+            </dl>
+            <p className="rata-kiri">
+              <Link href={`/indikator/${m.series_id}`}>Data lengkap angka ini dan unduhan CSV</Link>
+            </p>
+          </section>
+        )}
+      </div>
 
       {lanjut && (
         <Berikutnya tautan={[{ href: lanjut.href, tanya: tanyaLanjut, teks: `Lanjut ke ${lanjut.nama}` }]} />

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { DARAT, INDONESIA, KOTAK_PETA } from "@/lib/peta";
 
 type Props = {
-  /** Tanpa nama Indonesia dan garis penunjuknya. Dipakai saat globe gagal dimuat, karena tautan nama di atas globe
+  /** Tanpa nama Indonesia dan garis penunjuknya. Dipakai saat globe gagal dimuat, karena tautan nama di dekat globe
    *  tetap ada di sana, jadi tidak perlu tautan kedua. */
   tanpaNama?: boolean;
 };
