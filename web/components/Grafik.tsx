@@ -118,9 +118,10 @@ export function GrafikKelompok({ kelompok }: { kelompok: { nama: string; titik: 
   if (!isi.length) return <p>Riwayat belum cukup untuk digambar.</p>;
   const W = 320;
   const H = 150;
-  const kiri = 44;
+  // Ruang kiri dan kanan untuk label dua angka di depan koma, misalnya "12,6%".
+  const kiri = 48;
   const atas = 10;
-  const lebar = W - kiri - 44;
+  const lebar = W - kiri - 50;
   const tinggi = H - atas - 24;
   const nilai = isi.flatMap((k) => k.titik.map((t) => t[1]));
   const min = Math.min(0, ...nilai);

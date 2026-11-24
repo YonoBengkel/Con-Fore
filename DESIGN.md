@@ -78,7 +78,7 @@ Gaya 3, terang dan ramah, dipilih pengelola 2026-11-22 dari tiga contoh gaya: ge
 
 - HTML semantik (`header`, `nav`, `main`, `section` berjudul, `table` dengan `caption` dan `scope`), dan tautan "Langsung ke isi".
 - Fokus keyboard selalu terlihat, dan tidak tertutup kepala yang menempel.
-- Kontras teks minimal 4,5:1.
+- Kontras teks minimal 4,5:1. Garis data, titik, garis nol, dan batas antara resmi dan perkiraan di grafik minimal 3:1. Kisi dan pita rentang sengaja lebih pucat, karena nilainya juga tertulis di label sumbu, kalimat rentang, dan tabel rincian.
 - Tidak ada geser horizontal halaman di lebar 320 px, dan tabel lebar digulir di wadahnya sendiri.
 - Globe punya tautan teks di dekatnya, dan kanvasnya disembunyikan dari pembaca layar. Globe berhenti saat kursor ada di atas bola atau saat tautan namanya disorot kursor atau fokus keyboard, dan tidak berputar bagi yang memilih kurangi animasi. Putarannya mulai sendiri dan berlangsung lebih dari lima detik, jadi klik pada bola menghentikannya, dan fokus keyboard di tautan namanya menghentikannya sampai globe diseret atau diklik (WCAG 2.2.2). Sisi lain globe bisa dilihat tanpa menyeret: globe berputar sendiri di komputer, dan di HP atau bagi yang memilih kurangi animasi, ketukan atau klik pada bola menghadapkan titik itu (WCAG 2.5.7). Halaman negara selalu bisa dibuka dengan klik, ketukan, atau tautannya. Di mode warna paksa, kotak legenda tetap berwarna asli seperti kanvas globe. Bila globe gagal dimuat, tautan nama di dekatnya tetap di tempatnya, jadi fokus keyboard tidak hilang.
 
