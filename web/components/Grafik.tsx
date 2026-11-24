@@ -1,6 +1,7 @@
 // Grafik garis sederhana sebagai SVG, digambar di server (browser hanya menerima SVG jadi).
 // Setiap grafik dibungkus .wadah-grafik, karena ukuran labelnya dihitung dari lebar wadahnya (globals.css).
 
+import { teksGrafikBanding, type BarisBanding } from "@/lib/banding";
 import type { Titik } from "@/lib/data";
 import { angka, desimalUntuk, periode } from "@/lib/format";
 import { jarangkan } from "@/lib/riwayat";
@@ -316,6 +317,79 @@ export function GrafikJangkaPanjang({
         )}
         <text x={kiri} y={H - 6} className="sumbu">{resmi[0][0]}</text>
         <text x={kiri + lebar} y={H - 6} textAnchor="end" className="sumbu">{akhirImf[0]}</text>
+      </svg>
+    </div>
+  );
+}
+
+/** Tinggi dua label di ujung garis, dijauhkan sama rata bila jaraknya kurang dari `jarak`. */
+function pisahLabel(a: number, b: number, jarak: number): [number, number] {
+  const kurang = jarak - Math.abs(a - b);
+  if (kurang <= 0) return [a, b];
+  const geser = (a <= b ? -kurang : kurang) / 2;
+  return [a + geser, b - geser];
+}
+
+/**
+ * Proyeksi IMF untuk Indonesia dan satu negara lain. Kedua garis putus-putus karena sama-sama proyeksi, dan
+ * dibedakan dengan warna, pola putusnya, dan nama di ujung garis. Lebar gambarnya 300 supaya teksnya tetap
+ * terbaca di HP dan di kartu tiga kolom.
+ */
+export function GrafikBanding({ baris, negara, nama }: { baris: BarisBanding[]; negara: string; nama: string }) {
+  if (baris.length < 2) return <p>Proyeksinya belum cukup untuk digambar.</p>;
+  const W = 300;
+  const H = 190;
+  const kiri = 44;
+  const kanan = 84;
+  const atas = 14;
+  const lebar = W - kiri - kanan;
+  const tinggi = H - atas - 26;
+  const nilai = baris.flatMap((b) => [b.indonesia, b.lain]);
+  const min = Math.min(0, ...nilai);
+  const max = Math.max(0, ...nilai);
+  const awal = baris[0];
+  const akhir = baris[baris.length - 1];
+  const x = (tahun: number) => kiri + ((tahun - awal.tahun) / (akhir.tahun - awal.tahun)) * lebar;
+  const y = (v: number) => atas + tinggi - ((v - min) / (max - min || 1)) * tinggi;
+  const garis = (ambil: (b: BarisBanding) => number) =>
+    baris.map((b, i) => `${i ? "L" : "M"}${x(b.tahun).toFixed(1)} ${y(ambil(b)).toFixed(1)}`).join("");
+  const teks = (v: number) => `${angka(v, 1)}%`;
+  const ujung = kiri + lebar;
+  const [labelIndonesia, labelLain] = pisahLabel(y(akhir.indonesia), y(akhir.lain), 16);
+  const label = [
+    { nama: negara, titik: y(akhir.lain), teks: labelLain, kelas: "titik-akhir titik-lain" },
+    { nama: "Indonesia", titik: y(akhir.indonesia), teks: labelIndonesia, kelas: "titik-akhir" },
+  ];
+  return (
+    <div className="wadah-grafik">
+      <svg
+        className="grafik-riwayat grafik-banding"
+        viewBox={`0 0 ${W} ${H}`}
+        role="img"
+        aria-label={teksGrafikBanding(nama, negara, baris)}
+      >
+        <line x1={kiri} x2={ujung} y1={y(max)} y2={y(max)} className="kisi" />
+        <line x1={kiri} x2={ujung} y1={y(min)} y2={y(min)} className="kisi" />
+        <line x1={kiri} x2={ujung} y1={y(0)} y2={y(0)} className="kisi-nol" />
+        {max > 0 && <text x={kiri - 6} y={y(max) + 4} textAnchor="end" className="sumbu">{teks(max)}</text>}
+        {min < 0 && <text x={kiri - 6} y={y(min) + 4} textAnchor="end" className="sumbu">{teks(min)}</text>}
+        {/* Label 0 dilewati bila menimpa label nilai terendah. */}
+        {(min === 0 || y(min) - y(0) > 15) && (
+          <text x={kiri - 6} y={y(0) + 4} textAnchor="end" className="sumbu">0</text>
+        )}
+        <text x={kiri} y={H - 6} className="sumbu">{awal.tahun}</text>
+        <text x={ujung} y={H - 6} textAnchor="end" className="sumbu">{akhir.tahun}</text>
+        <path d={garis((b) => b.lain)} className="garis garis-putus garis-lain" />
+        <path d={garis((b) => b.indonesia)} className="garis garis-putus" />
+        {label.map((l) => (
+          <g key={l.nama}>
+            {l.teks !== l.titik && (
+              <line x1={ujung + 4} x2={ujung + 11} y1={l.titik} y2={l.teks} className="garis-label" />
+            )}
+            <circle cx={ujung} cy={l.titik} r={4} className={l.kelas} />
+            <text x={ujung + 13} y={l.teks + 4} className="sumbu-nilai kata">{l.nama}</text>
+          </g>
+        ))}
       </svg>
     </div>
   );

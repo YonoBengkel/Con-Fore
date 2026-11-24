@@ -10,6 +10,7 @@ import { GrafikJangkaPanjang, GrafikPerkiraan } from "@/components/Grafik";
 import { JsonLd } from "@/components/JsonLd";
 import { Sitasi } from "@/components/Kartu";
 import { BannerBasi } from "@/components/Klien";
+import { ALAMAT_BANDING } from "@/lib/banding";
 import {
   bacaGrafik,
   bacaMeta,
@@ -43,9 +44,8 @@ import {
   kalimatJangkaPanjang,
   kalimatPerkiraan,
   kalimatRentang,
-  nilaiTahunPerkiraan,
+  nilaiPerTahun,
   persen,
-  tahunPerkiraan,
   type NilaiTahun,
   type TargetPrediksi,
 } from "@/lib/prediksi";
@@ -214,11 +214,9 @@ function KartuPerkiraan({
 }
 
 function TabelImf({
-  tahun,
   nilai,
   imf,
 }: {
-  tahun: number[];
   nilai: Map<number, NilaiTahun>;
   imf: Record<"pertumbuhan" | "inflasi" | "pengangguran", Titik[]>;
 }) {
@@ -241,14 +239,21 @@ function TabelImf({
         </thead>
         <tbody>
           {baris.flatMap(({ kunci, nama, d }) =>
-            tahun.map((t) => {
-              const c = nilai.get(t)?.[kunci];
+            [...nilai].map(([t, isi]) => {
+              const c = isi[kunci];
               const i = imf[kunci].find((x) => x[0] === String(t))?.[1];
               return (
                 <tr key={`${kunci}-${t}`}>
                   <th scope="row">{nama}</th>
                   <td className="angka">{t}</td>
-                  <td className="angka">{c != null ? persen(c, d) : "-"}</td>
+                  <td className="angka">
+                    {c ? persen(c.nilai, d) : <span className="status-tanggal">belum diramal</span>}
+                    {c?.resmi && (
+                      <span className="status-tanggal">
+                        {kunci === "pertumbuhan" ? "dihitung dari angka resmi BPS" : "angka resmi BPS"}
+                      </span>
+                    )}
+                  </td>
                   <td className="angka">{i != null ? persen(i, d) : "-"}</td>
                 </tr>
               );
@@ -290,22 +295,10 @@ export default async function KeDepan() {
   }
 
   const sitasi = (seri: string) => meta.find((m) => m.series_id === seri)?.citation;
-  const resmiPer = (kunci: string) => titikSeri(grafik, TARGET_PREDIKSI.find((t) => t.kunci === kunci)!.seri);
-  const jalur = {
-    pdb: jalurPer.get("pertumbuhan")!,
-    inflasi: jalurPer.get("inflasi")!,
-    tpt: jalurPer.get("pengangguran")!,
-  };
-  const resmi = { pdb: resmiPer("pertumbuhan"), inflasi: resmiPer("inflasi"), tpt: resmiPer("pengangguran") };
-  const dibuat = jalur.inflasi[0].origin_date;
+  const dibuat = jalurPer.get("inflasi")![0].origin_date;
 
-  // Pembanding IMF: tahun perkiraan dan tahun sesudahnya.
-  const tahun = tahunPerkiraan(jalur.pdb);
-  const nilaiTahun = new Map<number, NilaiTahun>();
-  for (const t of tahun != null ? [tahun, tahun + 1] : []) {
-    const n = nilaiTahunPerkiraan(t, resmi, jalur);
-    if (n) nilaiTahun.set(t, n);
-  }
+  // Pembanding IMF: tahun perkiraan sampai tahun terakhir yang diramal.
+  const nilaiTahun = nilaiPerTahun(ramalan, (seri) => titikSeri(grafik, seri));
 
   // Jangka panjang.
   const resmiTahunan = titikSeri(grafik, SERI_PDB_TAHUNAN);
@@ -432,12 +425,12 @@ export default async function KeDepan() {
           <h2 id="judul-imf">Dibanding proyeksi IMF</h2>
           <p className="catatan">
             IMF memperbarui proyeksinya dua kali setahun, April dan Oktober, jadi angkanya bisa tertinggal dari data
-            terbaru. Angka Con-Fore untuk pengangguran memakai survei Agustus, atau perkiraan terakhir yang tersedia bila
-            survei itu masih terlalu jauh.
+            terbaru. Angka Con-Fore untuk pengangguran hanya memakai survei Agustus. Angka yang sudah terbit diberi label
+            angka resmi BPS, dan yang masih terlalu jauh ditulis belum diramal.
           </p>
         </div>
         <div>
-          <TabelImf tahun={[...nilaiTahun.keys()]} nilai={nilaiTahun} imf={imfTahunan} />
+          <TabelImf nilai={nilaiTahun} imf={imfTahunan} />
           {sitasiImf && (
             <p className="catatan sitasi">
               Sumber proyeksi: <Sitasi teks={sitasiImf} />
@@ -516,7 +509,14 @@ export default async function KeDepan() {
       </section>
 
       <Berikutnya
-        tautan={[{ href: "/indonesia", tanya: "Kembali ke ringkasan", teks: "Lihat keempat jawaban di halaman Indonesia" }]}
+        tautan={[
+          {
+            href: ALAMAT_BANDING,
+            tanya: "Dibanding negara lain?",
+            teks: "Lihat proyeksi IMF untuk Indonesia dan satu negara ASEAN pilihanmu",
+          },
+          { href: "/indonesia", tanya: "Kembali ke ringkasan", teks: "Lihat keempat jawaban di halaman Indonesia" },
+        ]}
       />
     </div>
   );

@@ -6,9 +6,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-/** Menu atas hanya Indonesia dan Tentang data; logo kembali ke peta dunia (PRD 4.1). */
+/** Menu atas: Indonesia, Banding, dan Tentang data; logo kembali ke halaman depan (PRD 4.1). */
 const MENU = [
   { href: "/indonesia", teks: "Indonesia", juga: "/indikator" },
+  { href: "/banding/malaysia", teks: "Banding", juga: "/banding" },
   { href: "/tentang-data", teks: "Tentang data" },
 ];
 
@@ -18,8 +19,9 @@ export function NavUtama() {
     <nav aria-label="Utama" className="nav-utama">
       {MENU.map((m) => {
         const aktif = jalur.startsWith(m.href) || (m.juga != null && jalur.startsWith(m.juga));
+        // Di halaman bawahannya, misalnya /banding/thailand, tautan menu menuju halaman lain.
         return (
-          <Link key={m.href} href={m.href} aria-current={aktif ? "page" : undefined}>
+          <Link key={m.href} href={m.href} aria-current={jalur === m.href ? "page" : aktif ? true : undefined}>
             {m.teks}
           </Link>
         );

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import Link from "next/link";
 import { NavUtama } from "@/components/Klien";
+import { ALAMAT_BANDING } from "@/lib/banding";
 import { DESKRIPSI_SITUS } from "@/lib/situs";
 import "./globals.css";
 
@@ -67,6 +68,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </li>
                 <li>
                   <Link href="/indonesia/ke-depan">Perkiraan ke depan</Link>
+                </li>
+                <li>
+                  <Link href={ALAMAT_BANDING}>Banding negara</Link>
                 </li>
                 <li>
                   <Link href="/tentang-data#label">Arti label</Link>

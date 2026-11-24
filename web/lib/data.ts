@@ -176,6 +176,17 @@ export const bacaSumber = () =>
 export const bacaMeta = () =>
   baca<MetaSeri>("series_meta", "select=*&order=series_id", { wajib: true });
 
+/**
+ * Meta beberapa seri saja, untuk halaman Banding. Alamat permintaannya berbeda untuk setiap daftar, jadi seri negara yang
+ * baru ditambah langsung terbaca saat build, walau cache build masih menyimpan jawaban dari sebelum seri itu ada.
+ */
+export const bacaMetaSeri = (ids: string[]) =>
+  baca<MetaSeri>(
+    "series_meta",
+    `select=*&series_id=in.(${ids.filter((id) => POLA_ID.test(id)).join(",")})&order=series_id`,
+    { wajib: true },
+  );
+
 export const bacaNilai = () =>
   baca<NilaiTerakhir>("latest_values", "select=*&order=series_id", { wajib: true });
 

@@ -120,15 +120,16 @@ export default async function TentangData() {
           </li>
           <li>
             <span className="lencana lencana-perkiraan">perkiraan Con-Fore</span> Hasil perhitungan Con-Fore untuk
-            periode yang belum terbit, di bagian dan halaman Ke depan.
+            periode yang belum terbit, di bagian dan halaman Ke depan, dan di halaman Banding untuk Indonesia.
           </li>
           <li>
-            <span className="lencana">proyeksi IMF</span> Proyeksi IMF World Economic Outlook apa adanya.
+            <span className="lencana lencana-perkiraan">proyeksi IMF</span> Proyeksi IMF World Economic Outlook apa
+            adanya, di halaman Ke depan dan Banding.
           </li>
         </ul>
         <p>
-          Perkiraan hanya ada di bagian Ke depan, dengan label sendiri. Angka lain di halaman Indonesia dan halaman
-          rinci adalah angka yang sudah terbit.
+          Perkiraan hanya ada di bagian Ke depan dan di halaman Banding, dengan label sendiri. Angka lain di halaman
+          Indonesia dan halaman rinci adalah angka yang sudah terbit.
         </p>
 
         <h2 id="pembaruan">Kapan diperbarui</h2>

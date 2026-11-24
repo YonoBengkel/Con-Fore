@@ -1,6 +1,7 @@
 // Kartu angka (tiga angka utama dan panel penggerak), sitasi bertaut, dan tabel target resmi.
 
 import Link from "next/link";
+import { Fragment } from "react";
 import type { MetaSeri, NilaiTerakhir, Target, Titik } from "@/lib/data";
 import { angka, nilaiPendek, perubahan, periode, tanggal } from "@/lib/format";
 import {
@@ -12,7 +13,7 @@ import {
 } from "@/lib/konten";
 import { GarisKecil } from "./Grafik";
 
-/** Teks sitasi dengan URL di dalamnya dijadikan tautan. */
+/** Teks sitasi dengan URL di dalamnya dijadikan tautan, yang boleh dipotong sesudah garis miring. */
 export function Sitasi({ teks }: { teks: string }) {
   const bagian = teks.split(/(https?:\/\/\S+)/);
   return (
@@ -20,7 +21,12 @@ export function Sitasi({ teks }: { teks: string }) {
       {bagian.map((b, i) =>
         /^https?:\/\//.test(b) ? (
           <a key={i} href={b} rel="noopener noreferrer">
-            {b.replace(/^https?:\/\//, "")}
+            {b.replace(/^https?:\/\//, "").split("/").map((ruas, j) => (
+              <Fragment key={j}>
+                {j > 0 && <>/<wbr /></>}
+                {ruas}
+              </Fragment>
+            ))}
           </a>
         ) : (
           b

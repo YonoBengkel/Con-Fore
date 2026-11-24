@@ -5,8 +5,11 @@ import type { BarisRamalan, BarisRekam, SkorBacktest, Target, Titik } from "./da
 import { angka, periode } from "./format.ts";
 import type { KunciKartu } from "./konten.ts";
 
-/** Angka tahunan ketiga target: pertumbuhan, inflasi akhir tahun, dan pengangguran Agustus. */
-export type NilaiTahun = { pertumbuhan: number; inflasi: number; pengangguran: number };
+/** Satu angka tahunan: angka resmi BPS yang sudah terbit, atau perkiraan Con-Fore. */
+export type AngkaTahun = { nilai: number; resmi: boolean };
+
+/** Angka tahunan ketiga target. Null: angkanya belum terbit dan belum diramal. */
+export type NilaiTahun = Record<KunciKartu, AngkaTahun | null>;
 
 /** Pengganti rentang bila uji dengan data lama untuk jarak itu belum cukup (PRD 4.1 prinsip 4). */
 export const TANPA_RENTANG = "Rentangnya belum tersedia, karena uji dengan data lama untuk jarak ini masih sedikit.";
@@ -120,27 +123,52 @@ export function tahunPerkiraan(jalurPdb: BarisRamalan[]): number | null {
 }
 
 /** Angka resmi periode itu, atau angka utama perkiraannya. */
-function resmiAtauRamalan(p: string, resmi: Titik[], jalur: BarisRamalan[]): number | null {
-  return resmi.find((t) => t[0] === p)?.[1] ?? jalur.find((b) => b.ref_period === p)?.point ?? null;
+function resmiAtauRamalan(p: string, resmi: Titik[], jalur: BarisRamalan[]): AngkaTahun | null {
+  const terbit = resmi.find((t) => t[0] === p);
+  if (terbit) return { nilai: terbit[1], resmi: true };
+  const ramalan = jalur.find((b) => b.ref_period === p);
+  return ramalan ? { nilai: ramalan.point, resmi: false } : null;
+}
+
+type ResmiPer = { pdb: Titik[]; inflasi: Titik[]; tpt: Titik[] };
+type JalurPer = { pdb: BarisRamalan[]; inflasi: BarisRamalan[]; tpt: BarisRamalan[] };
+
+/**
+ * Angka tahunan: pertumbuhan dari rata-rata y-on-y empat kuartal (2025: 5,105, resminya 5,11), inflasi dari
+ * Desember, dan TPT hanya dari survei Agustus, yang juga dipakai IMF untuk Indonesia. Survei Agustus yang
+ * terlalu jauh untuk diramal tidak diganti ronde lain, karena ronde yang berbeda bulan tidak sepadan.
+ */
+export function nilaiTahunPerkiraan(tahun: number, resmi: ResmiPer, jalur: JalurPer): NilaiTahun {
+  const kuartal = [1, 2, 3, 4]
+    .map((q) => resmiAtauRamalan(`${tahun}-Q${q}`, resmi.pdb, jalur.pdb))
+    .filter((k) => k != null);
+  return {
+    pertumbuhan:
+      kuartal.length === 4
+        ? { nilai: kuartal.reduce((a, k) => a + k.nilai, 0) / 4, resmi: kuartal.every((k) => k.resmi) }
+        : null,
+    inflasi: resmiAtauRamalan(`${tahun}-12`, resmi.inflasi, jalur.inflasi),
+    pengangguran: resmiAtauRamalan(`${tahun}-08`, resmi.tpt, jalur.tpt),
+  };
 }
 
 /**
- * Angka tahunan seperti pada segitiga. Pertumbuhan dari rata-rata y-on-y empat kuartal (2025: 5,105,
- * resminya 5,11), inflasi dari Desember, dan TPT dari ronde Agustus. Ronde Agustus yang belum bisa
- * diramal memakai angka utama TPT yang terakhir, karena perkiraannya hanya dua rilis ke depan.
+ * Angka tahun perkiraan sampai tahun terakhir yang diramal, untuk tabel pembanding IMF. `titik` memberi angka resmi satu
+ * seri. Tahun tanpa satu pun angka tidak ikut.
  */
-export function nilaiTahunPerkiraan(
-  tahun: number,
-  resmi: { pdb: Titik[]; inflasi: Titik[]; tpt: Titik[] },
-  jalur: { pdb: BarisRamalan[]; inflasi: BarisRamalan[]; tpt: BarisRamalan[] },
-): NilaiTahun | null {
-  const kuartal = [1, 2, 3, 4].map((q) => resmiAtauRamalan(`${tahun}-Q${q}`, resmi.pdb, jalur.pdb));
-  const inflasi = resmiAtauRamalan(`${tahun}-12`, resmi.inflasi, jalur.inflasi);
-  const pengangguran =
-    resmiAtauRamalan(`${tahun}-08`, resmi.tpt, jalur.tpt) ?? jalur.tpt[jalur.tpt.length - 1]?.point ?? null;
-  if (kuartal.some((k) => k == null) || inflasi == null || pengangguran == null) return null;
-  const pertumbuhan = (kuartal as number[]).reduce((a, b) => a + b, 0) / 4;
-  return { pertumbuhan, inflasi, pengangguran };
+export function nilaiPerTahun(ramalan: BarisRamalan[], titik: (seri: string) => Titik[]): Map<number, NilaiTahun> {
+  const seri = (kunci: KunciKartu) => TARGET_PREDIKSI.find((t) => t.kunci === kunci)!.seri;
+  const [pdb, inflasi, tpt] = [seri("pertumbuhan"), seri("inflasi"), seri("pengangguran")];
+  const resmi = { pdb: titik(pdb), inflasi: titik(inflasi), tpt: titik(tpt) };
+  const jalur = { pdb: jalurUtama(ramalan, pdb), inflasi: jalurUtama(ramalan, inflasi), tpt: jalurUtama(ramalan, tpt) };
+  const awal = tahunPerkiraan(jalur.pdb);
+  const akhir = Math.max(...Object.values(jalur).flat().map((b) => Number(b.ref_period.slice(0, 4))));
+  const hasil = new Map<number, NilaiTahun>();
+  for (let tahun = awal ?? Infinity; tahun <= akhir; tahun++) {
+    const nilai = nilaiTahunPerkiraan(tahun, resmi, jalur);
+    if (Object.values(nilai).some((a) => a != null)) hasil.set(tahun, nilai);
+  }
+  return hasil;
 }
 
 /**
