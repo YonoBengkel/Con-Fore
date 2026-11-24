@@ -18,11 +18,11 @@ declare module "d3-geo" {
     translate(geser: Titik): this;
   }
 
-  /** Penggambar jalur yang menulis langsung ke konteks kanvas yang diberikan ke geoPath. */
-  export type Jalur = (objek: GeoObjek) => void;
-
   export function geoOrthographic(): Proyeksi;
-  export function geoPath(proyeksi: Proyeksi, konteks: CanvasRenderingContext2D): Jalur;
+  /** Luas bidang di layar dalam piksel persegi, dipakai tes untuk mencocokkan jalur buatan sendiri. */
+  export function geoPath(proyeksi: Proyeksi): { area(objek: GeoObjek): number };
+  /** Titik di sepanjang lingkaran besar dari a (0) ke b (1), dengan jaraknya dalam radian. */
+  export function geoInterpolate(a: Titik, b: Titik): ((bagian: number) => Titik) & { distance: number };
   export function geoContains(objek: GeoObjek, titik: Titik): boolean;
   export function geoCentroid(objek: GeoObjek): Titik;
   export function geoGraticule10(): GeoObjek;

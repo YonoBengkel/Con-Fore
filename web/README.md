@@ -21,7 +21,7 @@ npm start              # sajikan hasil build
 
 | Alamat | Isi |
 |---|---|
-| `/` | Judul dan globe kanvas dengan Indonesia sebagai satu-satunya negara yang tersedia. Peta dunia diam tampil bila JavaScript mati atau kanvas gagal. Tidak membaca Supabase |
+| `/` | Judul dan globe kanvas yang bisa diseret, dengan Indonesia sebagai satu-satunya negara yang tersedia. Peta dunia diam tampil bila JavaScript mati atau kanvas gagal. Tidak membaca Supabase |
 | `/indonesia` | Ringkasan bercerita, baris empat pertanyaan, lalu blok jawaban Harga, Kerja, Ekonomi, dan Ke depan |
 | `/indonesia/harga`, `/indonesia/kerja`, `/indonesia/ekonomi` | Halaman rinci (route `[topik]`, `dynamicParams = false`): jawaban dan perbandingan, grafik riwayat, rincian khusus, yang ikut memengaruhi, satu kalimat perkiraan, lalu penjelas, sumber, dan waktu data |
 | `/indonesia/ke-depan` | Tiga perkiraan dengan rentang dan grafik kipas, seberapa sering meleset, pembanding proyeksi IMF, dan jangka panjang. Bila `public.forecast_latest` kosong, halamannya menjelaskan bahwa perkiraan belum tersedia |
@@ -47,8 +47,9 @@ lib/muat.ts       pemuatan data bersama halaman Indonesia dan halaman rinci
 lib/jawaban.ts    jawaban, label, contoh, perbandingan dalam kalimat, dan ringkasan bercerita (dites di jawaban.test.ts)
 lib/konten.ts     empat pertanyaan (TOPIK), seri angka utama (SERI_KARTU), seri tahunan patokan, label, "artinya buatmu"
 lib/peta.ts       jalur SVG peta dunia sederhana, gambar diam pengganti globe
-lib/globe.ts      hitungan globe: memisahkan Indonesia, sudut putar, angkatan, dan uji kena (dites di globe.test.ts)
-lib/gambar-globe.ts  menggambar globe di kanvas dengan d3-geo, dimuat lewat import() hanya di halaman depan
+lib/globe.ts      hitungan globe: memisahkan Indonesia, jalur yang digambar, sudut putar, seretan, lemparan, angkatan,
+                  dan uji kena (dites di globe.test.ts)
+lib/gambar-globe.ts  menggambar globe di kanvas, dimuat lewat import() hanya di halaman depan
 lib/pekerja.ts    kalimat otomatis pekerja formal dan informal PRD 4.4 (dites di pekerja.test.ts)
 lib/rincian.ts    kalimat dan tabel kelompok harga PRD 4.4 (dites di rincian.test.ts)
 lib/prediksi.ts   angka utama, angka tahunan, dan kalimat perkiraan (dites di prediksi.test.ts)

@@ -97,6 +97,7 @@ function KartuPerkiraan({
     target.kunci === "inflasi" && terakhir ? kalimatEfekBasis(jalur, terakhir[1], bulanan) : null;
   const caraSama = new Set(jalur.map((b) => b.model)).size === 1;
   const pembanding = caraSama ? [...new Set(semua.map((b) => b.model))].filter((m) => m !== awal.model) : [];
+  // Delapan anak langsung: di layar lebar ketiga kartu berbagi baris yang sama (.kisi-utama di globals.css).
   return (
     <article className="kartu kartu-utama" id={`perkiraan-${target.kunci}`} data-topik={topik.kunci}>
       <h3 className="kartu-judul">{topik.nama}</h3>
@@ -106,9 +107,11 @@ function KartuPerkiraan({
       <p className="kartu-angka">
         <data value={awal.point}>{persen(awal.point, d)}</data>
       </p>
-      <p className="prediksi-kalimat">{kalimatPerkiraan(topik.awalanPerkiraan, awal, d)}</p>
-      {!adaRentang && <p className="catatan">{TANPA_RENTANG}</p>}
-      {akhir !== awal && <p className="prediksi-lanjut">{kalimatPerkiraan("Untuk", akhir, d)}</p>}
+      <div>
+        <p className="prediksi-kalimat">{kalimatPerkiraan(topik.awalanPerkiraan, awal, d)}</p>
+        {!adaRentang && <p className="catatan rata-kiri">{TANPA_RENTANG}</p>}
+        {akhir !== awal && <p className="prediksi-lanjut">{kalimatPerkiraan("Untuk", akhir, d)}</p>}
+      </div>
       <GrafikPerkiraan
         riwayat={riwayat.slice(target.kunci === "inflasi" ? -24 : target.kunci === "pertumbuhan" ? -12 : -8)}
         ramalan={jalur.map((b) => ({ periode: b.ref_period, titik: b.point, bawah: b.lo80, atas: b.hi80 }))}
@@ -119,91 +122,93 @@ function KartuPerkiraan({
       <p className="artinya">
         <strong>Artinya buatmu:</strong> {artinyaPerkiraan(target.kunci, awal.point)}
       </p>
-      <details className="rincian-kartu">
-        <summary>
-          Kenapa perkiraannya begini<span className="sr-only"> {target.judul}</span>
-        </summary>
-        <div className="lipat-isi">
-          {kalimatCara(target, jalur, skor).map((k) => (
-            <p key={k}>{k}</p>
-          ))}
-          {efekBasis && <p>{efekBasis}</p>}
-          <p>{UJI_PENGGERAK[target.kunci]}</p>
-          <p>
-            Rentangnya menggambarkan masa biasa. Guncangan besar seperti COVID bisa membuat angkanya jauh di luar
-            rentang ini.
-          </p>
-          <dl className="rincian">
-            {sitasi && (
+      <div>
+        <details className="rincian-kartu">
+          <summary>
+            Kenapa perkiraannya begini<span className="sr-only"> {target.judul}</span>
+          </summary>
+          <div className="lipat-isi">
+            {kalimatCara(target, jalur, skor).map((k) => (
+              <p key={k}>{k}</p>
+            ))}
+            {efekBasis && <p>{efekBasis}</p>}
+            <p>{UJI_PENGGERAK[target.kunci]}</p>
+            <p>
+              Rentangnya menggambarkan masa biasa. Guncangan besar seperti COVID bisa membuat angkanya jauh di luar
+              rentang ini.
+            </p>
+            <dl className="rincian">
+              {sitasi && (
+                <div>
+                  <dt>Angka resmi</dt>
+                  <dd>
+                    <Sitasi teks={sitasi} />
+                  </dd>
+                </div>
+              )}
               <div>
-                <dt>Angka resmi</dt>
-                <dd>
-                  <Sitasi teks={sitasi} />
-                </dd>
+                <dt>Perkiraan dihitung Con-Fore</dt>
+                <dd>{tanggal(awal.origin_date)}</dd>
               </div>
-            )}
-            <div>
-              <dt>Perkiraan dihitung Con-Fore</dt>
-              <dd>{tanggal(awal.origin_date)}</dd>
-            </div>
-          </dl>
-        </div>
-      </details>
-      <details className="rincian-kartu">
-        <summary>
-          Rincian per periode<span className="sr-only"> {target.judul}</span>
-        </summary>
-        <div className="lipat-isi">
-          <p>
-            {caraSama
-              ? `Angka utama memakai cara: ${NAMA_MODEL[awal.model] ?? awal.model}.`
-              : "Cara yang menjadi angka utama bisa berbeda antarperiode."}
-          </p>
-          <div className="gulir-tabel" role="region" aria-label={`Rincian perkiraan ${target.judul}`} tabIndex={0}>
-            <table className="kepala-bungkus">
-              <caption>Batas rentang 80% per periode</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Periode</th>
-                  <th scope="col">Perkiraan</th>
-                  <th scope="col">Batas bawah</th>
-                  <th scope="col">Batas atas</th>
-                  {!caraSama && <th scope="col">Cara</th>}
-                  {pembanding.map((m) => (
-                    <th scope="col" key={m}>
-                      {NAMA_MODEL[m] ?? m}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {jalur.map((b) => (
-                  <tr key={b.ref_period}>
-                    <th scope="row">{periode(b.ref_period)}</th>
-                    <td className="angka">{persen(b.point, d)}</td>
-                    <td className="angka">{b.lo80 != null ? persen(b.lo80, d) : "-"}</td>
-                    <td className="angka">{b.hi80 != null ? persen(b.hi80, d) : "-"}</td>
-                    {!caraSama && <td>{NAMA_MODEL[b.model] ?? b.model}</td>}
-                    {pembanding.map((m) => {
-                      const lain = semua.find((x) => x.model === m && x.ref_period === b.ref_period);
-                      return (
-                        <td className="angka" key={m}>
-                          {lain ? persen(lain.point, d) : "-"}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            </dl>
           </div>
-          <p>
-            <a href={`/api/csv/perkiraan/${target.kunci}`} download>
-              Unduh rincian ini (CSV)<span className="sr-only"> {target.judul}</span>
-            </a>
-          </p>
-        </div>
-      </details>
+        </details>
+        <details className="rincian-kartu">
+          <summary>
+            Rincian per periode<span className="sr-only"> {target.judul}</span>
+          </summary>
+          <div className="lipat-isi">
+            <p>
+              {caraSama
+                ? `Angka utama memakai cara: ${NAMA_MODEL[awal.model] ?? awal.model}.`
+                : "Cara yang menjadi angka utama bisa berbeda antarperiode."}
+            </p>
+            <div className="gulir-tabel" role="region" aria-label={`Rincian perkiraan ${target.judul}`} tabIndex={0}>
+              <table className="kepala-bungkus">
+                <caption>Batas rentang 80% per periode</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Periode</th>
+                    <th scope="col">Perkiraan</th>
+                    <th scope="col">Batas bawah</th>
+                    <th scope="col">Batas atas</th>
+                    {!caraSama && <th scope="col">Cara</th>}
+                    {pembanding.map((m) => (
+                      <th scope="col" key={m}>
+                        {NAMA_MODEL[m] ?? m}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {jalur.map((b) => (
+                    <tr key={b.ref_period}>
+                      <th scope="row">{periode(b.ref_period)}</th>
+                      <td className="angka">{persen(b.point, d)}</td>
+                      <td className="angka">{b.lo80 != null ? persen(b.lo80, d) : "-"}</td>
+                      <td className="angka">{b.hi80 != null ? persen(b.hi80, d) : "-"}</td>
+                      {!caraSama && <td>{NAMA_MODEL[b.model] ?? b.model}</td>}
+                      {pembanding.map((m) => {
+                        const lain = semua.find((x) => x.model === m && x.ref_period === b.ref_period);
+                        return (
+                          <td className="angka" key={m}>
+                            {lain ? persen(lain.point, d) : "-"}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="rata-kiri">
+              <a href={`/api/csv/perkiraan/${target.kunci}`} download>
+                Unduh rincian ini (CSV)<span className="sr-only"> {target.judul}</span>
+              </a>
+            </p>
+          </div>
+        </details>
+      </div>
     </article>
   );
 }
@@ -272,8 +277,10 @@ export default async function KeDepan() {
   if (!siap) {
     return (
       <>
-        <BarisTanya kini="ke-depan" />
-        <h1>Ke depan bagaimana?</h1>
+        <div className="kepala-halaman">
+          <BarisTanya kini="ke-depan" />
+          <h1>Ke depan bagaimana?</h1>
+        </div>
         <p>
           Perkiraan belum tersedia. Halaman ini terisi setelah pembaruan otomatis berikutnya berhasil. Sementara itu,
           angka resmi terakhir ada di halaman <Link href="/indonesia">Indonesia</Link>.
@@ -316,9 +323,13 @@ export default async function KeDepan() {
   return (
     <div data-topik="ke-depan">
       <JsonLd data={jsonLdPerkiraan(ramalan, meta)} />
-      <BarisTanya kini="ke-depan" />
-      <h1>Ke depan bagaimana?</h1>
-      <p className="data-per">Perkiraan terakhir dihitung {tanggal(dibuat)}</p>
+      <div className="kepala-halaman">
+        <BarisTanya kini="ke-depan" />
+        <div>
+          <h1>Ke depan bagaimana?</h1>
+          <p className="data-per">Perkiraan terakhir dihitung {tanggal(dibuat)}</p>
+        </div>
+      </div>
       <BannerBasi terakhir={status.last_success_at} />
       <p className="pengantar">
         {ARTI_KEMUNGKINAN} Pada grafik, garis utuh adalah angka resmi, garis putus-putus perkiraan, dan pita
@@ -349,82 +360,90 @@ export default async function KeDepan() {
         </div>
       </section>
 
-      <section className="bagian" aria-labelledby="judul-rekam">
-        <h2 id="judul-rekam">Seberapa sering meleset</h2>
-        {rekam.length > 0 && (
-          <ul className="banding">
-            {TOPIK.map((topik) => {
-              const t = TARGET_PREDIKSI.find((x) => x.kunci === topik.kartu)!;
-              const kalimat = kalimatCakupan(cakupanRentang(rekam, t.seri));
-              return kalimat ? (
-                <li key={topik.kunci}>
-                  <strong>{topik.nama}:</strong> {kalimat}
-                </li>
-              ) : null;
-            })}
-          </ul>
-        )}
-        {rekam.length ? (
-          <div className="gulir-tabel" role="region" aria-label="Perkiraan sungguhan dan angka rilisnya" tabIndex={0}>
-            <table className="kepala-bungkus">
-              <caption>Perkiraan terakhir sebelum angkanya terbit, dibanding rilis pertama</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Angka</th>
-                  <th scope="col">Periode</th>
-                  <th scope="col">Perkiraan</th>
-                  <th scope="col">Rilis pertama</th>
-                  <th scope="col">Meleset</th>
-                  <th scope="col">Rentang</th>
-                  <th scope="col">Di dalam rentang</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rekam.map((r) => {
-                  const t = TARGET_PREDIKSI.find((x) => x.seri === r.series_id);
-                  const d = t?.desimal ?? 2;
-                  const berentang = r.lo80 != null && r.hi80 != null;
-                  const masuk = berentang && r.first_release_actual >= r.lo80! && r.first_release_actual <= r.hi80!;
-                  return (
-                    <tr key={`${r.series_id}-${r.ref_period}-${r.model}`}>
-                      <th scope="row">{t?.judul ?? r.series_id}</th>
-                      <td>{periode(r.ref_period)}</td>
-                      <td className="angka">{persen(r.forecast, d)}</td>
-                      <td className="angka">{persen(r.first_release_actual, d)}</td>
-                      <td className="angka">{angka(r.abs_error, 2)} poin persen</td>
-                      <td className="angka">{berentang ? `${persen(r.lo80!, d)} sampai ${persen(r.hi80!, d)}` : "-"}</td>
-                      <td>{berentang ? (masuk ? "Ya" : "Tidak") : "-"}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p>
-            Belum ada yang bisa dinilai. Perkiraan pertama dibuat 7 November 2026, jadi baris pertama muncul setelah
-            angka resmi berikutnya terbit. Hasil yang meleset tetap ditampilkan.
+      <section className="bagian bagian-sisi" aria-labelledby="judul-rekam">
+        <div>
+          <h2 id="judul-rekam">Seberapa sering meleset</h2>
+          {rekam.length > 0 && (
+            <ul className="banding">
+              {TOPIK.map((topik) => {
+                const t = TARGET_PREDIKSI.find((x) => x.kunci === topik.kartu)!;
+                const kalimat = kalimatCakupan(cakupanRentang(rekam, t.seri));
+                return kalimat ? (
+                  <li key={topik.kunci}>
+                    <strong>{topik.nama}:</strong> {kalimat}
+                  </li>
+                ) : null;
+              })}
+            </ul>
+          )}
+        </div>
+        <div>
+          {rekam.length ? (
+            <div className="gulir-tabel" role="region" aria-label="Perkiraan sungguhan dan angka rilisnya" tabIndex={0}>
+              <table className="kepala-bungkus">
+                <caption>Perkiraan terakhir sebelum angkanya terbit, dibanding rilis pertama</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Angka</th>
+                    <th scope="col">Periode</th>
+                    <th scope="col">Perkiraan</th>
+                    <th scope="col">Rilis pertama</th>
+                    <th scope="col">Meleset</th>
+                    <th scope="col">Rentang</th>
+                    <th scope="col">Di dalam rentang</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rekam.map((r) => {
+                    const t = TARGET_PREDIKSI.find((x) => x.seri === r.series_id);
+                    const d = t?.desimal ?? 2;
+                    const berentang = r.lo80 != null && r.hi80 != null;
+                    const masuk = berentang && r.first_release_actual >= r.lo80! && r.first_release_actual <= r.hi80!;
+                    return (
+                      <tr key={`${r.series_id}-${r.ref_period}-${r.model}`}>
+                        <th scope="row">{t?.judul ?? r.series_id}</th>
+                        <td>{periode(r.ref_period)}</td>
+                        <td className="angka">{persen(r.forecast, d)}</td>
+                        <td className="angka">{persen(r.first_release_actual, d)}</td>
+                        <td className="angka">{angka(r.abs_error, 2)} poin persen</td>
+                        <td className="angka">{berentang ? `${persen(r.lo80!, d)} sampai ${persen(r.hi80!, d)}` : "-"}</td>
+                        <td>{berentang ? (masuk ? "Ya" : "Tidak") : "-"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p>
+              Belum ada yang bisa dinilai. Perkiraan pertama dibuat 7 November 2026, jadi baris pertama muncul setelah
+              angka resmi berikutnya terbit. Hasil yang meleset tetap ditampilkan.
+            </p>
+          )}
+          <p className="catatan">
+            Hasil uji setiap cara hitung dengan data lama ada di{" "}
+            <Link href="/tentang-data#uji">Tentang data</Link>.
           </p>
-        )}
-        <p className="catatan">
-          Hasil uji setiap cara hitung dengan data lama ada di{" "}
-          <Link href="/tentang-data#uji">Tentang data</Link>.
-        </p>
+        </div>
       </section>
 
-      <section className="bagian" aria-labelledby="judul-imf">
-        <h2 id="judul-imf">Dibanding proyeksi IMF</h2>
-        <p className="catatan">
-          IMF memperbarui proyeksinya dua kali setahun, April dan Oktober, jadi angkanya bisa tertinggal dari data
-          terbaru. Angka Con-Fore untuk pengangguran memakai survei Agustus, atau perkiraan terakhir yang tersedia bila
-          survei itu masih terlalu jauh.
-        </p>
-        <TabelImf tahun={[...nilaiTahun.keys()]} nilai={nilaiTahun} imf={imfTahunan} />
-        {sitasiImf && (
+      <section className="bagian bagian-sisi" aria-labelledby="judul-imf">
+        <div>
+          <h2 id="judul-imf">Dibanding proyeksi IMF</h2>
           <p className="catatan">
-            Sumber proyeksi: <Sitasi teks={sitasiImf} />
+            IMF memperbarui proyeksinya dua kali setahun, April dan Oktober, jadi angkanya bisa tertinggal dari data
+            terbaru. Angka Con-Fore untuk pengangguran memakai survei Agustus, atau perkiraan terakhir yang tersedia bila
+            survei itu masih terlalu jauh.
           </p>
-        )}
+        </div>
+        <div>
+          <TabelImf tahun={[...nilaiTahun.keys()]} nilai={nilaiTahun} imf={imfTahunan} />
+          {sitasiImf && (
+            <p className="catatan sitasi">
+              Sumber proyeksi: <Sitasi teks={sitasiImf} />
+            </p>
+          )}
+        </div>
       </section>
 
       {barisPanjang.length > 0 && (
@@ -438,7 +457,7 @@ export default async function KeDepan() {
                 imf={barisPanjang.map((b): Titik => [String(b.tahun), b.imf])}
                 target={barisPanjang.filter((b) => b.rpjmn != null).map((b): Titik => [String(b.tahun), b.rpjmn!])}
               />
-              <p className="catatan">
+              <p className="catatan rata-kiri">
                 Garis utuh: angka resmi. Garis putus-putus: proyeksi IMF. Titik berongga: target RPJMN.
                 {dokumenRpjmn && (
                   <>
