@@ -84,6 +84,10 @@ def check_series(items, source_ids):
                                       "dengan frekuensi sama")
         elif not item.get("dataset") or not item.get("query"):
             raise ConfigError(f"series.toml {sid}: butuh dataset dan query, atau derive")
+        elif (item.get("dated") or item.get("actual_only")) and (
+                item["dataset"] != "WEO" or "detail=dataonly" in item["query"]):
+            # Kolom PUBLICATION_DATE dan LATEST_ACTUAL_ANNUAL_DATA hanya ada di jawaban WEO yang lengkap.
+            raise ConfigError(f"series.toml {sid}: dated dan actual_only hanya untuk WEO tanpa detail=dataonly")
         elif item["source"] == "bps":
             # Format ketat (angka saja) juga mencegah key BPS tertulis di registri dan database.
             if not BPS_TABLE_ITEM.fullmatch(item["query"]):

@@ -15,8 +15,8 @@ from confore import cli, config, db, fetch, revalidate
 from confore.derive import chain, derive_all, ratio, share, yoy
 from confore.fetch import FetchError, Point
 from confore import publish
-from confore.publish import (calendar_releases, display_decimals, next_releases, previous_value, release_of,
-                             revision_rows)
+from confore.publish import (calendar_releases, display_decimals, last_release, next_releases, previous_value,
+                             release_of, revision_rows)
 
 
 def points(*pairs, frequency="Q"):
@@ -54,6 +54,26 @@ class ParseTest(unittest.TestCase):
         self.assertEqual([p.period for p in fetch.parse(body, "A", actual_only=True)], ["2025"])
         with self.assertRaises(FetchError):
             fetch.parse("TIME_PERIOD,OBS_VALUE\n2025,5.1\n", "A", actual_only=True)
+
+    def test_dated_reads_the_edition_date_in_wib(self):
+        head = "TIME_PERIOD,OBS_VALUE,PUBLICATION_DATE\n"
+        # 13 Oktober 2026 pukul 02.00 UTC = 09.00 WIB; pukul 18.00 UTC sudah tanggal berikutnya di WIB.
+        body = head + "2026,5.1,2026-10-13T02:00:00Z\n2027,5.2,2026-10-13T18:00:00Z\n"
+        self.assertEqual([p.release for p in fetch.parse(body, "A", dated=True)],
+                         [date(2026, 10, 13), date(2026, 10, 14)])
+        self.assertEqual([p.release for p in fetch.parse(body, "A")], [None, None])
+        for raw in ("", "x", "2026-10-13", "2026-10-13T02:00:00"):  # tanpa zona waktu, tanggal WIB-nya tidak pasti
+            with self.subTest(raw), self.assertRaisesRegex(FetchError, "tanpa tanggal terbit"):
+                fetch.parse(head + f"2026,5.1,{raw}\n", "A", dated=True)
+        with self.assertRaisesRegex(FetchError, "tanpa tanggal terbit"):
+            fetch.parse("TIME_PERIOD,OBS_VALUE\n2026,5.1\n", "A", dated=True)
+
+    def test_dated_key_reaches_the_parser(self):
+        item = {"source": "imf", "query": "IMF.RES,WEO/MYS.LUR.A?startPeriod=2024", "frequency": "A"}
+        body = "TIME_PERIOD,OBS_VALUE,PUBLICATION_DATE\n2026,3.0,2026-10-13T02:00:00Z\n"
+        with mock.patch.object(fetch, "get", return_value=body):
+            self.assertEqual(fetch.fetch_series({**item, "dated": True})[0].release, date(2026, 10, 13))
+            self.assertIsNone(fetch.fetch_series(item)[0].release)
 
     def test_contract_errors(self):
         cases = ["PERIOD,VALUE\n2025,1\n",                        # kolom berubah
@@ -297,6 +317,29 @@ class ConfigTest(unittest.TestCase):
         with self.assertRaises(config.ConfigError):
             config.check_calendar([row, dict(row)], series)
 
+    def test_comparison_series_cover_four_countries(self):
+        weo = {s["id"]: s for s in config.load()["series"] if s["id"].endswith("_weo_a")}
+        self.assertEqual(len(weo), 15)
+        for prefix, country in [("idn", "IDN"), ("mys", "MYS"), ("tha", "THA"), ("phl", "PHL"), ("vnm", "VNM")]:
+            for name, code in [("gdp_growth", "NGDP_RPCH"), ("cpi_eop", "PCPIEPCH"), ("unemp", "LUR")]:
+                item = weo[f"{prefix}_{name}_weo_a"]
+                with self.subTest(item["id"]):
+                    self.assertEqual(item.get("country", "IDN"), country)
+                    self.assertTrue(item["query"].startswith(f"IMF.RES,WEO/{country}.{code}.A?startPeriod="))
+                    self.assertTrue(item["dated"])
+                    twin = weo[f"idn_{name}_weo_a"]
+                    self.assertEqual((item["unit"], item["concept"], item["citation"]),
+                                     (twin["unit"], twin["concept"], twin["citation"]))
+
+    def test_rejects_dated_without_the_full_weo_answer(self):
+        base = {"id": "a", "source": "imf", "frequency": "A", "unit": "%", "concept": "yoy",
+                "name": "A", "citation": "c", "dataset": "WEO", "query": "IMF.RES,WEO/IDN.LUR.A?startPeriod=2024"}
+        for key in ("dated", "actual_only"):
+            self.assertIn("a", config.check_series([{**base, key: True}], {"imf"}))
+            for change in ({"query": base["query"] + "&detail=dataonly"}, {"dataset": "QNEA"}):
+                with self.subTest(key=key, **change), self.assertRaises(config.ConfigError):
+                    config.check_series([{**base, **change, key: True}], {"imf"})
+
     def test_rejects_derive_before_input(self):
         items = [{"id": "b", "source": "imf", "frequency": "Q", "unit": "%", "concept": "yoy",
                   "name": "B", "citation": "c", "derive": "yoy", "inputs": ["a"]}]
@@ -366,6 +409,17 @@ class TimeAndSafetyTest(unittest.TestCase):
         self.assertEqual(release_of(point._replace(seen=None), "s", released), date(2026, 11, 2))
         self.assertEqual(release_of(point._replace(release=date(2026, 11, 3)), "s", released), date(2026, 11, 3))
         self.assertIsNone(release_of(point._replace(period="2026-09"), "s", released))
+
+    def test_last_release_is_the_newest_edition_of_the_series(self):
+        # Edisi baru yang hanya mengubah 2027: angka 2026 dan 2031 tetap bertanggal edisi lama.
+        old, new = date(2026, 4, 14), date(2026, 10, 13)
+        rows = [Point(str(year), date(year, 1, 1), Decimal("3"), release=release)
+                for year, release in [(2026, old), (2027, new), (2031, old)]]
+        self.assertEqual(last_release(rows, old), new)
+        # Sumber tanpa tanggal (BPS): tanggal dari kalender tetap dipakai.
+        bare = [p._replace(release=None) for p in rows]
+        self.assertEqual(last_release(bare, old), old)
+        self.assertIsNone(last_release([], None))
 
     def test_display_decimals_match_the_site(self):
         # Sama dengan desimalUntuk di web/lib/format.ts.

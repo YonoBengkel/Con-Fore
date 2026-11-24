@@ -291,9 +291,10 @@ def save_fetch(conn, run_id, item, points, error, http_status, vintage, force=Fa
 def write_observations(cur, item, points, vintage):
     cur.execute("create temp table tmp_obs (like etl.observations including defaults) on commit drop")
     with cur.copy("""copy tmp_obs (series_id, period, vintage_date, period_start, value,
-                                   source_id, source_status) from stdin""") as copy:
+                                   release_date, source_id, source_status) from stdin""") as copy:
         for p in points:
-            copy.write_row((item["id"], p.period, vintage, p.start, p.value, item["source"], p.status))
+            copy.write_row((item["id"], p.period, vintage, p.start, p.value, p.release, item["source"],
+                            p.status))
     # Periode yang masih tampil tetapi tidak ada lagi di sumber: catat sebagai vintage NULL.
     cur.execute("""
         insert into tmp_obs (series_id, period, vintage_date, period_start, value, source_id)
@@ -328,7 +329,7 @@ def write_observations(cur, item, points, vintage):
         ) last on true
         where last.value is distinct from s.value
         on conflict (series_id, period, vintage_date) do update
-          set value = excluded.value, seen_at = now()
+          set value = excluded.value, release_date = excluded.release_date, seen_at = now()
           where etl.observations.value is distinct from excluded.value
     """)
     return removed + cur.rowcount

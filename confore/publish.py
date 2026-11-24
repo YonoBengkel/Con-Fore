@@ -52,6 +52,12 @@ def release_of(point, series_id, released):
     return release if release and (point.seen is None or release <= point.seen) else None
 
 
+def last_release(points, release):
+    """Tanggal rilis terakhir satu seri. Satu edisi sumber bisa mengubah periode mana pun, jadi untuk seri
+    yang sumbernya mencatat tanggal, yang dipakai tanggal paling baru di antara semua angkanya."""
+    return max((p.release for p in points if p.release), default=release)
+
+
 def display_decimals(size, concept):
     """Desimal angka tampil di situs untuk besar angka itu, sama dengan desimalUntuk di web/lib/format.ts."""
     if concept in ("rate", "round_rate"):
@@ -148,7 +154,7 @@ def publish(conn, cfg, status, today):
         release = release_of(last, item["id"], released) if last else None
         meta.append((item["id"], item["source"], item.get("country", "IDN"), item["name"],
                      item["unit"], item["concept"], item["frequency"], item["citation"],
-                     last.period if last else None, release,
+                     last.period if last else None, last_release(points, release),
                      upcoming.get(item["id"]), versions.get(item["id"])))
         if last:
             previous = previous_value(points, item["concept"])
