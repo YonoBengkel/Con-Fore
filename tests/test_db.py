@@ -283,6 +283,39 @@ class DatabaseTest(unittest.TestCase):
         self.assertEqual(revisions, [("2026-10", date(2026, 11, 4), Decimal("3.24"), Decimal("3.31"))])
         self.assertEqual(self.db.check_access(self.conn), [])
 
+    def test_edition_dates_are_stored_and_published(self):
+        item = next(s for s in self.cfg["series"] if s["id"] == "mys_unemp_weo_a")
+        april, october = date(2026, 4, 14), date(2026, 10, 13)
+
+        def edition(release, *values):
+            return [Point(*fetch.period_of(year, "A"), Decimal(value), release=release) for year, value in values]
+
+        def stored():
+            return self.conn.execute("""select period, vintage_date, value, release_date from etl.observations
+                                        where series_id = 'mys_unemp_weo_a'
+                                        order by period, vintage_date""").fetchall()
+
+        day1, day2 = date(2026, 4, 20), date(2026, 10, 20)
+        self.db.save_fetch(self.conn, self.run_id, item,
+                           edition(april, ("2026", "3.0"), ("2027", "3.1"), ("2028", "3.2")), None, 200, day1)
+        # Edisi berikutnya hanya mengubah 2027: angka tahun lain tidak mendapat versi baru.
+        self.db.save_fetch(self.conn, self.run_id, item,
+                           edition(october, ("2026", "3.0"), ("2027", "3.3"), ("2028", "3.2")), None, 200, day2)
+        self.assertEqual(stored(), [("2026", day1, Decimal("3.0"), april), ("2027", day1, Decimal("3.1"), april),
+                                    ("2027", day2, Decimal("3.3"), october), ("2028", day1, Decimal("3.2"), april)])
+        # Koreksi di hari yang sama ikut memperbarui tanggal terbitnya.
+        corrected = date(2026, 10, 15)
+        self.db.save_fetch(self.conn, self.run_id, item,
+                           edition(corrected, ("2026", "3.0"), ("2027", "3.4"), ("2028", "3.2")), None, 200, day2)
+        self.assertEqual(stored()[2], ("2027", day2, Decimal("3.4"), corrected))
+        self.publish.publish(self.conn, self.cfg, "ok", day2)
+        with self.conn.transaction():
+            self.conn.execute("set local role anon")
+            meta = self.conn.execute("""select country, last_period, last_release_date from public.series_meta
+                                        where series_id = 'mys_unemp_weo_a'""").fetchone()
+        # Tanggal serinya dari edisi terbaru, walau angka tahun terakhirnya (2028) masih dari edisi April.
+        self.assertEqual(meta, ("MYS", "2028", corrected))
+
     def test_forecasts_keep_other_days_and_backtest_is_replaced(self):
         series, today = "bps_cpi_yoy_m", date(2026, 11, 7)
         self.assertIsNone(self.db.last_forecast_hash(self.conn))

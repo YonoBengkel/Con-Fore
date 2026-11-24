@@ -9,7 +9,8 @@
 # Key dan id tahun (th) ditambahkan kode saat permintaan dibuat; key tidak pernah ditulis di sini.
 # Seri turunan: derive ("yoy", "ratio", "share", atau "chain") dan inputs (id seri lain), tanpa query.
 # Opsional: country (bawaan IDN), is_target (bawaan false), actual_only (khusus WEO: buang tahun
-# proyeksi, simpan hanya tahun sampai LATEST_ACTUAL_ANNUAL_DATA).
+# proyeksi, simpan hanya tahun sampai LATEST_ACTUAL_ANNUAL_DATA), dated (khusus WEO: simpan tanggal
+# terbit edisinya, PUBLICATION_DATE). Keduanya butuh query tanpa detail=dataonly.
 # concept: level, index, yoy, avg_yoy, eop_yoy, rate, round_rate (lihat SCHEMA.md). round_rate dipakai
 # semua nilai per ronde Sakernas, termasuk jumlah orang, karena pembandingnya ronde bulan yang sama.
 # rate juga dipakai perubahan bulanan (m-to-m) BPS: dua desimal, dan pembandingnya bulan sebelumnya.
@@ -55,40 +56,201 @@ is_target = true
 name = "Tingkat pengangguran terbuka, tahunan"
 citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
 
-# --- Proyeksi IMF untuk tab Prediksi: tahun yang belum terjadi ikut disimpan, jadi setiap edisi WEO ---
-# --- menjadi vintage baru dan kelak bisa dibandingkan dengan angka resminya. ---
+# --- Proyeksi IMF untuk halaman Ke depan dan Banding: tahun yang belum terjadi ikut disimpan, jadi ---
+# --- setiap edisi WEO menjadi vintage baru dan kelak bisa dibandingkan dengan angka resminya. ---
 
 [[series]]
 id = "idn_gdp_growth_weo_a"
 source = "imf"
 dataset = "WEO"
-query = "IMF.RES,WEO/IDN.NGDP_RPCH.A?startPeriod=2024&detail=dataonly"
+query = "IMF.RES,WEO/IDN.NGDP_RPCH.A?startPeriod=2024"
+dated = true
 frequency = "A"
 unit = "%"
 concept = "yoy"
-name = "Proyeksi IMF: pertumbuhan ekonomi, tahunan"
+name = "Proyeksi IMF: pertumbuhan ekonomi Indonesia, tahunan"
 citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
 
 [[series]]
 id = "idn_cpi_eop_weo_a"
 source = "imf"
 dataset = "WEO"
-query = "IMF.RES,WEO/IDN.PCPIEPCH.A?startPeriod=2024&detail=dataonly"
+query = "IMF.RES,WEO/IDN.PCPIEPCH.A?startPeriod=2024"
+dated = true
 frequency = "A"
 unit = "%"
 concept = "eop_yoy"
-name = "Proyeksi IMF: inflasi akhir tahun"
+name = "Proyeksi IMF: inflasi akhir tahun Indonesia"
 citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
 
 [[series]]
 id = "idn_unemp_weo_a"
 source = "imf"
 dataset = "WEO"
-query = "IMF.RES,WEO/IDN.LUR.A?startPeriod=2024&detail=dataonly"
+query = "IMF.RES,WEO/IDN.LUR.A?startPeriod=2024"
+dated = true
 frequency = "A"
 unit = "% angkatan kerja"
 concept = "rate"
-name = "Proyeksi IMF: tingkat pengangguran terbuka, tahunan"
+name = "Proyeksi IMF: tingkat pengangguran Indonesia, tahunan"
+citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
+
+# --- Proyeksi IMF untuk negara pembanding di halaman Banding (PRD 8, fase 7) ---
+
+[[series]]
+id = "mys_gdp_growth_weo_a"
+source = "imf"
+dataset = "WEO"
+country = "MYS"
+query = "IMF.RES,WEO/MYS.NGDP_RPCH.A?startPeriod=2024"
+dated = true
+frequency = "A"
+unit = "%"
+concept = "yoy"
+name = "Proyeksi IMF: pertumbuhan ekonomi Malaysia, tahunan"
+citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
+
+[[series]]
+id = "mys_cpi_eop_weo_a"
+source = "imf"
+dataset = "WEO"
+country = "MYS"
+query = "IMF.RES,WEO/MYS.PCPIEPCH.A?startPeriod=2024"
+dated = true
+frequency = "A"
+unit = "%"
+concept = "eop_yoy"
+name = "Proyeksi IMF: inflasi akhir tahun Malaysia"
+citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
+
+[[series]]
+id = "mys_unemp_weo_a"
+source = "imf"
+dataset = "WEO"
+country = "MYS"
+query = "IMF.RES,WEO/MYS.LUR.A?startPeriod=2024"
+dated = true
+frequency = "A"
+unit = "% angkatan kerja"
+concept = "rate"
+name = "Proyeksi IMF: tingkat pengangguran Malaysia, tahunan"
+citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
+
+[[series]]
+id = "tha_gdp_growth_weo_a"
+source = "imf"
+dataset = "WEO"
+country = "THA"
+query = "IMF.RES,WEO/THA.NGDP_RPCH.A?startPeriod=2024"
+dated = true
+frequency = "A"
+unit = "%"
+concept = "yoy"
+name = "Proyeksi IMF: pertumbuhan ekonomi Thailand, tahunan"
+citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
+
+[[series]]
+id = "tha_cpi_eop_weo_a"
+source = "imf"
+dataset = "WEO"
+country = "THA"
+query = "IMF.RES,WEO/THA.PCPIEPCH.A?startPeriod=2024"
+dated = true
+frequency = "A"
+unit = "%"
+concept = "eop_yoy"
+name = "Proyeksi IMF: inflasi akhir tahun Thailand"
+citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
+
+[[series]]
+id = "tha_unemp_weo_a"
+source = "imf"
+dataset = "WEO"
+country = "THA"
+query = "IMF.RES,WEO/THA.LUR.A?startPeriod=2024"
+dated = true
+frequency = "A"
+unit = "% angkatan kerja"
+concept = "rate"
+name = "Proyeksi IMF: tingkat pengangguran Thailand, tahunan"
+citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
+
+[[series]]
+id = "phl_gdp_growth_weo_a"
+source = "imf"
+dataset = "WEO"
+country = "PHL"
+query = "IMF.RES,WEO/PHL.NGDP_RPCH.A?startPeriod=2024"
+dated = true
+frequency = "A"
+unit = "%"
+concept = "yoy"
+name = "Proyeksi IMF: pertumbuhan ekonomi Filipina, tahunan"
+citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
+
+[[series]]
+id = "phl_cpi_eop_weo_a"
+source = "imf"
+dataset = "WEO"
+country = "PHL"
+query = "IMF.RES,WEO/PHL.PCPIEPCH.A?startPeriod=2024"
+dated = true
+frequency = "A"
+unit = "%"
+concept = "eop_yoy"
+name = "Proyeksi IMF: inflasi akhir tahun Filipina"
+citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
+
+[[series]]
+id = "phl_unemp_weo_a"
+source = "imf"
+dataset = "WEO"
+country = "PHL"
+query = "IMF.RES,WEO/PHL.LUR.A?startPeriod=2024"
+dated = true
+frequency = "A"
+unit = "% angkatan kerja"
+concept = "rate"
+name = "Proyeksi IMF: tingkat pengangguran Filipina, tahunan"
+citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
+
+[[series]]
+id = "vnm_gdp_growth_weo_a"
+source = "imf"
+dataset = "WEO"
+country = "VNM"
+query = "IMF.RES,WEO/VNM.NGDP_RPCH.A?startPeriod=2024"
+dated = true
+frequency = "A"
+unit = "%"
+concept = "yoy"
+name = "Proyeksi IMF: pertumbuhan ekonomi Vietnam, tahunan"
+citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
+
+[[series]]
+id = "vnm_cpi_eop_weo_a"
+source = "imf"
+dataset = "WEO"
+country = "VNM"
+query = "IMF.RES,WEO/VNM.PCPIEPCH.A?startPeriod=2024"
+dated = true
+frequency = "A"
+unit = "%"
+concept = "eop_yoy"
+name = "Proyeksi IMF: inflasi akhir tahun Vietnam"
+citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
+
+[[series]]
+id = "vnm_unemp_weo_a"
+source = "imf"
+dataset = "WEO"
+country = "VNM"
+query = "IMF.RES,WEO/VNM.LUR.A?startPeriod=2024"
+dated = true
+frequency = "A"
+unit = "% angkatan kerja"
+concept = "rate"
+name = "Proyeksi IMF: tingkat pengangguran Vietnam, tahunan"
 citation = "International Monetary Fund, World Economic Outlook database, https://data.imf.org/en/datasets/IMF.RES:WEO"
 
 # --- Target, kuartalan dan bulanan (salinan IMF dari data BPS) ---

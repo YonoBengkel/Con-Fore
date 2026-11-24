@@ -18,11 +18,12 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from html.parser import HTMLParser
 from typing import NamedTuple
 
+from confore.availability import WIB
 from confore.smoke import KEY_FORMAT, NoRedirect
 
 USER_AGENT = "Con-Fore (github.com/YonoBengkel/Con-Fore)"
@@ -153,7 +154,18 @@ def get(url, headers, opener=OPENER, complete=csv_complete, data=None):
         time.sleep(wait)
 
 
-def parse(body, frequency, actual_only=False):
+def publication_date(raw):
+    """Tanggal terbit edisi WEO ("2026-10-13T02:00:00Z") menurut kalender WIB."""
+    try:
+        moment = datetime.fromisoformat((raw or "").strip())
+    except ValueError:
+        raise FetchError("tanpa tanggal terbit", 200) from None
+    if moment.tzinfo is None:  # tanpa zona waktu, tanggal WIB-nya tidak pasti
+        raise FetchError("tanpa tanggal terbit", 200)
+    return moment.astimezone(WIB).date()
+
+
+def parse(body, frequency, actual_only=False, dated=False):
     """CSV SDMX menjadi daftar Point terurut; baris tanpa nilai (kosong atau NaN) dilewati."""
     reader = csv.DictReader(io.StringIO(body))
     if not {"TIME_PERIOD", "OBS_VALUE"} <= set(reader.fieldnames or []):
@@ -181,7 +193,8 @@ def parse(body, frequency, actual_only=False):
             raise FetchError("nilai tidak valid", 200)
         if period in points:
             raise FetchError("periode ganda", 200)
-        points[period] = Point(period, start, value, (row.get("OBS_STATUS") or "").strip() or None)
+        points[period] = Point(period, start, value, (row.get("OBS_STATUS") or "").strip() or None,
+                               release=publication_date(row.get("PUBLICATION_DATE")) if dated else None)
     if not points:
         raise FetchError("tanpa data", 200)
     return sorted(points.values(), key=lambda point: point.start)
@@ -496,7 +509,7 @@ def fetch_series(item):
         return fetch_bps(item)
     base, headers = BASES[item["source"]]
     return parse(get(base + item["query"], headers), item["frequency"],
-                 item.get("actual_only", False))
+                 item.get("actual_only", False), item.get("dated", False))
 
 
 def data_hash(points):
