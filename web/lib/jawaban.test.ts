@@ -200,6 +200,35 @@ test("arah banding dari angka yang tampil, dengan batas sedikit", () => {
   assert.equal(arahBanding(4.9, 1, 5.0, 1, "ekonomi"), "sedikit lebih lambat dari");
 });
 
+test("angka yang dibulatkan berbeda oleh toFixed mengikuti yang tampil: 2,55 tampil 2,6", () => {
+  const j = buatJawaban({
+    topik: HARGA,
+    meta: meta("bps_cpi_yoy_m", "yoy", "M", null),
+    nilai: nilai("bps_cpi_yoy_m", "2026-10", 2.55, 2.6),
+    titik: [["2025-10", 2.6], ["2026-10", 2.55]],
+    tahunan: [],
+    target: [target("idn_cpi_eop_a", "pmk", { lower: 1.5, upper: 2.5 })],
+  });
+  assert.equal(j.angka, "2,6%");
+  assert.match(j.contoh, /kini sekitar Rp102\.600\. Harga naik secepat bulan lalu\.$/);
+  assert.deepEqual(j.banding, [
+    "Sama dengan setahun lalu, Oktober 2025 (2,6%).",
+    "Sedikit di atas sasaran pemerintah untuk akhir 2026, yaitu 1,5% sampai 2,5%.",
+  ]);
+  assert.match(teks(ringkasanCerita({ harga: j }, {})!.kalimat[0]), /naik rata-rata 2,6%: .* kini sekitar Rp102\.600\.$/);
+  assert.equal(kalimatTarget(EKONOMI, 5.35, "2026-Q3", TARGET), "Sama dengan target pemerintah untuk seluruh 2026, yaitu 5,4%.");
+
+  // Patokannya juga dibaca dari angka yang tampil: rata-rata, kedua batas sasaran, dan rata-rata pengangguran.
+  assert.equal(arahBanding(2.6, 1, 2.55, 1, "harga"), "sama dengan");
+  const sasaran = (lower: number, upper: number) => [target("idn_cpi_eop_a", "pmk", { lower, upper })];
+  assert.match(kalimatTarget(HARGA, 2.6, "2026-10", sasaran(1.5, 2.55))!, /^Di dalam .* 1,5% sampai 2,6%\.$/);
+  assert.match(kalimatTarget(HARGA, 2.5, "2026-10", sasaran(2.55, 3.5))!, /^Sedikit di bawah .* 2,6% sampai 3,5%\.$/);
+  const pengangguran = (value: number, rata: number) =>
+    teks(ringkasanCerita({ kerja: { ...kerja, nilai: nilai("bps_unemp_round", "2026-08", value, null), rata } }, {})!.kalimat[0]);
+  assert.match(pengangguran(5.6, 5.85), /, lebih sedikit dari rata-rata/); // 5,60 dan 5,9
+  assert.match(pengangguran(2.355, 2.1), /, lebih banyak dari rata-rata/); // 2,36 dan 2,1
+});
+
 test("rata-rata jangka panjang butuh semua tahun", () => {
   assert.equal(rataJangkaPanjang(tahunan(5)), 5);
   assert.equal(rataJangkaPanjang(tahunan(5).slice(1)), null);

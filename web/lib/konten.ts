@@ -1,7 +1,7 @@
 // Isi tetap situs: seri mana yang tampil di mana, label kejujuran, dan penjelasan "artinya buatmu".
 
 import type { MetaSeri } from "./data";
-import { angka } from "./format.ts";
+import { angka, angkaTampil } from "./format.ts";
 
 export type KunciKartu = "pertumbuhan" | "inflasi" | "pengangguran";
 
@@ -246,7 +246,7 @@ const ARTINYA_PENGGERAK: Record<string, string> = {
 
 /** "2,6% lebih mahal dibanding setahun sebelumnya", dari angka yang tampil. */
 function gerakHarga(nilai: number, desimal: number, pembanding: string, awalan = ""): string {
-  const tampil = Number(nilai.toFixed(desimal));
+  const tampil = angkaTampil(nilai, desimal);
   if (tampil === 0) return `hampir sama dengan ${pembanding}`;
   return `${awalan}${angka(Math.abs(tampil), desimal)}% ${tampil > 0 ? "lebih mahal" : "lebih murah"} dibanding ${pembanding}`;
 }
@@ -256,7 +256,7 @@ function gerakHarga(nilai: number, desimal: number, pembanding: string, awalan =
  * desimal), dibulatkan ke Rp100 terdekat: "Rp103.200".
  */
 export function keranjangKini(nilai: number): string {
-  const tampil = Number(nilai.toFixed(1));
+  const tampil = angkaTampil(nilai, 1);
   return `Rp${angka(Math.round((100000 * (1 + tampil / 100)) / 100) * 100, 0)}`;
 }
 
@@ -266,8 +266,8 @@ export function keranjangKini(nilai: number): string {
  */
 export function arahInflasi(nilai: number, sebelumnya: number | null | undefined): string | null {
   if (sebelumnya == null) return null;
-  const kini = Number(nilai.toFixed(1));
-  const lalu = Number(sebelumnya.toFixed(1));
+  const kini = angkaTampil(nilai, 1);
+  const lalu = angkaTampil(sebelumnya, 1);
   if (kini <= 0) return null;
   if (kini < lalu) return "Harga masih naik, tetapi lebih lambat dibanding bulan lalu.";
   if (kini > lalu) return "Harga naik lebih cepat dibanding bulan lalu.";
@@ -297,7 +297,7 @@ export function artinyaBuatmu(seri: string, nilai: number, sebelumnya?: number |
     return `Bayangkan semua barang dan jasa yang dihasilkan di Indonesia sebagai satu kue. Pertumbuhan ${angka(nilai, 1)}% berarti kuenya ${angka(Math.abs(nilai), 1)}% ${arah} dibanding setahun sebelumnya. Pertumbuhan yang melambat biasanya membuat lapangan kerja baru dan kenaikan penghasilan lebih sulit didapat.`;
   }
   if (jenis === "inflasi") {
-    const tampil = Number(nilai.toFixed(1));
+    const tampil = angkaTampil(nilai, 1);
     const arah = seri.endsWith("_m") ? arahInflasi(nilai, sebelumnya) : null;
     const penutup =
       tampil > 0

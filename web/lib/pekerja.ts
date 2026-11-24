@@ -2,7 +2,7 @@
 // sama, dan memakai porsi terhadap seluruh pekerja, bukan jumlah orang.
 
 import type { Titik } from "./data";
-import { angka, periode } from "./format.ts";
+import { angka, periode, selisihTampil } from "./format.ts";
 
 /** Perubahan porsi (poin persen) di bawah ini ditulis "hampir tidak berubah". */
 export const AMBANG_PORSI = 0.1;
@@ -26,7 +26,7 @@ export function kalimatPekerja(
   if (pembanding == null) return { porsi: `${pokok}.`, hubungan: null };
 
   // Dihitung dari angka yang tampil, sama seperti kalimat perubahan di kartu.
-  const selisih = Number(nilai.toFixed(2)) - Number(pembanding.toFixed(2));
+  const selisih = selisihTampil(nilai, pembanding, 2);
   const tetap = Math.abs(selisih) < AMBANG_PORSI;
   const arah = tetap ? "hampir tidak berubah" : arahPoin(selisih);
   const porsi = `${pokok}, ${arah} dari ${periode(lalu)} (${angka(pembanding, 2)}%).`;
@@ -36,7 +36,7 @@ export function kalimatPekerja(
   const dulu = peta.get(lalu);
   if (kini == null || dulu == null) return { porsi, hubungan: null };
 
-  const ubahTpt = Number((kini - dulu).toFixed(2));
+  const ubahTpt = selisihTampil(kini, dulu, 2);
   const komposisi = tetap
     ? "komposisi pekerja formal dan informal hampir tidak berubah"
     : `komposisi pekerja bergeser ke sektor ${selisih > 0 ? "formal" : "informal"}`;

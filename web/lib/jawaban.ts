@@ -4,7 +4,7 @@
 // yang tampil, supaya kalimatnya selalu cocok dengan angka di halaman.
 
 import type { BarisRamalan, MetaSeri, NilaiTerakhir, Target, Titik } from "./data";
-import { angka, periode, tanggal } from "./format.ts";
+import { angka, angkaTampil, periode, tanggal } from "./format.ts";
 import {
   SERI_TAHUNAN,
   TAHUN_AKHIR,
@@ -21,7 +21,6 @@ import { setahunSebelum } from "./riwayat.ts";
 export const SEDIKIT = 0.25;
 const TOLERANSI = 1e-9;
 
-const tampil = (v: number, d: number) => Number(v.toFixed(d));
 const persen = (v: number, d: number) => `${angka(v, d)}%`;
 const kapital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const SEBUT_RATA = `rata-rata tahun ${TAHUN_AWAL} sampai ${TAHUN_AKHIR}`;
@@ -47,8 +46,8 @@ export function arahBanding(
   desimalPatokan: number,
   kunci: KunciTopik,
 ): string {
-  const a = tampil(kini, desimalKini);
-  const b = tampil(patokan, desimalPatokan);
+  const a = angkaTampil(kini, desimalKini);
+  const b = angkaTampil(patokan, desimalPatokan);
   if (Math.abs(a - b) < TOLERANSI) return "sama dengan";
   const kata = a > b ? KATA[kunci].naik : KATA[kunci].turun;
   return `${Math.abs(a - b) <= SEDIKIT + TOLERANSI ? "sedikit " : ""}${kata} dari`;
@@ -72,7 +71,7 @@ export function kalimatTarget(topik: Topik, nilai: number, periodeData: string, 
   );
   if (!t) return null;
   const d = topik.desimal;
-  const a = tampil(nilai, d);
+  const a = angkaTampil(nilai, d);
   const frasa = `${topik.target.frasa} ${tahun}`;
   let bawah = t.lower;
   let atas = t.upper;
@@ -80,7 +79,7 @@ export function kalimatTarget(topik: Topik, nilai: number, periodeData: string, 
     [bawah, atas] = t.target_kind === "pmk" ? [t.value - 1, t.value + 1] : [t.value, t.value];
   }
   if (bawah == null || atas == null) return null;
-  const posisi = posisiTarget(a, tampil(bawah, d), tampil(atas, d));
+  const posisi = posisiTarget(a, angkaTampil(bawah, d), angkaTampil(atas, d));
   const isi = bawah === atas ? persen(bawah, d) : `${persen(bawah, d)} sampai ${persen(atas, d)}`;
   return `${kapital(posisi)} ${frasa}, yaitu ${isi}.`;
 }
@@ -106,7 +105,7 @@ export function kalimatWaktu(m: MetaSeri, kalender: string | undefined): string 
 }
 
 function kalimatJawaban(kunci: KunciTopik, v: number, d: number): string {
-  const t = tampil(v, d);
+  const t = angkaTampil(v, d);
   if (kunci === "kerja") {
     return `Dari semua orang yang bekerja atau sedang mencari kerja, ${persen(v, d)} belum mendapat pekerjaan.`;
   }
@@ -133,7 +132,7 @@ function contohSehari(kunci: KunciTopik, v: number, d: number, sebelumnya: numbe
   if (kunci === "kerja") {
     return `Bayangkan 100 orang yang bekerja atau sedang mencari kerja. Sekitar ${angka(v, 0)} di antaranya belum mendapat pekerjaan.`;
   }
-  return `Bayangkan semua barang dan jasa yang dihasilkan di Indonesia sebagai satu kue. Kuenya kini ${persen(Math.abs(v), d)} ${tampil(v, d) >= 0 ? "lebih besar" : "lebih kecil"} dibanding setahun sebelumnya.`;
+  return `Bayangkan semua barang dan jasa yang dihasilkan di Indonesia sebagai satu kue. Kuenya kini ${persen(Math.abs(v), d)} ${angkaTampil(v, d) >= 0 ? "lebih besar" : "lebih kecil"} dibanding setahun sebelumnya.`;
 }
 
 export type Jawaban = {
@@ -209,7 +208,7 @@ export function ringkasanCerita(
   const h = jawaban.harga;
   if (h) {
     const v = h.nilai.value;
-    const t = tampil(v, 1);
+    const t = angkaTampil(v, 1);
     kalimat.push(
       t === 0
         ? ["Dibanding setahun lalu, rata-rata harga barang hampir sama."]
@@ -225,7 +224,7 @@ export function ringkasanCerita(
     const v = k.nilai.value;
     let pembanding = "";
     if (k.rata != null) {
-      const selisih = tampil(v, 2) - tampil(k.rata, 1);
+      const selisih = angkaTampil(v, 2) - angkaTampil(k.rata, 1);
       const banyak =
         Math.abs(selisih) <= SEDIKIT + TOLERANSI ? "hampir sama dengan" : selisih < 0 ? "lebih sedikit dari" : "lebih banyak dari";
       pembanding = `, ${banyak} ${SEBUT_RATA}`;
@@ -241,7 +240,7 @@ export function ringkasanCerita(
     const v = e.nilai.value;
     const pembanding = e.rata != null ? `, ${arahBanding(v, 1, e.rata, 1, "ekonomi")} ${SEBUT_RATA}` : "";
     kalimat.push([
-      tampil(v, 1) >= 0 ? "Ekonomi tumbuh " : "Ekonomi menyusut ",
+      angkaTampil(v, 1) >= 0 ? "Ekonomi tumbuh " : "Ekonomi menyusut ",
       { angka: persen(Math.abs(v), 1), kelas: "ekonomi" },
       `${pembanding}.`,
     ]);

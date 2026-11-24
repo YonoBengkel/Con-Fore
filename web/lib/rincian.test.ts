@@ -39,6 +39,11 @@ test("turun dan hampir tidak berubah ditulis apa adanya", () => {
   assert.match(hasil?.kalimat ?? "", /inti turun sekitar 9,0%, harga diatur pemerintah hampir tidak berubah, dan/);
 });
 
+test("angka yang dibulatkan berbeda oleh toFixed mengikuti yang tampil: 2,55 tampil 2,6", () => {
+  const hasil = rincianInflasi(seri({ ...DATA, bps_cpi_core_yoy_m: [["2026-10", 2.55]] }));
+  assert.match(hasil?.kalimat ?? "", /inti naik sekitar 2,6%/);
+});
+
 test("kelompok yang tertinggal menentukan periodenya, dan umum boleh kosong", () => {
   const hasil = rincianInflasi(
     seri({ ...DATA, bps_cpi_volatile_yoy_m: [["2026-09", 5.04]], bps_cpi_yoy_m: [["2026-10", 3.23]] }),

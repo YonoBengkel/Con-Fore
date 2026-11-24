@@ -2,8 +2,8 @@
 // Fungsi murni tanpa waktu sekarang, dites di prediksi.test.ts.
 
 import type { BarisRamalan, BarisRekam, SkorBacktest, Target, Titik } from "./data";
-import { angka, periode } from "./format.ts";
-import type { KunciKartu } from "./konten.ts";
+import { angka, angkaTampil, periode, selisihTampil } from "./format.ts";
+import { keranjangKini, type KunciKartu } from "./konten.ts";
 
 /** Satu angka tahunan: angka resmi BPS yang sudah terbit, atau perkiraan Con-Fore. */
 export type AngkaTahun = { nilai: number; resmi: boolean };
@@ -284,7 +284,7 @@ export function kalimatEfekBasis(
 
 /** "naik 0,10%", dari angka yang tampil. */
 function gerakBulanan(nilai: number): string {
-  const tampil = Number(nilai.toFixed(2));
+  const tampil = angkaTampil(nilai, 2);
   if (tampil === 0) return "hampir tidak berubah";
   return `${tampil > 0 ? "naik" : "turun"} ${angka(Math.abs(tampil), 2)}%`;
 }
@@ -292,8 +292,7 @@ function gerakBulanan(nilai: number): string {
 /** "Artinya buatmu" untuk perkiraan: selalu bersyarat, dan tidak pernah berupa saran. */
 export function artinyaPerkiraan(kunci: KunciKartu, nilai: number): string {
   if (kunci === "inflasi") {
-    const hasil = Math.round((100000 * (1 + nilai / 100)) / 100) * 100;
-    return `Bila perkiraan ini tepat, belanja yang setahun sebelumnya Rp100.000 menjadi sekitar Rp${angka(hasil, 0)}.`;
+    return `Bila perkiraan ini tepat, belanja yang setahun sebelumnya Rp100.000 menjadi sekitar ${keranjangKini(nilai)}.`;
   }
   if (kunci === "pertumbuhan") {
     return `Bila perkiraan ini tepat, nilai barang dan jasa yang dihasilkan di Indonesia sekitar ${angka(nilai, 1)}% lebih besar dibanding periode yang sama setahun sebelumnya.`;
@@ -325,7 +324,7 @@ export function kalimatJangkaPanjang(baris: BarisJangkaPanjang[], resmi: Titik[]
   const puncak = resmi.reduce((a, b) => (b[1] > a[1] ? b : a));
   return (
     `Untuk ${akhir.tahun}, proyeksi IMF ${persen(akhir.imf, 1)} dan target RPJMN ${persen(akhir.rpjmn, 1)}, ` +
-    `selisih ${angka(Math.abs(akhir.rpjmn - akhir.imf), 1)} poin persen. Sejak ${resmi[0][0]}, pertumbuhan ` +
+    `selisih ${angka(Math.abs(selisihTampil(akhir.rpjmn, akhir.imf, 1)), 1)} poin persen. Sejak ${resmi[0][0]}, pertumbuhan ` +
     `tahunan tertinggi ${persen(puncak[1], 1)} pada ${puncak[0]}.`
   );
 }
