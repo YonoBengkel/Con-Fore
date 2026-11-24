@@ -3,6 +3,7 @@
 // JSON-LD (web/lib/jsonld.ts). Halaman depan dan Tentang data tanpa tanggal, karena isinya hanya berubah lewat kode.
 
 import type { MetadataRoute } from "next";
+import { NEGARA_BANDING, seriProyeksi } from "@/lib/banding";
 import { bacaNilai, bacaRamalan } from "@/lib/data";
 import { tanggalUbah, terbaru } from "@/lib/jsonld";
 import { KELOMPOK_INFLASI, SERI_DITAUTKAN, SERI_FORMAL, SERI_KARTU, SERI_TAHUNAN, TOPIK } from "@/lib/konten";
@@ -35,6 +36,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ]),
     ]),
     ["/indonesia/ke-depan", terbaru([...perkiraan, tgl(TARGET_PREDIKSI.flatMap((t) => [t.seri, t.imf]))])],
+    ...NEGARA_BANDING.map((n): [string, string | undefined] => [
+      `/banding/${n.kunci}`,
+      terbaru([
+        ...perkiraan,
+        tgl(TARGET_PREDIKSI.flatMap((t) => [t.seri, t.imf, seriProyeksi(t.kunci, n.awalan)])),
+      ]),
+    ]),
     ["/tentang-data", undefined],
     ...seri.map((id): [string, string | undefined] => [`/indikator/${id}`, ubah.get(id)]),
   ];

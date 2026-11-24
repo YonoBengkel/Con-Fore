@@ -177,7 +177,7 @@ class RevalidateTest(unittest.TestCase):
 
     def test_posts_without_redirect_then_warms_every_address(self):
         result, get = self.refresh(self.SITE)
-        self.assertEqual(result, revalidate.Result(8, 0, None))
+        self.assertEqual(result, revalidate.Result(12, 0, None))
         post, *warm = get.call_args_list
         self.assertEqual(post.args, ("https://situs.test/api/revalidate", {"x-revalidate-secret": "RAHASIA"}))
         self.assertIs(post.kwargs["opener"], fetch.KEYED_OPENER)
@@ -185,12 +185,14 @@ class RevalidateTest(unittest.TestCase):
         self.assertEqual([call.args for call in warm],
                          [(f"https://situs.test{path}", {})
                           for path in ["/indonesia", "/indonesia/harga", "/indonesia/kerja", "/indonesia/ekonomi",
-                                       "/indonesia/ke-depan", "/tentang-data", "/indikator/a", "/api/csv/a"]])
+                                       "/indonesia/ke-depan", "/banding/malaysia", "/banding/thailand",
+                                       "/banding/filipina", "/banding/vietnam", "/tentang-data", "/indikator/a",
+                                       "/api/csv/a"]])
 
     def test_new_series_404_is_counted(self):
-        # POST, enam halaman, lalu halaman data per seri baru yang belum dibangun (404), lalu CSV-nya.
-        result, _ = self.refresh(self.SITE, [None] * 7 + [FetchError("HTTP 404", 404), None])
-        self.assertEqual(result, revalidate.Result(7, 1, None))
+        # POST, sepuluh halaman, lalu halaman data per seri baru yang belum dibangun (404), lalu CSV-nya.
+        result, _ = self.refresh(self.SITE, [None] * 11 + [FetchError("HTTP 404", 404), None])
+        self.assertEqual(result, revalidate.Result(11, 1, None))
 
     def test_other_warm_error_stops_without_raising(self):
         result, get = self.refresh(self.SITE, [None, None, FetchError("HTTP 500", 500)])

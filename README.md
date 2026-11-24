@@ -2,7 +2,7 @@
 
 Website publik berbahasa Indonesia yang menjelaskan kondisi dan arah ekonomi Indonesia lewat tiga angka (pertumbuhan, inflasi, pengangguran), diperbarui otomatis setiap hari.
 
-Status: fase 1 (pipeline data) jalan otomatis setiap hari, dan situsnya (`web/`) tayang di https://con-fore.vercel.app. Fase 3 (model dan backtest) ada di `confore/models/`. Fase 5 menambah alarm kegagalan dan backup mingguan, dan uji tujuh harinya lulus 14 November 2026. Sejak 22 November 2026 situsnya memakai desain ulang (fase 5c di PRD): halaman depan dengan globe, halaman Indonesia, tiga halaman rinci, Ke depan, dan Tentang data.
+Status: fase 1 (pipeline data) jalan otomatis setiap hari, dan situsnya (`web/`) tayang di https://con-fore.vercel.app. Fase 3 (model dan backtest) ada di `confore/models/`. Fase 5 menambah alarm kegagalan dan backup mingguan, dan uji tujuh harinya lulus 14 November 2026. Sejak 22 November 2026 situsnya memakai desain ulang (fase 5c di PRD): halaman depan dengan globe, halaman Indonesia, tiga halaman rinci, Ke depan, dan Tentang data. Sejak 24 November 2026 ada halaman Banding (fase 7), yang menaruh proyeksi IMF untuk Indonesia dan satu negara ASEAN berdampingan.
 
 ## Dokumen
 

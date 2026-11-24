@@ -22,11 +22,12 @@ class Result(NamedTuple):
 
 #: Halaman yang membaca Supabase (desain ulang, PRD 4.1). Halaman depan tidak ikut: isinya peta tanpa data.
 PAGES = ["/indonesia", "/indonesia/harga", "/indonesia/kerja", "/indonesia/ekonomi",
-         "/indonesia/ke-depan", "/tentang-data"]
+         "/indonesia/ke-depan", "/banding/malaysia", "/banding/thailand", "/banding/filipina",
+         "/banding/vietnam", "/tentang-data"]
 
 
 def paths(series_ids):
-    # Seri proyeksi IMF hanya tampil di halaman Ke depan dan tidak punya halaman data per seri.
+    # Seri proyeksi IMF hanya tampil di halaman Ke depan dan Banding, dan tidak punya halaman data per seri.
     return [*PAGES,
             *(f"/indikator/{series_id}" for series_id in series_ids if not series_id.endswith("_weo_a")),
             *(f"/api/csv/{series_id}" for series_id in series_ids)]

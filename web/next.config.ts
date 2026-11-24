@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
       { source: "/metode", destination: "/tentang-data", permanent: true },
       { source: "/cara-kerja", destination: "/tentang-data", permanent: true },
       { source: "/sumber", destination: "/tentang-data#sumber", permanent: true },
+      // Sementara, karena negara pertama di halaman Banding bisa berganti.
+      { source: "/banding", destination: "/banding/malaysia", permanent: false },
     ];
   },
   async headers() {

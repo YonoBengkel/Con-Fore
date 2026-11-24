@@ -139,6 +139,7 @@ li {
     .prediksi-lanjut,
     .sitasi,
     .label-angka,
+    .data-per,
     .waktu,
     .kalimat-periode,
     .meta-seri,
@@ -286,12 +287,13 @@ main.wadah {
   backdrop-filter: blur(10px);
 }
 
+/* Di HP merek dan menunya sedikit lebih kecil dan rapat, supaya tiga tautan sebaris dengan merek mulai layar 360 px. */
 .kepala-dalam {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0 1.5rem;
+  gap: 0 0.625rem;
 }
 
 .merek {
@@ -301,7 +303,7 @@ main.wadah {
   min-height: 44px;
   color: var(--tinta);
   text-decoration: none;
-  font-size: var(--t-sedang);
+  font-size: var(--t-isi);
   font-weight: 700;
   letter-spacing: -0.01em;
 }
@@ -323,7 +325,7 @@ main.wadah {
 .nav-utama {
   display: flex;
   flex-wrap: wrap;
-  gap: 0 1.25rem;
+  gap: 0 0.625rem;
 }
 
 .nav-utama a {
@@ -332,16 +334,34 @@ main.wadah {
   min-height: 44px;
   color: var(--redup);
   text-decoration: none;
-  font-size: var(--t-kecil);
+  font-size: var(--t-label);
   font-weight: 600;
   border-bottom: 2px solid transparent;
+}
+
+@media (min-width: 30em) {
+  .kepala-dalam {
+    column-gap: 1.5rem;
+  }
+
+  .merek {
+    font-size: var(--t-sedang);
+  }
+
+  .nav-utama {
+    column-gap: 1.25rem;
+  }
+
+  .nav-utama a {
+    font-size: var(--t-kecil);
+  }
 }
 
 .nav-utama a:hover {
   color: var(--tinta);
 }
 
-.nav-utama a[aria-current="page"] {
+.nav-utama a[aria-current] {
   color: var(--tinta);
   border-bottom-color: var(--tinta);
 }
@@ -366,6 +386,12 @@ main.wadah {
 .catatan {
   color: var(--redup);
   font-size: var(--t-kecil);
+}
+
+/* Alamat sumber lebih panjang daripada kolom tersempit. Potongannya di garis miring (Sitasi di Kartu.tsx), atau di mana
+   saja bila satu ruasnya masih terlalu panjang. */
+.sitasi {
+  overflow-wrap: anywhere;
 }
 
 .bagian {
@@ -613,6 +639,39 @@ main.wadah {
 
 .baris-tanya a[aria-current="page"] {
   box-shadow: inset 0 0 0 2px var(--topik);
+}
+
+/* Mode warna paksa menghapus bayangan dan menampakkan garis transparan, jadi penanda halaman kini ditulis ulang. */
+@media (forced-colors: active) {
+  .baris-tanya a[aria-current="page"] {
+    border: 2px solid CanvasText;
+  }
+
+  .nav-utama a:not([aria-current]) {
+    border-bottom-color: Canvas;
+  }
+}
+
+/* Pilihan negara di halaman Banding: tanpa titik warna, karena warna hanya milik pertanyaan. Di HP keempatnya sebaris,
+   atau dua baris bila layarnya sangat sempit atau hurufnya diperbesar. */
+.pilih-negara {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.pilih-negara a {
+  justify-content: center;
+  padding: 0 0.25rem;
+}
+
+.pilih-negara a::before {
+  content: none;
+}
+
+@media (min-width: 22.5em) {
+  .pilih-negara {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .blok {
@@ -874,6 +933,22 @@ main.wadah {
   gap: 1rem;
 }
 
+.kisi-banding {
+  margin-top: 1.5rem;
+}
+
+.banding-catatan {
+  margin-top: 0.75rem;
+}
+
+.banding-catatan > :last-child {
+  margin-bottom: 0;
+}
+
+.kisi-banding p {
+  text-wrap: pretty;
+}
+
 .kartu {
   display: flex;
   flex-direction: column;
@@ -1030,7 +1105,9 @@ main.wadah {
 
 /* Tabel */
 
+/* Posisinya relatif supaya teks khusus pembaca layar di dalam sel ikut tergunting, dan tidak melebarkan halaman. */
 .gulir-tabel {
+  position: relative;
   overflow-x: auto;
   border-radius: 14px;
   background: var(--permukaan);
@@ -1101,6 +1178,44 @@ td.angka {
   display: block;
   font-size: var(--t-label);
   color: var(--samar);
+  white-space: normal;
+}
+
+/* Tabel pembanding negara, muat di kartu tersempit tanpa digeser. Contoh garis di kepalanya menjadi legenda grafik di
+   atasnya, dan baris Con-Fore menyatu dengan tahun di atasnya. */
+.tabel-banding th,
+.tabel-banding td {
+  padding: 0.5rem;
+}
+
+.tabel-banding thead th {
+  vertical-align: bottom;
+}
+
+.tabel-banding tbody th {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabel-banding .baris-con-fore th,
+.tabel-banding .baris-con-fore td {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.tabel-banding .lencana {
+  padding: 0 0.375rem;
+}
+
+.utuh {
+  white-space: nowrap;
+}
+
+.contoh-garis {
+  display: block;
+  width: 27px;
+  height: 6px;
+  margin-bottom: 0.25rem;
 }
 
 /* Di HP, setiap baris tabel target menjadi satu blok berlabel supaya tidak perlu digeser. */
@@ -1151,15 +1266,30 @@ td.angka {
   overflow: visible;
 }
 
-.grafik-riwayat .garis {
+.grafik-riwayat .garis,
+.contoh-garis .garis {
   fill: none;
   stroke: var(--topik);
   stroke-width: 2.25;
   stroke-linejoin: round;
 }
 
-.grafik-riwayat .garis-putus {
+.grafik-riwayat .garis-putus,
+.contoh-garis .garis-putus {
   stroke-dasharray: 6 4;
+}
+
+/* Negara lain di halaman Banding: warna tinta dan pola putus yang lebih rapat, jadi warna bukan satu-satunya
+   pembeda. */
+.grafik-riwayat .garis-lain,
+.contoh-garis .garis-lain {
+  stroke: var(--tinta);
+  stroke-dasharray: 2 3;
+}
+
+/* Tebal dan pola garisnya tetap di semua ukuran, sama dengan contoh garis di kepala tabel. */
+.grafik-banding .garis {
+  vector-effect: non-scaling-stroke;
 }
 
 .grafik-riwayat .kisi {
@@ -1187,6 +1317,30 @@ td.angka {
   fill: var(--topik);
   stroke: var(--permukaan);
   stroke-width: 2;
+}
+
+.grafik-riwayat .titik-lain {
+  fill: var(--tinta);
+}
+
+/* Penghubung titik akhir ke namanya, bila kedua nama harus dijauhkan. */
+.grafik-riwayat .garis-label {
+  stroke: var(--acuan);
+}
+
+/* Browser tidak mengganti warna SVG di mode warna paksa, jadi teks grafik dan garis negara lain memakai warna teks
+   sistem di sini. Aturan ini sesudah aturan yang ditimpanya. */
+@media (forced-colors: active) {
+  .grafik-riwayat .garis-lain,
+  .contoh-garis .garis-lain {
+    stroke: CanvasText;
+  }
+
+  .grafik-riwayat .titik-lain,
+  .grafik-riwayat .sumbu,
+  .grafik-riwayat .sumbu-nilai {
+    fill: CanvasText;
+  }
 }
 
 .grafik-riwayat .pita-rentang {
@@ -1217,6 +1371,10 @@ td.angka {
 
 .grafik-sedang {
   max-width: 40rem;
+}
+
+.grafik-banding {
+  max-width: 30rem;
 }
 
 /* Ukuran label grafik dihitung dari lebar wadah ini (@supports di bawah). */
@@ -1338,6 +1496,11 @@ td.angka {
   .grafik-kelompok .sumbu,
   .grafik-kelompok .sumbu-nilai {
     font-size: min(13px, calc(13px * (320px / 100cqw)));
+  }
+
+  .grafik-banding .sumbu,
+  .grafik-banding .sumbu-nilai {
+    font-size: min(14px, calc(13px * (300px / min(100cqw, 30rem))));
   }
 }
 
@@ -1699,6 +1862,14 @@ td.angka {
     flex: 0 0 9.5rem;
     text-align: right;
   }
+
+  .pilih-negara {
+    display: flex;
+  }
+
+  .pilih-negara a {
+    padding: 0 1rem;
+  }
 }
 
 @media (min-width: 960px) {
@@ -1757,6 +1928,10 @@ td.angka {
     margin-top: 1.875rem;
   }
 
+  .kepala-halaman > .pilih-negara {
+    margin-top: 1.875rem;
+  }
+
   .kisi-rinci {
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     gap: 1.5rem;
@@ -1804,6 +1979,15 @@ td.angka {
 
   .kisi-utama > .kartu > .label-angka {
     justify-self: start;
+  }
+
+  /* Tujuh baris di halaman Banding: judul, nama, kalimat, grafik, label, tabel, lalu catatannya. */
+  .kisi-banding > .kartu {
+    grid-row: span 7;
+  }
+
+  .kisi-banding > .kartu > .gulir-tabel {
+    align-self: start;
   }
 
   /* Data per seri: pintu penjelas dan pilihan seri sebaris, kecuali saat penjelasnya dibuka. */
@@ -1926,8 +2110,40 @@ td.angka {
 @media (min-width: 720px) and (max-width: 959px) {
   .kisi-jawaban p,
   .kisi-jawaban li,
-  .kisi-penggerak p {
+  .kisi-penggerak p,
+  .kisi-banding p {
     text-align: left;
+  }
+
+  /* Halaman Banding di lebar tablet: grafik dan catatannya di kiri, tabelnya di kanan. */
+  .kisi-banding > .kartu {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(5, auto) 1fr;
+    column-gap: 1.5rem;
+  }
+
+  .kisi-banding > .kartu > * {
+    grid-column: 1;
+  }
+
+  .kisi-banding > .kartu > :nth-child(-n + 3) {
+    grid-column: 1 / -1;
+  }
+
+  .kisi-banding > .kartu > .label-angka {
+    justify-self: start;
+  }
+
+  .kisi-banding > .kartu > .gulir-tabel {
+    grid-column: 2;
+    grid-row: 4 / -1;
+    align-self: start;
+    margin-top: 0.5rem;
+  }
+
+  .banding-catatan {
+    margin-top: 0;
   }
 }
 
@@ -2001,6 +2217,11 @@ td.angka {
 
   .daftar-sumber {
     grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+  }
+
+  /* Kelima tautan kaki sebaris, dan teksnya memakai lebar sisanya. */
+  .kaki-kisi {
+    grid-template-columns: minmax(0, 42rem) auto;
   }
 }
 

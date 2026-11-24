@@ -1,6 +1,6 @@
 # PRD Con-Fore
 
-> Status: disetujui pengelola 2026-10-30, dengan tambahan yang disetujui pengelola 2026-11-03, 2026-11-08, dan 2026-11-09. Pada 2026-11-20 pengelola memutuskan tampilan disusun ulang dari nol sesudah dua uji baca gagal, lewat sesi drill, dan hasilnya ditulis di bagian 2, 3, 4.1, 4.2, 4.4, 5, 6, 7, 8, dan 9. Susunan baru tayang sejak 2026-11-22, termasuk globe di halaman depan, dan fase 5c di bagian 8 selesai 2026-11-24. Arti "lebih akurat" di bagian 6 diusulkan agent 2026-11-07 dan masih menunggu persetujuan pengelola. Menggantikan `docs/RENCANA-MVP.md`. Detail teknis ada di [ARCHITECTURE.md](ARCHITECTURE.md) dan [SCHEMA.md](SCHEMA.md), dan aturan tampilan di [DESIGN.md](DESIGN.md).
+> Status: disetujui pengelola 2026-10-30, dengan tambahan yang disetujui pengelola 2026-11-03, 2026-11-08, dan 2026-11-09. Pada 2026-11-20 pengelola memutuskan tampilan disusun ulang dari nol sesudah dua uji baca gagal, lewat sesi drill, dan hasilnya ditulis di bagian 2, 3, 4.1, 4.2, 4.4, 5, 6, 7, 8, dan 9. Susunan baru tayang sejak 2026-11-22, termasuk globe di halaman depan, dan fase 5c serta fase 7 di bagian 8 selesai 2026-11-24. Arti "lebih akurat" di bagian 6 diusulkan agent 2026-11-07 dan masih menunggu persetujuan pengelola. Menggantikan `docs/RENCANA-MVP.md`. Detail teknis ada di [ARCHITECTURE.md](ARCHITECTURE.md) dan [SCHEMA.md](SCHEMA.md), dan aturan tampilan di [DESIGN.md](DESIGN.md).
 
 ## 1. Masalah
 
@@ -21,6 +21,7 @@ Website publik berbahasa Indonesia yang online 24/7 dan diperbarui otomatis seti
 - **Halaman depan** berupa globe yang memperlihatkan semua negara, karena Con-Fore direncanakan mencakup seluruh dunia. Untuk sekarang hanya Indonesia yang tersedia.
 - **Halaman Indonesia** menjawab empat pertanyaan orang awam, masing-masing dengan satu kalimat, satu angka, dan satu contoh sehari-hari.
 - **Halaman rinci** untuk setiap pertanyaan memuat riwayat, penjelas, dan perkiraannya.
+- **Halaman Banding** menaruh proyeksi IMF untuk Indonesia dan satu negara ASEAN berdampingan.
 
 Situs disusun dari pertanyaan, bukan dari nama indikator, dan tidak memakai skor atau gambar yang perlu dijelaskan dulu.
 
@@ -39,7 +40,7 @@ Prinsip yang berlaku di semua halaman:
 1. Situs disusun dari empat pertanyaan orang awam, diurutkan dari yang paling terasa sehari-hari: harga naik berapa, susah cari kerja atau tidak, ekonomi tumbuh cepat atau lambat, dan ke depan bagaimana.
 2. Setiap jawaban berisi satu kalimat, satu angka, dan satu contoh sehari-hari, lalu perbandingannya dalam kalimat (4.2).
 3. Setiap angka membawa waktunya: periode data dan rilis berikutnya.
-4. Label "angka resmi" atau "perkiraan" selalu terlihat. Perkiraan tidak pernah tampil tanpa rentang dalam kata dan catatan seberapa sering perkiraan itu meleset.
+4. Label "angka resmi", "perkiraan", atau "proyeksi IMF" selalu terlihat. Perkiraan tidak pernah tampil tanpa rentang dalam kata dan catatan seberapa sering perkiraan itu meleset. Pengecualiannya halaman Banding: angkanya tanpa rentang, karena IMF tidak menerbitkannya, dan halaman itu menautkan rentang dan catatan meleset di Ke depan.
 5. Penjelasan berlapis: kalimat pendek dan kata sehari-hari di lapisan pertama, istilah resmi di kotak penjelas, dan cara hitung di Tentang data.
 6. Tampilan jelas independen dan netral (4.4).
 
@@ -72,7 +73,7 @@ Ketiganya memakai urutan isi yang sama:
 
 - Perkiraan ketiga angka, masing-masing satu kalimat dengan rentang dalam kata, dan grafik kipas untuk tiap angka.
 - Seberapa sering meleset: rekam jejak yang menulis selisih dalam poin persen dan cakupan rentang sebagai hitungan, misalnya "3 dari 4 perkiraan jatuh di dalam rentangnya", dibanding angka resmi pertama. Persen tidak dipakai, karena persen dari sedikit perkiraan terlihat lebih pasti daripada kenyataannya.
-- Pembanding proyeksi IMF dan target jangka panjang pemerintah (8% di RPJMN).
+- Pembanding proyeksi IMF dan target jangka panjang pemerintah (8% di RPJMN). Pengangguran di pembanding IMF hanya dari survei Agustus, yang juga dipakai IMF: angka yang sudah terbit berlabel angka resmi BPS, dan yang masih terlalu jauh ditulis belum diramal.
 - Kotak penjelas cara menghitung, dengan tautan ke Tentang data.
 - Perkiraan selalu berangkat dari angka resmi terakhir. Penjelasan "kenapa perkiraannya begini" hanya menyebut yang terbukti pada backtest. Bila tidak ada penggerak yang terbukti membantu, halamannya mengatakan itu, tidak mengarang penggerak.
 
@@ -88,13 +89,17 @@ Ketiganya memakai urutan isi yang sama:
 
 **Menu dan alur**
 
-- Menu atas hanya berisi logo (kembali ke globe), Indonesia, dan Tentang data.
+- Menu atas hanya berisi logo (kembali ke globe), Indonesia, Banding, dan Tentang data.
 - Halaman Indonesia dan halaman rinci memuat baris empat pertanyaan (Harga, Kerja, Ekonomi, Ke depan). Setiap halaman rinci ditutup tautan ke pertanyaan berikutnya, berurutan sampai Ke depan.
 - Alamat lama dialihkan permanen: `/prediksi` ke `/indonesia/ke-depan`, dan `/metode`, `/cara-kerja`, serta `/sumber` ke `/tentang-data`.
 
-**Banding**
+**Halaman Banding (`/banding/[negara]`)**
 
-- Halaman pembanding negara di fase 7 (bagian 8). Menunya baru muncul saat halaman itu tayang, supaya tidak ada menu yang berujung halaman kosong.
+- Proyeksi IMF untuk Indonesia dan satu negara pilihan pengunjung (Malaysia, Thailand, Filipina, atau Vietnam) berdampingan. Setiap pasangan punya alamat sendiri, dan `/banding` dialihkan ke Malaysia.
+- Tiga angka dengan urutan di prinsip 1: inflasi akhir tahun, pengangguran, dan pertumbuhan ekonomi, dari tahun terbit edisi IMF sampai tahun terakhir proyeksinya. Setiap angka berisi kalimat, grafik dua garis, dan tabel per tahun, dengan label "proyeksi IMF", tanggal terbit, dan sumbernya.
+- Kalimatnya menulis angka tahun pertama dan tahun terakhir beserta selisihnya dalam poin persen, tanpa menyebut siapa yang lebih baik.
+- Perkiraan Con-Fore untuk Indonesia menjadi baris berlabel di bawah tahunnya, hanya untuk tahun yang angka resminya belum lengkap, dengan tanggal hitungnya. Pengangguran memakai survei Agustus, jadi barisnya baru muncul saat survei Agustus tahun itu sudah diramal.
+- Kartu Kerja menulis bahwa pengangguran kedua negara tidak dihitung dengan cara yang sama. Kotak penjelasnya menulis siapa yang dihitung menganggur di masing-masing negara, dengan sumbernya.
 
 ### 4.2 Perbandingan dalam kalimat
 
@@ -145,14 +150,15 @@ Ketiganya memakai urutan isi yang sama:
 | Kejujuran label | Setiap angka punya sumber, tanggal, dan label "angka resmi", "perkiraan Con-Fore", atau "proyeksi IMF" |
 | Akurasi model | Galat (MAE) forecast Con-Fore dibandingkan dengan baseline per horizon dan diterbitkan di rekam jejak. Angka utama adalah yang lebih akurat (model atau baseline). Model dianggap lebih akurat hanya bila menang di masa normal dan di data sejak 2022. Baseline dan proyeksi IMF selalu tampil sebagai pembanding, dan hasil yang kalah tetap dipublikasikan |
 | Dipahami pembaca awam | Uji konsep dua tahap. Tahap pilih: tiga orang melihat ketiga bentuk halaman Indonesia dengan urutan bergilir, dan bentuk yang paling dipahami dipilih. Tahap lulus: lima orang baru menguji bentuk terpilih. Seorang peserta lulus bila tanpa bantuan bisa menyebut topik situs dari halaman depan, menjawab keempat pertanyaan dengan kata-katanya sendiri beserta angkanya, dan membedakan angka resmi dari perkiraan. Uji lulus bila minimal empat dari lima orang lulus. Nilai tiap orang dicatat di lembar hasil, dan aturan ini dikunci sebelum uji pertama. Tahap pilih 2026-11-20 memilih bentuk ringkasan bercerita. Tahap lulus dinyatakan lulus oleh pengelola 2026-11-22: semua peserta menyatakan oke, tetapi nilai per orang tidak dicatat di lembar hasil |
-| Tampilan | Halaman depan, Indonesia, rinci, data per seri, dan Tentang data tampil benar di HP dan desktop. Globe punya tautan teks untuk keyboard dan pembaca layar, dan berhenti berputar bagi yang mematikan animasi |
+| Tampilan | Halaman depan, Indonesia, rinci, Banding, data per seri, dan Tentang data tampil benar di HP dan desktop. Globe punya tautan teks untuk keyboard dan pembaca layar, dan berhenti berputar bagi yang mematikan animasi |
 | Biaya | Rp0 untuk layanan, karena semua memakai paket gratis permanen. Domain sendiri, bila dipilih, satu-satunya biaya |
 
 ## 7. Risiko produk
 
 | Risiko | Mitigasi |
 |---|---|
-| Perkiraan dibaca sebagai janji | Rentang selalu tampil, label "perkiraan Con-Fore, bukan angka resmi", dan rekam jejak terbuka |
+| Perkiraan dibaca sebagai janji | Rentang selalu tampil (di halaman Banding lewat tautan, 4.1), label "perkiraan Con-Fore, bukan angka resmi", dan rekam jejak terbuka |
+| Pembanding negara dibaca sebagai peringkat | Kalimatnya hanya menulis angka dan selisihnya, dan perbedaan definisi pengangguran tertulis di halaman (4.1) |
 | Data resmi diperdebatkan publik (contoh: PDB kuartal II 2025) | Sumber dan revisi selalu tampil, dan panel cek silang di versi berikutnya |
 | Target resmi berubah atau kedaluwarsa | Tabel target bersumber dengan tanggal pemeriksaan terakhir, dicek tiap akhir September |
 | Sampel data pendek membuat model terlalu pas dengan masa lalu | Model sederhana, baseline wajib, dan backtest jujur. Variabel masuk model hanya bila menurunkan galat backtest dibanding baseline |
@@ -175,7 +181,7 @@ Risiko teknis ada di [ARCHITECTURE.md](ARCHITECTURE.md#5-risiko-utama).
 | 5b. Susunan baru | Dikerjakan 2026-11-09 dalam empat tahap di `web/`: menu dan halaman Metode, sampul segitiga dan waktu di kartu, halaman detail dan judul grafik, lalu perbaikan hasil uji baca pertama. Uji baca dengan lima orang sesudah tahap 3 dan uji ulang sesudah tahap 4 sama-sama belum lulus, jadi susunan ini diganti fase 5c. Bagian yang butuh pipeline atau tabel baru (tanggal rilis angka BPS dari kalender rilis, cakupan rentang di rekam jejak, dan catatan revisi) pindah ke fase 6 | Diganti fase 5c |
 | 5c. Desain ulang | Dimulai 2026-11-20, selesai 2026-11-24. (1) Konsep kasar hitam-putih: halaman depan dengan peta diam dan halaman Indonesia dalam tiga bentuk, di `/konsep/`, tidak diindeks mesin pencari, dan dihapus sesudah uji. (2) Uji tahap pilih, selesai 2026-11-20: bentuk ringkasan bercerita terpilih, tanpa catatan perbaikan. (3) Perbaikan bentuk terpilih, lalu uji tahap lulus dengan lima orang baru (6). Dinyatakan lulus oleh pengelola 2026-11-22, tanpa lembar nilai. (4) Pembangunan halaman baru di `web/` dengan alamat dan menu di 4.1, termasuk globe 3D dari aset yang memenuhi syarat di `DESIGN.md`. Tayang 2026-11-22. Globe menyusul di hari yang sama sebagai globe kanvas d3-geo, dengan peta diam sebagai gambar penggantinya. (5) Gaya visual dipilih sesudah uji lulus dan sebelum pembangunan (4), dari tiga contoh gaya, supaya halaman baru cukup dibangun sekali. Gaya 3 dipilih 2026-11-22, dan konsep kasar serta contoh gaya sudah dihapus. (6) Perbaikan dari catatan pengelola 2026-11-24: huruf lebih kecil, tata letak selebar layar di komputer, teks rata kiri kanan, dan globe yang diseret tanpa tombol henti. Hasilnya diterima pengelola di hari yang sama, sesudah dilihat di HP dan komputer. Setiap tahap langsung tayang sesudah lulus tes dan build | Uji tahap lulus lulus, halaman baru tampil benar di HP dan desktop, dan lolos daftar periksa tampilan pengelola serta linter Design Kit |
 | 6. Otomasi perawatan | Uji tujuh hari lulus 2026-11-14, jadi fase ini boleh jalan berdampingan dengan fase 5c selama hanya menyentuh pipeline. Pengingat lewat issue GitHub untuk tabel tahunan (target resmi, kalender rilis, tanggal Lebaran) dan satu workflow pemeriksa untuk cek bulanan, tanpa panggilan model AI, dibangun 2026-11-22 sebagai workflow **Pemeriksaan bulanan** yang berjalan tanggal 9 sesudah backtest (RUNBOOK 9 dan 9b). Cek yang butuh akses akun lain (cron-job.org dan pemakaian Vercel) serta penilaian angka backtest tetap manual. Uji pengingat 2026-11-22 (run #1 Pemeriksaan bulanan) membuka lalu menutup keempat jenis issue (#2 sampai #5). Pemeriksaan sungguhan pertama di GitHub dijadwalkan 9 Desember 2026. Bagian pipeline dari fase 5b selesai 2026-11-22: tanggal rilis angka dari kalender rilis, cakupan rentang di rekam jejak, dan catatan revisi (migrasi 0006). Angka resmi dari dokumen tetap disetujui pengelola, dan agent hanya dipakai untuk mengubah kode dan menulis teks penjelas. Tampilan untuk data barunya dibuat di halaman fase 5c | Cek bulanan di RUNBOOK yang bisa dijalankan script tidak lagi manual, dan setiap pengingat terbukti membuka issue saat diuji |
-| 7. Pembanding negara | Dimulai sesudah fase 5c dan 6. Satu halaman yang menampilkan proyeksi IMF untuk Indonesia dan satu negara pilihan pengunjung (Malaysia, Thailand, Filipina, atau Vietnam) berdampingan: pertumbuhan, inflasi akhir tahun, dan pengangguran sampai tahun terakhir proyeksi IMF. Perkiraan Con-Fore untuk Indonesia tampil sebagai baris berlabel pada tahun yang juga diramal Con-Fore. Tanpa rentang, karena IMF tidak menerbitkannya. Model Con-Fore untuk negara lain tidak termasuk | Keempat pasangan tampil benar di HP dan desktop, setiap angka berlabel proyeksi IMF dengan sumber dan tanggal terbitnya, dan perbedaan definisi pengangguran antarnegara tertulis di halaman |
+| 7. Pembanding negara | Dikerjakan sesudah fase 5c dan 6, dan tayang 2026-11-24 di `/banding/[negara]` (4.1). Satu halaman yang menampilkan proyeksi IMF untuk Indonesia dan satu negara pilihan pengunjung (Malaysia, Thailand, Filipina, atau Vietnam) berdampingan: pertumbuhan, inflasi akhir tahun, dan pengangguran sampai tahun terakhir proyeksi IMF. Perkiraan Con-Fore untuk Indonesia tampil sebagai baris berlabel pada tahun yang juga diramal Con-Fore. Tanpa rentang, karena IMF tidak menerbitkannya. Model Con-Fore untuk negara lain tidak termasuk | Keempat pasangan tampil benar di HP dan desktop, setiap angka berlabel proyeksi IMF dengan sumber dan tanggal terbitnya, dan perbedaan definisi pengangguran antarnegara tertulis di halaman |
 
 Keputusan produk dan alasannya dicatat di catatan proyek pengelola, dan dokumen ini hanya memuat hasilnya.
 
@@ -190,3 +196,4 @@ Keputusan produk dan alasannya dicatat di catatan proyek pengelola, dan dokumen 
 7. (Diputuskan 2026-11-22) Aset globe di halaman depan: globe kanvas dengan d3-geo dan batas negara Natural Earth, dipilih pengelola dari dua calon karena jauh lebih ringan daripada globe.gl. Syarat aset dan cara memenuhinya ada di `DESIGN.md`.
 8. (Diputuskan 2026-11-22) Gaya visual: gaya 3, terang dan ramah, dengan satu warna per pertanyaan dan huruf Plus Jakarta Sans (`DESIGN.md`).
 9. (Diputuskan 2026-11-24) Sesudah melihat situs di HP dan komputer, pengelola meminta huruf yang lebih kecil, isi selebar layar di komputer dengan boks berdampingan, teks rata kiri kanan, dan globe yang bisa diseret tanpa tombol henti. Aturannya ada di `DESIGN.md`.
+10. (Diputuskan 2026-11-24) Halaman Banding: angkanya tanpa rentang dengan tautan ke Ke depan, pengangguran hanya dari survei Agustus di Banding dan di Ke depan, dan setiap angka berisi kalimat, grafik dua garis, dan tabel.

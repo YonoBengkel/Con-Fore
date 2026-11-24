@@ -21,6 +21,14 @@ export function angka(n: number, desimal: number): string {
   return f.format(n);
 }
 
+/**
+ * Angka seperti yang tampil, untuk kalimat yang harus cocok dengan angka di halaman. Dibaca dari teksnya, karena
+ * toFixed dan Intl membulatkan sebagian angka ke arah berbeda (2,55 menjadi 2,5 dan 2,6). Tanpa nol negatif.
+ */
+export function angkaTampil(n: number, desimal: number): number {
+  return Number(angka(n, desimal).replace(/\./g, "").replace(",", ".")) + 0;
+}
+
 /** Jumlah desimal yang wajar menurut konsep dan besar angka. */
 export function desimalUntuk(n: number, konsep: string): number {
   if (konsep === "rate" || konsep === "round_rate") return Math.abs(n) >= 1000 ? 0 : 2; // >= 1000: jumlah orang per ronde

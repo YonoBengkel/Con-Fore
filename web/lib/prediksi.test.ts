@@ -15,6 +15,7 @@ import {
   kalimatRentang,
   maeModel,
   modelTerurut,
+  nilaiPerTahun,
   nilaiTahunPerkiraan,
   tahunPerkiraan,
 } from "./prediksi.ts";
@@ -81,21 +82,49 @@ test("angka tahunan memakai angka resmi dulu, lalu perkiraan", () => {
     inflasi: [ramalan("i", "2026-12", 3.2)],
     tpt: [ramalan("u", "2026-11", 4.7)],
   };
-  const hasil = nilaiTahunPerkiraan(2026, resmi, jalur)!;
-  assert.ok(Math.abs(hasil.pertumbuhan - 5.45) < 1e-9);
-  assert.equal(hasil.inflasi, 3.2);
-  assert.equal(hasil.pengangguran, 4.75);
+  const hasil = nilaiTahunPerkiraan(2026, resmi, jalur);
+  assert.ok(Math.abs(hasil.pertumbuhan!.nilai - 5.45) < 1e-9);
+  assert.equal(hasil.pertumbuhan!.resmi, false); // satu kuartal perkiraan cukup membuat angka setahunnya perkiraan
+  assert.deepEqual(hasil.inflasi, { nilai: 3.2, resmi: false });
+  assert.deepEqual(hasil.pengangguran, { nilai: 4.75, resmi: true });
+  const lengkap = { ...resmi, pdb: [...resmi.pdb, ["2026-Q4", 5.4]] as Titik[] };
+  assert.equal(nilaiTahunPerkiraan(2026, lengkap, jalur).pertumbuhan!.resmi, true);
 });
 
-test("TPT tanpa ronde Agustus memakai angka utama terakhir, dan kuartal bolong membuat tahun kosong", () => {
+test("TPT hanya dari survei Agustus, dan kuartal bolong membuat pertumbuhan kosong", () => {
   const resmi = { pdb: [] as Titik[], inflasi: [] as Titik[], tpt: [["2026-08", 4.75]] as Titik[] };
   const jalur = {
-    pdb: ["Q1", "Q2", "Q3", "Q4"].map((q) => ramalan("p", `2027-${q}`, 5)),
+    pdb: ["2027-Q1", "2027-Q2", "2027-Q3", "2027-Q4", "2028-Q1"].map((p) => ramalan("p", p, 5)),
     inflasi: [ramalan("i", "2027-12", 3)],
     tpt: [ramalan("u", "2026-11", 4.7), ramalan("u", "2027-02", 4.6)],
   };
-  assert.equal(nilaiTahunPerkiraan(2027, resmi, jalur)!.pengangguran, 4.6);
-  assert.equal(nilaiTahunPerkiraan(2028, resmi, jalur), null);
+  assert.deepEqual(nilaiTahunPerkiraan(2027, resmi, jalur), {
+    pertumbuhan: { nilai: 5, resmi: false },
+    inflasi: { nilai: 3, resmi: false },
+    pengangguran: null, // ronde Februari 2027 tidak menggantikan survei Agustus
+  });
+  assert.deepEqual(nilaiTahunPerkiraan(2028, resmi, jalur), { pertumbuhan: null, inflasi: null, pengangguran: null });
+});
+
+test("angka per tahun: tahun perkiraan dan sesudahnya, tanpa tahun yang kosong seluruhnya", () => {
+  const resmi: Record<string, Titik[]> = {
+    [PDB.seri]: [["2026-Q3", 5.5]],
+    [INFLASI.seri]: [["2026-12", 3.1]],
+    [TPT.seri]: [],
+  };
+  const titik = (seri: string) => resmi[seri];
+  const pdb = ramalan(PDB.seri, "2026-Q4", 5.4);
+  const inflasi = ramalan(INFLASI.seri, "2027-12", 3);
+  // 2027 ikut karena inflasinya diramal, walau pertumbuhan dan TPT-nya belum.
+  const hasil = nilaiPerTahun([pdb, inflasi], titik);
+  assert.deepEqual([...hasil.keys()], [2026, 2027]);
+  assert.deepEqual(hasil.get(2026), { pertumbuhan: null, inflasi: { nilai: 3.1, resmi: true }, pengangguran: null });
+  assert.deepEqual(hasil.get(2027)!.inflasi, { nilai: 3, resmi: false });
+  assert.deepEqual([...nilaiPerTahun([pdb], titik).keys()], [2026]);
+  assert.equal(nilaiPerTahun([inflasi], titik).size, 0);
+  // Januari sampai PDB kuartal IV terbit: perkiraan sudah sampai dua tahun sesudah tahun itu.
+  const januari = ramalan(INFLASI.seri, "2028-12", 2.8);
+  assert.deepEqual([...nilaiPerTahun([pdb, inflasi, januari], titik).keys()], [2026, 2027, 2028]);
 });
 
 test("skor dicari per seri, model, horizon, dan jendela", () => {
