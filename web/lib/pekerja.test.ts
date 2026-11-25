@@ -39,6 +39,14 @@ test("porsi turun saat pengangguran turun disambung dengan tetapi", () => {
   assert.match(k.hubungan!, /tetapi komposisi pekerja bergeser ke sektor informal\.$/);
 });
 
+test("perubahan dihitung dari angka yang tampil, tanpa ekor desimal", () => {
+  // 40.3 - 40.2 = 0.09999999999999432, sedangkan yang tampil 40,30 dan 40,20.
+  const k = kalimatPekerja([["2025-02", 40.2], ["2026-02", 40.3]], [["2025-02", 4.755], ["2026-02", 4.684]])!;
+  assert.equal(k.porsi, "Porsi pekerja formal Februari 2026: 40,30%, naik 0,10 poin persen dari Februari 2025 (40,20%).");
+  // Yang tampil 4,68 dan 4,76.
+  assert.equal(k.hubungan, "Pada ronde yang sama, pengangguran turun 0,08 poin persen, dan komposisi pekerja bergeser ke sektor formal.");
+});
+
 test("tanpa ronde pembanding atau tanpa TPT, kalimatnya dipendekkan", () => {
   assert.deepEqual(kalimatPekerja([["2017-02", 40]], TPT), { porsi: "Porsi pekerja formal Februari 2017: 40,00%.", hubungan: null });
   assert.equal(kalimatPekerja(FORMAL, [])!.hubungan, null);

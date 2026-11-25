@@ -187,6 +187,11 @@ test("efek basis menunjuk bulan dengan lompatan terbesar dan pola bulan itu", ()
   assert.match(turun, /harga Januari 2026 turun 0,14%, sedangkan pola lima tahun terakhir untuk bulan itu naik 0,16%/);
 });
 
+test("efek basis mengikuti angka yang tampil: 0,145 tampil 0,15", () => {
+  const jalur = [ramalan(INFLASI.seri, "2026-11", 3.3)];
+  assert.match(kalimatEfekBasis(jalur, 3, [["2025-11", 0.145]])!, /harga November 2025 naik 0,15%/);
+});
+
 test("efek basis diam bila lompatannya kecil atau bulan pembandingnya tidak ada", () => {
   assert.equal(kalimatEfekBasis([ramalan(INFLASI.seri, "2026-11", 3.26)], 3.25, [["2025-11", 0.1]]), null);
   assert.equal(kalimatEfekBasis([ramalan(INFLASI.seri, "2026-11", 3.9)], 3.25, []), null);
@@ -197,6 +202,8 @@ test("artinya buatmu selalu bersyarat dan tanpa saran", () => {
     artinyaPerkiraan("inflasi", 3.32),
     "Bila perkiraan ini tepat, belanja yang setahun sebelumnya Rp100.000 menjadi sekitar Rp103.300.",
   );
+  // Rupiahnya dari angka yang tampil: -0,25 tampil -0,3.
+  assert.match(artinyaPerkiraan("inflasi", -0.25), /menjadi sekitar Rp99\.700\.$/);
   for (const kunci of ["pertumbuhan", "inflasi", "pengangguran"] as const) {
     const teks = artinyaPerkiraan(kunci, 3);
     assert.match(teks, /^Bila perkiraan ini tepat/);
@@ -217,6 +224,11 @@ test("panel jangka panjang hanya tahun sesudah angka resmi, dengan target RPJMN 
   assert.equal(
     kalimatJangkaPanjang(baris, resmi),
     "Untuk 2029, proyeksi IMF 5,2% dan target RPJMN 8,0%, selisih 2,8 poin persen. Sejak 2000, pertumbuhan tahunan tertinggi 7,4% pada 2008.",
+  );
+  // Selisihnya dari kedua angka yang tampil: 5,35 tampil 5,4.
+  assert.match(
+    kalimatJangkaPanjang([{ tahun: 2029, imf: 5.35, rpjmn: 8 }], resmi)!,
+    /proyeksi IMF 5,4% dan target RPJMN 8,0%, selisih 2,6 poin persen\./,
   );
   assert.equal(kalimatJangkaPanjang([{ tahun: 2030, imf: 5, rpjmn: null }], resmi), null);
 });

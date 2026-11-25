@@ -1,14 +1,14 @@
 // Rincian inflasi per kelompok BPS untuk halaman detail inflasi (PRD 4.4).
 
 import type { Titik } from "./data";
-import { angka, periode } from "./format.ts";
+import { angka, angkaTampil, periode } from "./format.ts";
 import { KELOMPOK_INFLASI, SERI_INFLASI_BULANAN, SERI_KARTU } from "./konten.ts";
 
 export type BarisRincian = { nama: string; setahun: number | null; sebulan: number | null };
 
 /** "naik sekitar 2,6%", dari angka yang tampil (satu desimal). */
 function gerak(nilai: number): string {
-  const tampil = Number(nilai.toFixed(1));
+  const tampil = angkaTampil(nilai, 1);
   if (tampil === 0) return "hampir tidak berubah";
   return `${tampil > 0 ? "naik" : "turun"} sekitar ${angka(Math.abs(tampil), 1)}%`;
 }

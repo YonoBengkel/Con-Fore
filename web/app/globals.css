@@ -82,6 +82,8 @@ body {
   line-height: 1.6;
   /* Spasi kata bawaan Plus Jakarta Sans sempit, jadi dilonggarkan sedikit untuk teks bacaan. */
   word-spacing: 0.05em;
+  /* Acuan @container layar (Layar lebar, di bawah). */
+  container: layar / inline-size;
 }
 
 h1,
@@ -94,8 +96,10 @@ h4 {
   text-wrap: balance;
 }
 
+/* Di layar HP, judul yang hurufnya diperbesar berhenti di 13vw, supaya kata terpanjangnya tetap utuh. */
 h1 {
-  font-size: var(--t-judul);
+  font-size: min(var(--t-judul), 13vw);
+  overflow-wrap: break-word;
   line-height: 1.12;
   letter-spacing: -0.02em;
   margin: 1.5rem 0 0.5rem;
@@ -566,12 +570,13 @@ main.wadah {
   opacity: 1;
 }
 
-/* Ringkasan bercerita dan blok jawaban (halaman Indonesia, bentuk C) */
+/* Ringkasan bercerita dan blok jawaban (halaman Indonesia, bentuk C). Di layar HP jarak sampingnya px, seperti .wadah,
+   supaya tidak ikut membesar saat hurufnya diperbesar. */
 
 .cerita {
   background: var(--permukaan);
   border-radius: var(--r-blok);
-  padding: 1.25rem;
+  padding: 1.25rem 20px;
   margin: 0 0 1.25rem;
 }
 
@@ -669,15 +674,17 @@ main.wadah {
 }
 
 @media (min-width: 22.5em) {
-  .pilih-negara {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+  @container layar (min-width: 21rem) {
+    .pilih-negara {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
   }
 }
 
 .blok {
   background: var(--permukaan);
   border-radius: var(--r-blok);
-  padding: 1.25rem 1.25rem 1.375rem;
+  padding: 1.25rem 20px 1.375rem;
   margin: 0 0 1rem;
   scroll-margin-top: 1rem;
 }
@@ -790,6 +797,7 @@ main.wadah {
   border-radius: 14px;
   background: var(--isi-lipat);
   margin: 0 0 0.75rem;
+  overflow-wrap: break-word;
 }
 
 .lipat > summary,
@@ -798,10 +806,11 @@ main.wadah {
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 12px;
   min-height: 44px;
-  padding: 0.5rem 0.875rem;
+  padding: 0.5rem 14px;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .lipat > summary::-webkit-details-marker,
@@ -827,8 +836,8 @@ main.wadah {
 }
 
 .lipat > :not(summary) {
-  margin-left: 0.875rem;
-  margin-right: 0.875rem;
+  margin-left: 14px;
+  margin-right: 14px;
 }
 
 .lipat > :last-child {
@@ -846,7 +855,7 @@ main.wadah {
 }
 
 .lipat-isi {
-  padding: 0 0.875rem 0.875rem;
+  padding: 0 14px 0.875rem;
 }
 
 .rincian {
@@ -1071,7 +1080,7 @@ main.wadah {
 }
 
 .artinya {
-  padding: 0.65rem 0.8rem;
+  padding: 0.65rem 12.8px;
   border-radius: var(--r-tombol);
   background: color-mix(in srgb, var(--topik) 8%, #ffffff);
   font-size: var(--t-kecil);
@@ -1780,7 +1789,10 @@ td.angka {
   display: inline;
 }
 
-/* Layar lebar */
+/* Layar lebar. Susunan berdampingan butuh dua syarat: layarnya cukup lebar (@media, dalam px), dan lebarnya cukup
+   untuk ukuran hurufnya (@container layar, dalam rem). Di huruf 100% syarat kedua selalu terpenuhi bersama syarat
+   pertama, karena 42, 57, dan 72rem adalah 720, 960, dan 1200 px dikurangi ruang untuk bilah gulir. Saat huruf
+   diperbesar, yang dipakai susunan layar yang lebih sempit, supaya isinya tidak terjepit atau keluar layar. */
 
 @media (min-width: 720px) {
   :root {
@@ -1825,50 +1837,52 @@ td.angka {
     grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
   }
 
-  .kisi-jawaban,
-  .kisi-penggerak,
-  .detail-lain > .dua-bagian {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  @container layar (min-width: 42rem) {
+    .kisi-jawaban,
+    .kisi-penggerak,
+    .detail-lain > .dua-bagian {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 
-  /* Tautan rincian di dasar blok, supaya sejajar di antara blok yang bersebelahan. */
-  .kisi-jawaban > .blok {
-    display: flex;
-    flex-direction: column;
-  }
+    /* Tautan rincian di dasar blok, supaya sejajar di antara blok yang bersebelahan. */
+    .kisi-jawaban > .blok {
+      display: flex;
+      flex-direction: column;
+    }
 
-  .kisi-jawaban > .blok > .label-angka {
-    align-self: flex-start;
-  }
+    .kisi-jawaban > .blok > .label-angka {
+      align-self: flex-start;
+    }
 
-  .kisi-jawaban > .blok > .tautan-rinci {
-    margin-top: auto;
-    padding-top: 0.25rem;
-  }
+    .kisi-jawaban > .blok > .tautan-rinci {
+      margin-top: auto;
+      padding-top: 0.25rem;
+    }
 
-  .kaki-kisi {
-    grid-template-columns: 2fr 1fr;
-  }
+    .kaki-kisi {
+      grid-template-columns: 2fr 1fr;
+    }
 
-  .penjelas-isi {
-    grid-template-columns: 1fr 1fr;
-  }
+    .penjelas-isi {
+      grid-template-columns: 1fr 1fr;
+    }
 
-  .penggeser {
-    flex-wrap: nowrap;
-  }
+    .penggeser {
+      flex-wrap: nowrap;
+    }
 
-  .penggeser-periode {
-    flex: 0 0 9.5rem;
-    text-align: right;
-  }
+    .penggeser-periode {
+      flex: 0 0 9.5rem;
+      text-align: right;
+    }
 
-  .pilih-negara {
-    display: flex;
-  }
+    .pilih-negara {
+      display: flex;
+    }
 
-  .pilih-negara a {
-    padding: 0 1rem;
+    .pilih-negara a {
+      padding: 0 1rem;
+    }
   }
 }
 
@@ -1877,360 +1891,404 @@ td.angka {
     padding: 0 clamp(24px, 3vw, 56px);
   }
 
-  /* Halaman depan: judul, nama negara, dan legenda di kiri, globe setinggi layar di kanan. */
-  .depan {
-    display: grid;
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    grid-template-rows: 1fr repeat(3, auto) 1fr;
-    column-gap: clamp(2rem, 4vw, 5rem);
-  }
-
-  .depan > h1 {
-    grid-row: 2;
-    margin-top: 0;
-  }
-
-  .depan > .negara-tersedia {
-    grid-row: 3;
-  }
-
-  .depan > .legenda {
-    grid-row: 4;
-    width: auto;
-    margin: 1.5rem 0 0;
-  }
-
-  .depan > .globe,
-  .depan > .peta,
-  .depan > noscript {
-    grid-column: 2;
-    grid-row: 1 / -1;
-    align-self: center;
+  .globe,
+  :where(.depan > .globe) ~ .legenda {
+    width: min(100%, calc(100vh - 7rem));
+    width: min(100%, calc(100svh - 7rem));
   }
 
   .globe {
-    width: min(100%, calc(100vh - 7rem));
-    width: min(100%, calc(100svh - 7rem));
     margin: 1.5rem auto;
   }
 
-  /* Judul halaman di kiri, baris empat pertanyaan di kanannya. */
-  .kepala-halaman {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-    column-gap: 2rem;
-  }
+  @container layar (min-width: 57rem) {
+    /* Halaman depan: judul, nama negara, dan legenda di kiri, globe setinggi layar di kanan. */
+    .depan {
+      display: grid;
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      grid-template-rows: 1fr repeat(3, auto) 1fr;
+      column-gap: clamp(2rem, 4vw, 5rem);
+    }
 
-  .kepala-halaman > .baris-atas {
-    grid-column: 2;
-    grid-row: 1;
-    margin-top: 1.875rem;
-  }
+    .depan > h1 {
+      grid-row: 2;
+      margin-top: 0;
+    }
 
-  .kepala-halaman > .pilih-negara {
-    margin-top: 1.875rem;
-  }
+    .depan > .negara-tersedia {
+      grid-row: 3;
+    }
 
-  .kisi-rinci {
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    gap: 1.5rem;
-  }
+    .depan > .legenda {
+      grid-row: 4;
+      width: auto;
+      margin: 1.5rem 0 0;
+    }
 
-  .dua-bagian,
-  .dua-kolom {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+    .depan > .globe,
+    .depan > .peta,
+    .depan > noscript {
+      grid-column: 2;
+      grid-row: 1 / -1;
+      align-self: center;
+    }
 
-  .dua-kolom {
-    align-items: start;
-  }
+    /* Judul halaman di kiri, baris empat pertanyaan di kanannya. */
+    .kepala-halaman {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
+      column-gap: 2rem;
+    }
 
-  .dua-kolom + h3 {
-    margin-top: 1.5rem;
-  }
+    .kepala-halaman > .baris-atas {
+      grid-column: 2;
+      grid-row: 1;
+      margin-top: 1.875rem;
+    }
 
-  .dua-bagian-kotak > section {
-    padding: 1.5rem;
-    border-radius: var(--r-blok);
-    background: var(--permukaan);
-  }
+    .kepala-halaman > .pilih-negara {
+      margin-top: 1.875rem;
+    }
 
-  .dua-bagian-kotak h2 {
-    font-size: var(--t-sedang);
-  }
+    .kisi-rinci {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      gap: 1.5rem;
+    }
 
-  .kisi-utama,
-  .kisi-kelompok {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+    .dua-bagian,
+    .dua-kolom {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 
-  /* Delapan baris setiap kartu perkiraan memakai baris yang sama, supaya angka, grafik, dan lipatannya sejajar. */
-  .kisi-utama {
-    row-gap: 0;
-  }
+    .dua-kolom {
+      align-items: start;
+    }
 
-  .kisi-utama > .kartu {
-    display: grid;
-    grid-row: span 8;
-    grid-template-rows: subgrid;
-    grid-template-columns: minmax(0, 1fr);
-  }
+    .dua-kolom + h3 {
+      margin-top: 1.5rem;
+    }
 
-  .kisi-utama > .kartu > .label-angka {
-    justify-self: start;
-  }
+    .dua-bagian-kotak > section {
+      padding: 1.5rem;
+      border-radius: var(--r-blok);
+      background: var(--permukaan);
+    }
 
-  /* Tujuh baris di halaman Banding: judul, nama, kalimat, grafik, label, tabel, lalu catatannya. */
-  .kisi-banding > .kartu {
-    grid-row: span 7;
-  }
+    .dua-bagian-kotak h2 {
+      font-size: var(--t-sedang);
+    }
 
-  .kisi-banding > .kartu > .gulir-tabel {
-    align-self: start;
-  }
+    .kisi-utama,
+    .kisi-kelompok {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
 
-  /* Data per seri: pintu penjelas dan pilihan seri sebaris, kecuali saat penjelasnya dibuka. */
-  .baris-penjelas {
-    display: flex;
-    flex-wrap: wrap;
-    column-gap: 1rem;
-  }
+    /* Delapan baris setiap kartu perkiraan memakai baris yang sama, supaya angka, grafik, dan lipatannya sejajar. */
+    .kisi-utama {
+      row-gap: 0;
+    }
 
-  .penjelas {
-    flex: 1 1 22rem;
-  }
+    .kisi-utama > .kartu {
+      display: grid;
+      grid-row: span 8;
+      grid-template-rows: subgrid;
+      grid-template-columns: minmax(0, 1fr);
+    }
 
-  .penjelas[open] {
-    flex-basis: 100%;
-  }
+    .kisi-utama > .kartu > .label-angka {
+      justify-self: start;
+    }
 
-  .penjelas > summary {
-    min-height: calc(44px + 0.6rem);
-  }
+    /* Tujuh baris di halaman Banding: judul, nama, kalimat, grafik, label, tabel, lalu catatannya. */
+    .kisi-banding > .kartu {
+      grid-row: span 7;
+    }
 
-  .pil-baris {
-    flex: 0 1 auto;
-    flex-wrap: wrap;
-    max-width: 100%;
-  }
+    .kisi-banding > .kartu > .gulir-tabel {
+      align-self: start;
+    }
 
-  /* Data per seri: grafik dan keterangannya di kiri, angka terakhir dan tabelnya di kanan. Baris tengah yang lentur
-     menyerap selisih tinggi kedua sisi. */
-  .kisi-detail {
-    grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
-    grid-template-rows: auto 1fr auto;
-    gap: 1rem 1.5rem;
-    align-items: start;
-  }
+    /* Data per seri: pintu penjelas dan pilihan seri sebaris, kecuali saat penjelasnya dibuka. */
+    .baris-penjelas {
+      display: flex;
+      flex-wrap: wrap;
+      column-gap: 1rem;
+    }
 
-  .kisi-detail > .detail-angka {
-    grid-column: 2;
-    grid-row: 1;
-  }
+    .penjelas {
+      flex: 1 1 22rem;
+    }
 
-  .kisi-detail > .detail-grafik {
-    grid-column: 1;
-    grid-row: 1 / span 2;
-  }
+    .penjelas[open] {
+      flex-basis: 100%;
+    }
 
-  .kisi-detail > .detail-tabel {
-    grid-column: 2;
-    grid-row: 2 / span 2;
-  }
+    .penjelas > summary {
+      min-height: calc(44px + 0.6rem);
+    }
 
-  .kisi-detail > .detail-lain {
-    grid-column: 1;
-    grid-row: 3;
-  }
+    .pil-baris {
+      flex: 0 1 auto;
+      flex-wrap: wrap;
+      max-width: 100%;
+    }
 
-  .detail-lain > .dua-bagian {
-    margin-top: 1.25rem;
-  }
+    /* Data per seri: grafik dan keterangannya di kiri, angka terakhir dan tabelnya di kanan. Baris tengah yang lentur
+       menyerap selisih tinggi kedua sisi. */
+    .kisi-detail {
+      grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
+      grid-template-rows: auto 1fr auto;
+      gap: 1rem 1.5rem;
+      align-items: start;
+    }
 
-  /* Tentang data: kalimat tetap selebar bacaan, daftarnya mengalir dua kolom, dan tabelnya selebar halaman. */
-  .halaman-bacaan {
-    grid-template-columns: 13rem minmax(0, 1fr);
-  }
+    .kisi-detail > .detail-angka {
+      grid-column: 2;
+      grid-row: 1;
+    }
 
-  .prosa {
-    max-width: none;
-  }
+    .kisi-detail > .detail-grafik {
+      grid-column: 1;
+      grid-row: 1 / span 2;
+    }
 
-  .prosa > p,
-  .prosa > ul:not(.daftar-sumber) {
-    max-width: 46rem;
-  }
+    .kisi-detail > .detail-tabel {
+      grid-column: 2;
+      grid-row: 2 / span 2;
+    }
 
-  .kaki-kisi {
-    grid-template-columns: minmax(0, 42rem) minmax(0, 1fr);
-    column-gap: 4rem;
-  }
+    .kisi-detail > .detail-lain {
+      grid-column: 1;
+      grid-row: 3;
+    }
 
-  .kaki-kisi ul {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    column-gap: 1.75rem;
-  }
+    .detail-lain > .dua-bagian {
+      margin-top: 1.25rem;
+    }
 
-  .daftar-isi {
-    position: sticky;
-    top: 5rem;
-    align-self: start;
-    margin-top: 2.5rem;
-  }
+    /* Tentang data: kalimat tetap selebar bacaan, daftarnya mengalir dua kolom, dan tabelnya selebar halaman. */
+    .halaman-bacaan {
+      grid-template-columns: 13rem minmax(0, 1fr);
+    }
 
-  .daftar-isi ul {
-    display: block;
-  }
+    .prosa {
+      max-width: none;
+    }
 
-  .daftar-isi a {
-    min-height: 36px;
-  }
+    .prosa > p,
+    .prosa > ul:not(.daftar-sumber) {
+      max-width: 46rem;
+    }
 
-  .daftar-sumber {
-    grid-template-columns: 1fr 1fr;
-  }
+    .kaki-kisi {
+      grid-template-columns: minmax(0, 42rem) minmax(0, 1fr);
+      column-gap: 4rem;
+    }
 
-  .daftar-sumber h3 {
-    margin-top: 0;
-  }
+    .kaki-kisi ul {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      column-gap: 1.75rem;
+    }
 
-  .jangka-panjang {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 1.5rem;
-    align-items: start;
+    .daftar-isi {
+      position: sticky;
+      top: 5rem;
+      align-self: start;
+      margin-top: 2.5rem;
+    }
+
+    .daftar-isi ul {
+      display: block;
+    }
+
+    .daftar-isi a {
+      min-height: 36px;
+    }
+
+    .daftar-sumber {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .daftar-sumber h3 {
+      margin-top: 0;
+    }
+
+    .jangka-panjang {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 1.5rem;
+      align-items: start;
+    }
   }
 }
 
 /* Kolom yang lebih sempit daripada layar HP: blok jawaban dan kartu yang ikut memengaruhi di lebar tablet, lalu tiga
    kartu perkiraan dan panel angka terakhir, lalu ringkasan halaman Indonesia. */
 @media (min-width: 720px) and (max-width: 959px) {
-  .kisi-jawaban p,
-  .kisi-jawaban li,
-  .kisi-penggerak p,
-  .kisi-banding p {
-    text-align: left;
-  }
+  @container layar (min-width: 42rem) {
+    .kisi-jawaban p,
+    .kisi-jawaban li,
+    .kisi-penggerak p,
+    .kisi-banding p {
+      text-align: left;
+    }
 
-  /* Halaman Banding di lebar tablet: grafik dan catatannya di kiri, tabelnya di kanan. */
-  .kisi-banding > .kartu {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(5, auto) 1fr;
-    column-gap: 1.5rem;
-  }
+    /* Halaman Banding di lebar tablet: grafik dan catatannya di kiri, tabelnya di kanan. */
+    .kisi-banding > .kartu {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: repeat(5, auto) 1fr;
+      column-gap: 1.5rem;
+    }
 
-  .kisi-banding > .kartu > * {
-    grid-column: 1;
-  }
+    .kisi-banding > .kartu > * {
+      grid-column: 1;
+    }
 
-  .kisi-banding > .kartu > :nth-child(-n + 3) {
-    grid-column: 1 / -1;
-  }
+    .kisi-banding > .kartu > :nth-child(-n + 3) {
+      grid-column: 1 / -1;
+    }
 
-  .kisi-banding > .kartu > .label-angka {
-    justify-self: start;
-  }
+    .kisi-banding > .kartu > .label-angka {
+      justify-self: start;
+    }
 
-  .kisi-banding > .kartu > .gulir-tabel {
-    grid-column: 2;
-    grid-row: 4 / -1;
-    align-self: start;
-    margin-top: 0.5rem;
-  }
+    .kisi-banding > .kartu > .gulir-tabel {
+      grid-column: 2;
+      grid-row: 4 / -1;
+      align-self: start;
+      margin-top: 0.5rem;
+    }
 
-  .banding-catatan {
-    margin-top: 0;
+    .banding-catatan {
+      margin-top: 0;
+    }
   }
 }
 
 @media (min-width: 960px) and (max-width: 1199px) {
-  .kisi-utama p,
-  .detail-angka p {
-    text-align: left;
+  @container layar (min-width: 57rem) {
+    .kisi-utama p,
+    .detail-angka p {
+      text-align: left;
+    }
   }
 }
 
 @media (min-width: 1200px) and (max-width: 1399px) {
-  .cerita p {
-    text-align: left;
+  @container layar (min-width: 72rem) {
+    .cerita p {
+      text-align: left;
+    }
+  }
+}
+
+/* Kolom yang sama sempitnya di layar yang lebih lebar, karena hurufnya diperbesar. */
+@media (min-width: 960px) {
+  @container layar (min-width: 42rem) and (max-width: 57rem) {
+    .kisi-jawaban p,
+    .kisi-jawaban li,
+    .kisi-penggerak p {
+      text-align: left;
+    }
   }
 }
 
 @media (min-width: 1200px) {
-  /* Halaman Indonesia: ringkasan di kiri, keempat blok jawaban di sampingnya. */
-  .negara {
-    display: grid;
-    grid-template-columns: clamp(21rem, 27vw, 30rem) minmax(0, 1fr);
-    column-gap: 1.5rem;
-    align-items: start;
+  @container layar (min-width: 57rem) and (max-width: 72rem) {
+    .kisi-utama p,
+    .detail-angka p {
+      text-align: left;
+    }
   }
+}
 
-  .negara-jawaban > .baris-tanya {
-    margin: 1.875rem 0 1rem;
+@media (min-width: 1400px) {
+  @container layar (min-width: 72rem) and (max-width: 84rem) {
+    .cerita p {
+      text-align: left;
+    }
   }
+}
 
-  .kisi-penggerak {
-    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
-  }
+@media (min-width: 1200px) {
+  @container layar (min-width: 72rem) {
+    /* Halaman Indonesia: ringkasan di kiri, keempat blok jawaban di sampingnya. */
+    .negara {
+      display: grid;
+      grid-template-columns: clamp(21rem, 27vw, 30rem) minmax(0, 1fr);
+      column-gap: 1.5rem;
+      align-items: start;
+    }
 
-  /* Empat kartu atau lebih sebaris bisa lebih sempit daripada layar HP. */
-  .kisi-penggerak p {
-    text-align: left;
-  }
+    .negara-jawaban > .baris-tanya {
+      margin: 1.875rem 0 1rem;
+    }
 
-  /* Judul bagian di kiri dan tabelnya di kanan, sejajar dengan ketiga kartu perkiraan. Di layar yang lebih sempit
-     tabelnya perlu selebar halaman, supaya tidak harus digulir ke samping. */
-  .bagian-sisi {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    column-gap: 1rem;
-  }
+    .kisi-penggerak {
+      grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+    }
 
-  .bagian-sisi > :last-child {
-    grid-column: span 2;
-  }
+    /* Empat kartu atau lebih sebaris bisa lebih sempit daripada layar HP. */
+    .kisi-penggerak p {
+      text-align: left;
+    }
 
-  .prosa > ul:not(.daftar-sumber) {
-    max-width: calc(2 * 46rem + 3rem);
-    columns: 2;
-    column-gap: 3rem;
-  }
+    /* Judul bagian di kiri dan tabelnya di kanan, sejajar dengan ketiga kartu perkiraan. Di layar yang lebih sempit
+       tabelnya perlu selebar halaman, supaya tidak harus digulir ke samping. */
+    .bagian-sisi {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: 1rem;
+    }
 
-  .prosa > ul:not(.daftar-sumber) > li {
-    break-inside: avoid;
-    margin-top: 0;
-  }
+    .bagian-sisi > :last-child {
+      grid-column: span 2;
+    }
 
-  .kelompok-uji {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 1.5rem;
-    align-items: start;
-  }
+    .prosa > ul:not(.daftar-sumber) {
+      max-width: calc(2 * 46rem + 3rem);
+      columns: 2;
+      column-gap: 3rem;
+    }
 
-  .kelompok-uji > h3 {
-    grid-column: 1 / -1;
-  }
+    .prosa > ul:not(.daftar-sumber) > li {
+      break-inside: avoid;
+      margin-top: 0;
+    }
 
-  .daftar-sumber {
-    grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
-  }
+    .kelompok-uji {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 1.5rem;
+      align-items: start;
+    }
 
-  /* Kelima tautan kaki sebaris, dan teksnya memakai lebar sisanya. */
-  .kaki-kisi {
-    grid-template-columns: minmax(0, 42rem) auto;
+    .kelompok-uji > h3 {
+      grid-column: 1 / -1;
+    }
+
+    .daftar-sumber {
+      grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+    }
+
+    /* Kelima tautan kaki sebaris, dan teksnya memakai lebar sisanya. */
+    .kaki-kisi {
+      grid-template-columns: minmax(0, 42rem) auto;
+    }
   }
 }
 
 /* Ringkasan tetap terlihat selama blok jawaban digulir, bila layarnya cukup tinggi untuk menampungnya. Dengan
    pemberitahuan data terlambat di atasnya, ringkasannya lebih tinggi, jadi ikut digulir. */
 @media (min-width: 1200px) and (min-height: 43rem) {
-  .negara-awal:not(:has(.banner)) {
-    position: sticky;
-    top: calc(3.5rem + 1px);
+  @container layar (min-width: 72rem) {
+    .negara-awal:not(:has(.banner)) {
+      position: sticky;
+      top: calc(3.5rem + 1px);
+    }
   }
 }
 

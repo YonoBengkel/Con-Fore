@@ -29,6 +29,11 @@ export function angkaTampil(n: number, desimal: number): number {
   return Number(angka(n, desimal).replace(/\./g, "").replace(",", ".")) + 0;
 }
 
+/** Selisih dua angka tampil. Dibulatkan lagi, karena 40.3 - 40.2 di komputer 0.0999..., bukan 0.1. */
+export function selisihTampil(a: number, b: number, desimal: number): number {
+  return angkaTampil(angkaTampil(a, desimal) - angkaTampil(b, desimal), desimal);
+}
+
 /** Jumlah desimal yang wajar menurut konsep dan besar angka. */
 export function desimalUntuk(n: number, konsep: string): number {
   if (konsep === "rate" || konsep === "round_rate") return Math.abs(n) >= 1000 ? 0 : 2; // >= 1000: jumlah orang per ronde
@@ -105,8 +110,8 @@ export function perubahan(
   if (satuan.startsWith("%")) {
     const d = konsep === "rate" || konsep === "round_rate" ? 2 : 1;
     // Dihitung dari angka yang tampil, supaya kalimatnya selalu cocok dengan angka di kartu.
-    const selisih = Number(sekarang.toFixed(d)) - Number(sebelum.toFixed(d));
-    if (Math.abs(selisih) < 0.5 * 10 ** -d) {
+    const selisih = selisihTampil(sekarang, sebelum, d);
+    if (selisih === 0) {
       return `${sekarang === sebelum ? "sama" : "hampir sama"} dengan ${banding}`;
     }
     return `${selisih > 0 ? "naik" : "turun"} ${angka(Math.abs(selisih), d)} poin persen dari ${banding} (${nilaiPendek(sebelum, satuan, konsep)})`;

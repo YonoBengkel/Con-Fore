@@ -30,6 +30,17 @@ test("arah inflasi dalam bahasa sehari-hari mengikuti angka yang tampil", () => 
   assert.doesNotMatch(artinyaBuatmu("idn_cpi_eop_a", 3.2, 3.3) ?? "", /bulan lalu/);
 });
 
+test("angka yang dibulatkan berbeda oleh toFixed mengikuti yang tampil: 2,55 tampil 2,6", () => {
+  assert.equal(arahInflasi(2.55, 2.6), "Harga naik secepat bulan lalu.");
+  assert.equal(arahInflasi(2.6, 2.55), "Harga naik secepat bulan lalu.");
+  assert.match(
+    artinyaBuatmu("bps_cpi_yoy_m", 2.55) ?? "",
+    /Inflasi 2,6% berarti .* kini sekitar Rp102\.600\. Kalau penghasilanmu naik kurang dari 2,6%/,
+  );
+  assert.match(artinyaBuatmu("bps_cpi_core_yoy_m", 2.55) ?? "", /^Harga kelompok ini sekitar 2,6% lebih mahal/);
+  assert.match(artinyaBuatmu("bps_cpi_mom_m", 0.145) ?? "", /^Rata-rata harga barang dan jasa 0,15% lebih mahal/);
+});
+
 const seri = (source_id: string, country = "IDN") => ({ source_id, country }) as MetaSeri;
 const PERKIRAAN = "perkiraan dari pola rilis BPS, jadwal resminya belum terbit";
 
